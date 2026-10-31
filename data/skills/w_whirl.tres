@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_35b0o"]
+
+[resource]
+script = ExtResource("1_35b0o")
+id = &"w_whirl"
+display_name = "Giro de Lâminas"
+description = "Gira a arma, atingindo todos ao redor."
+icon = &"whirl"
+color = Color(1, 0.8235294, 0.47843137, 1)
+delivery = 4
+radius = 5.4
+element = 1
+power = 1.7
+threat_multiplier = 1.6
+cooldown = 7.0
+mp_cost = 16.0
+chi_gain = 18.0
+animation = &"spin"

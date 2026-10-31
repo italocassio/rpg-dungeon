@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_3powe"]
+[ext_resource type="Resource" path="res://data/effects/chill.tres" id="2_e4cdx"]
+
+[resource]
+script = ExtResource("1_3powe")
+id = &"m_icelance"
+display_name = "Lança de Gelo"
+description = "Dispara instantaneamente e reduz a velocidade do alvo."
+icon = &"lance"
+color = Color(0.62352943, 0.8901961, 1, 1)
+delivery = 2
+skill_range = 42.0
+projectile_speed = 40.0
+damage_kind = 1
+element = 3
+power = 1.5
+cooldown = 5.0
+mp_cost = 16.0
+chi_gain = 12.0
+target_effect = ExtResource("2_e4cdx")
+animation = &"cast_quick"

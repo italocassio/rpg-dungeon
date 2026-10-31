@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EffectData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/effect_data.gd" id="1_how5i"]
+
+[resource]
+script = ExtResource("1_how5i")
+id = &"warcry"
+display_name = "Grito de Guerra"
+duration = 8.0
+color = Color(1, 0.7019608, 0.3529412, 1)
+stat_multipliers = Dictionary[StringName, float]({
+&"magic_defense": 1.25,
+&"phys_defense": 1.4
+})

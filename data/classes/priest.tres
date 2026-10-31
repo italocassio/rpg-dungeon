@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="ClassData" format=3]
+
+[ext_resource type="Resource" path="res://data/skills/p_smite.tres" id="1_k8tmx"]
+[ext_resource type="Script" path="res://src/rpg/data/class_data.gd" id="2_b8pnn"]
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="3_38jpi"]
+[ext_resource type="Resource" path="res://data/skills/p_heal.tres" id="4_feplm"]
+[ext_resource type="Resource" path="res://data/skills/p_circle.tres" id="5_y2e7q"]
+[ext_resource type="Resource" path="res://data/skills/p_bless.tres" id="6_rbvwx"]
+[ext_resource type="Resource" path="res://data/skills/p_judgement.tres" id="7_ppaag"]
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="8_poefc"]
+[ext_resource type="Resource" path="res://data/items/p_start_habit.tres" id="9_4oyqt"]
+[ext_resource type="Resource" path="res://data/items/p_start_pilgrim.tres" id="10_ro2lu"]
+[ext_resource type="Resource" path="res://data/items/p_start_scepter.tres" id="11_a8a4q"]
+[ext_resource type="Resource" path="res://data/items/p_start_tome.tres" id="12_wrybd"]
+[ext_resource type="Resource" path="res://data/skills/p_miracle.tres" id="13_b372u"]
+
+[resource]
+script = ExtResource("2_b8pnn")
+id = &"priest"
+display_name = "Sacerdote"
+description = "Suporte do grupo. Cura, fortalece e até revive os aliados caídos."
+role = 2
+armor_type = 2
+color = Color(1, 0.84313726, 0.41568628, 1)
+strength = 4
+vitality = 7
+intelligence = 12
+base_hp = 150.0
+base_mp = 130.0
+hp_per_level = 22.0
+mp_per_level = 24.0
+base_move_speed = 5.8
+basic_attack = ExtResource("1_k8tmx")
+skills = Array[ExtResource("3_38jpi")]([ExtResource("4_feplm"), ExtResource("5_y2e7q"), ExtResource("6_rbvwx"), ExtResource("7_ppaag")])
+ultimate = ExtResource("13_b372u")
+guard_name = "Égide"
+guard_mp_per_second = 10.0
+starter_weapons = Array[ExtResource("8_poefc")]([ExtResource("11_a8a4q"), ExtResource("12_wrybd")])
+starter_armors = Array[ExtResource("8_poefc")]([ExtResource("9_4oyqt"), ExtResource("10_ro2lu")])

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_x0ujm"]
+
+[resource]
+script = ExtResource("1_x0ujm")
+id = &"w_start_mail"
+display_name = "Cota de Malha"
+description = "Proteção equilibrada."
+kind = 4
+icon = &"armor"
+class_id = &"warrior"
+stat_bonuses = Dictionary[StringName, float]({
+&"max_hp": 40.0,
+&"phys_defense": 18.0
+})
+armor_tint = Color(0.56078434, 0.62352943, 0.7058824, 1)

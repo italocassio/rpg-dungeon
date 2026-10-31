@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_6fu4l"]
+
+[resource]
+script = ExtResource("1_6fu4l")
+id = &"mage_t1_armor"
+display_name = "Manto Gélido"
+description = "Peça do conjunto Gélido."
+kind = 4
+rarity = 1
+icon = &"robe"
+class_id = &"mage"
+required_level = 3
+stat_bonuses = Dictionary[StringName, float]({
+&"magic_defense": 38.0,
+&"max_hp": 90.0,
+&"phys_defense": 14.0
+})
+armor_tint = Color(0.43137255, 0.65882355, 1, 1)

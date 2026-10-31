@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="MonsterData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/drop_entry.gd" id="1_y211w"]
+[ext_resource type="Resource" path="res://data/items/mat_bone.tres" id="2_pksm3"]
+[ext_resource type="Resource" path="res://data/items/mat_cloth.tres" id="3_63ib2"]
+[ext_resource type="Script" path="res://src/rpg/data/boss_phase_data.gd" id="4_xfo2k"]
+[ext_resource type="Script" path="res://src/rpg/data/monster_data.gd" id="5_n85sx"]
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="6_8nd8l"]
+[ext_resource type="Resource" path="res://data/skills/mon_blade.tres" id="7_hcdsi"]
+
+[sub_resource type="Resource" id="Resource_yxp2g"]
+script = ExtResource("1_y211w")
+item = ExtResource("2_pksm3")
+chance = 0.78
+max_count = 2
+
+[sub_resource type="Resource" id="Resource_vf1wf"]
+script = ExtResource("1_y211w")
+item = ExtResource("3_63ib2")
+chance = 0.3
+
+[resource]
+script = ExtResource("5_n85sx")
+id = &"skeleton"
+display_name = "Sentinela Óssea"
+level = 3
+visual = &"skeleton"
+scale = 1.05
+body_radius = 0.42
+body_height = 1.8
+max_hp = 540.0
+phys_attack = 38.0
+magic_attack = 10.0
+phys_defense = 26.0
+magic_defense = 12.0
+move_speed = 3.9
+weak_element = 2
+skills = Array[ExtResource("6_8nd8l")]([ExtResource("7_hcdsi")])
+xp_reward = 26
+mana_crystals = Vector2i(2, 4)
+drops = Array[ExtResource("1_y211w")]([SubResource("Resource_yxp2g"), SubResource("Resource_vf1wf")])

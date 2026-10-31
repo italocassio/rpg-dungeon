@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_81f7i"]
+
+[resource]
+script = ExtResource("1_81f7i")
+id = &"warrior_t1_weapon"
+display_name = "Lâmina Gélida"
+description = "Forjada com materiais dos monstros do Portão."
+kind = 2
+rarity = 1
+icon = &"sword"
+class_id = &"warrior"
+required_level = 2
+stat_bonuses = Dictionary[StringName, float]({
+&"crit_chance": 0.02,
+&"heal_power": 0.0,
+&"phys_attack": 32.0
+})
+weapon_model = &"sword_shield"

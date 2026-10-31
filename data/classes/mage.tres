@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="ClassData" format=3]
+
+[ext_resource type="Resource" path="res://data/skills/m_bolt.tres" id="1_sjuk8"]
+[ext_resource type="Script" path="res://src/rpg/data/class_data.gd" id="2_cuoi5"]
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="3_ntoji"]
+[ext_resource type="Resource" path="res://data/skills/m_fireball.tres" id="4_7i70b"]
+[ext_resource type="Resource" path="res://data/skills/m_icelance.tres" id="5_b4jg5"]
+[ext_resource type="Resource" path="res://data/skills/m_meteor.tres" id="6_srxku"]
+[ext_resource type="Resource" path="res://data/skills/m_blink.tres" id="7_wtygw"]
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="8_ttxsn"]
+[ext_resource type="Resource" path="res://data/items/m_start_robe.tres" id="9_4clds"]
+[ext_resource type="Resource" path="res://data/items/m_start_cloak.tres" id="10_6eowd"]
+[ext_resource type="Resource" path="res://data/items/m_start_staff.tres" id="11_tm5w4"]
+[ext_resource type="Resource" path="res://data/items/m_start_orb.tres" id="12_7pgy1"]
+[ext_resource type="Resource" path="res://data/skills/m_nova.tres" id="13_dfke3"]
+
+[resource]
+script = ExtResource("2_cuoi5")
+id = &"mage"
+display_name = "Mago"
+description = "Dano em área à distância. Frágil, mas devastador com os cinco elementos."
+armor_type = 2
+color = Color(0.30980393, 0.5529412, 1, 1)
+strength = 3
+vitality = 6
+agility = 6
+intelligence = 14
+base_hp = 130.0
+base_mp = 120.0
+hp_per_level = 18.0
+mp_per_level = 22.0
+base_move_speed = 5.8
+basic_attack = ExtResource("1_sjuk8")
+skills = Array[ExtResource("3_ntoji")]([ExtResource("4_7i70b"), ExtResource("5_b4jg5"), ExtResource("6_srxku"), ExtResource("7_wtygw")])
+ultimate = ExtResource("13_dfke3")
+guard_name = "Barreira de Mana"
+guard_damage_multiplier = 0.55
+guard_mp_per_second = 14.0
+starter_weapons = Array[ExtResource("8_ttxsn")]([ExtResource("11_tm5w4"), ExtResource("12_7pgy1")])
+starter_armors = Array[ExtResource("8_ttxsn")]([ExtResource("9_4clds"), ExtResource("10_6eowd")])

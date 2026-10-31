@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_rx56d"]
+
+[resource]
+script = ExtResource("1_rx56d")
+id = &"w_slash"
+display_name = "Corte"
+description = "Golpe em arco que atinge os inimigos à frente e gera Chi."
+color = Color(0.8117647, 0.89411765, 1, 1)
+skill_range = 3.6
+cone_degrees = 110.0
+element = 1
+cooldown = 0.62
+chi_gain = 14.0

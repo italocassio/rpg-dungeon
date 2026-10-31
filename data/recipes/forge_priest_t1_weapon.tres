@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_kvj0s"]
+[ext_resource type="Resource" path="res://data/items/mat_fang.tres" id="2_2ukci"]
+[ext_resource type="Resource" path="res://data/items/mat_bone.tres" id="3_cqy2q"]
+[ext_resource type="Resource" path="res://data/items/mat_ore.tres" id="4_vbnka"]
+[ext_resource type="Resource" path="res://data/items/priest_t1_weapon.tres" id="5_h1yjq"]
+[ext_resource type="Script" path="res://src/rpg/data/recipe_data.gd" id="6_p3db2"]
+
+[resource]
+script = ExtResource("6_p3db2")
+id = &"forge_priest_t1_weapon"
+result = ExtResource("5_h1yjq")
+ingredients = Dictionary[ExtResource("1_kvj0s"), int]({
+ExtResource("2_2ukci"): 12,
+ExtResource("3_cqy2q"): 10,
+ExtResource("4_vbnka"): 5
+})
+mana_crystal_cost = 80

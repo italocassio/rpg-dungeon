@@ -1,0 +1,46 @@
+[gd_resource type="Resource" script_class="MonsterData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/drop_entry.gd" id="1_r0ur3"]
+[ext_resource type="Resource" path="res://data/items/mat_fang.tres" id="2_n065f"]
+[ext_resource type="Resource" path="res://data/items/mat_cloth.tres" id="3_fsndp"]
+[ext_resource type="Resource" path="res://data/items/potion_hp.tres" id="4_7y3d8"]
+[ext_resource type="Script" path="res://src/rpg/data/boss_phase_data.gd" id="5_y00ew"]
+[ext_resource type="Script" path="res://src/rpg/data/monster_data.gd" id="6_onrpj"]
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="7_rtbyh"]
+[ext_resource type="Resource" path="res://data/skills/mon_club.tres" id="8_7fcxh"]
+
+[sub_resource type="Resource" id="Resource_jiih1"]
+script = ExtResource("1_r0ur3")
+item = ExtResource("2_n065f")
+chance = 0.72
+max_count = 2
+
+[sub_resource type="Resource" id="Resource_xeto5"]
+script = ExtResource("1_r0ur3")
+item = ExtResource("3_fsndp")
+chance = 0.6
+max_count = 2
+
+[sub_resource type="Resource" id="Resource_ger6i"]
+script = ExtResource("1_r0ur3")
+item = ExtResource("4_7y3d8")
+chance = 0.05
+
+[resource]
+script = ExtResource("6_onrpj")
+id = &"goblin"
+display_name = "Goblin Gélido"
+visual = &"goblin"
+scale = 0.82
+body_radius = 0.42
+body_height = 1.3
+max_hp = 320.0
+phys_attack = 30.0
+magic_attack = 10.0
+phys_defense = 14.0
+magic_defense = 10.0
+move_speed = 4.4
+weak_element = 4
+skills = Array[ExtResource("7_rtbyh")]([ExtResource("8_7fcxh")])
+xp_reward = 16
+drops = Array[ExtResource("1_r0ur3")]([SubResource("Resource_jiih1"), SubResource("Resource_xeto5"), SubResource("Resource_ger6i")])

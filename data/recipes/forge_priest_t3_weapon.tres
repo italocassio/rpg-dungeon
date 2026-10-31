@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_03f6x"]
+[ext_resource type="Resource" path="res://data/items/boss_core.tres" id="2_vjrbc"]
+[ext_resource type="Resource" path="res://data/items/boss_crown.tres" id="3_de1gh"]
+[ext_resource type="Resource" path="res://data/items/mat_shard.tres" id="4_6wsg3"]
+[ext_resource type="Resource" path="res://data/items/priest_t3_weapon.tres" id="5_i7qdj"]
+[ext_resource type="Script" path="res://src/rpg/data/recipe_data.gd" id="6_i6x46"]
+
+[resource]
+script = ExtResource("6_i6x46")
+id = &"forge_priest_t3_weapon"
+result = ExtResource("5_i7qdj")
+ingredients = Dictionary[ExtResource("1_03f6x"), int]({
+ExtResource("2_vjrbc"): 4,
+ExtResource("3_de1gh"): 1,
+ExtResource("4_6wsg3"): 20
+})
+mana_crystal_cost = 900
+tier = 3

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_cwyn5"]
+[ext_resource type="Resource" path="res://data/items/mat_hide.tres" id="2_3wh33"]
+[ext_resource type="Resource" path="res://data/items/mat_bone.tres" id="3_q06i4"]
+[ext_resource type="Resource" path="res://data/items/warrior_t1_boots.tres" id="4_rlvh2"]
+[ext_resource type="Script" path="res://src/rpg/data/recipe_data.gd" id="5_wqx8o"]
+
+[resource]
+script = ExtResource("5_wqx8o")
+id = &"forge_warrior_t1_boots"
+result = ExtResource("4_rlvh2")
+ingredients = Dictionary[ExtResource("1_cwyn5"), int]({
+ExtResource("2_3wh33"): 8,
+ExtResource("3_q06i4"): 8
+})
+mana_crystal_cost = 50

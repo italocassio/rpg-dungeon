@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_75rp3"]
+
+[resource]
+script = ExtResource("1_75rp3")
+id = &"w_start_axe"
+display_name = "Machado Grande de Novato"
+description = "Lento na mão de iniciantes, mas muito mais forte."
+kind = 2
+icon = &"axe"
+class_id = &"warrior"
+stat_bonuses = Dictionary[StringName, float]({
+&"phys_attack": 20.0
+})
+weapon_model = &"greataxe"

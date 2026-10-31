@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_haitn"]
+
+[resource]
+script = ExtResource("1_haitn")
+id = &"m_start_orb"
+display_name = "Orbe Cintilante"
+description = "Mais mana e conjuração mais rápida."
+kind = 2
+icon = &"orb"
+class_id = &"mage"
+stat_bonuses = Dictionary[StringName, float]({
+&"cast_speed": 0.1,
+&"magic_attack": 11.0,
+&"max_mp": 60.0
+})
+weapon_model = &"orb"

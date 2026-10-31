@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_d45hk"]
+
+[resource]
+script = ExtResource("1_d45hk")
+id = &"p_start_tome"
+display_name = "Tomo de Preces"
+description = "Mais mana e cura, menos ataque."
+kind = 2
+icon = &"tome"
+class_id = &"priest"
+stat_bonuses = Dictionary[StringName, float]({
+&"heal_power": 0.2,
+&"magic_attack": 7.0,
+&"max_mp": 60.0
+})
+weapon_model = &"tome"

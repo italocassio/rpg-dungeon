@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_mvaw6"]
+
+[resource]
+script = ExtResource("1_mvaw6")
+id = &"mat_hide"
+display_name = "Couro Gélido"
+description = "Pele de lobo das neves."
+rarity = 1
+icon = &"hide"

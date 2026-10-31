@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="MonsterData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/drop_entry.gd" id="1_u7s1y"]
+[ext_resource type="Resource" path="res://data/items/mat_ore.tres" id="2_8htam"]
+[ext_resource type="Resource" path="res://data/items/mat_shard.tres" id="3_1bof3"]
+[ext_resource type="Resource" path="res://data/items/mat_essence.tres" id="4_uj4ep"]
+[ext_resource type="Script" path="res://src/rpg/data/boss_phase_data.gd" id="5_lmmp5"]
+[ext_resource type="Script" path="res://src/rpg/data/monster_data.gd" id="6_hkyvc"]
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="7_wixqh"]
+[ext_resource type="Resource" path="res://data/skills/mon_punch.tres" id="8_q6mkc"]
+[ext_resource type="Resource" path="res://data/skills/mon_smash.tres" id="9_7rxdr"]
+
+[sub_resource type="Resource" id="Resource_plmje"]
+script = ExtResource("1_u7s1y")
+item = ExtResource("2_8htam")
+chance = 1.0
+min_count = 2
+max_count = 3
+
+[sub_resource type="Resource" id="Resource_uyh18"]
+script = ExtResource("1_u7s1y")
+item = ExtResource("3_1bof3")
+chance = 0.75
+max_count = 2
+
+[sub_resource type="Resource" id="Resource_hf5yg"]
+script = ExtResource("1_u7s1y")
+item = ExtResource("4_uj4ep")
+chance = 0.6
+max_count = 2
+
+[resource]
+script = ExtResource("6_hkyvc")
+id = &"crystal_golem"
+display_name = "Golem de Cristal"
+tier = 1
+level = 4
+visual = &"golem"
+scale = 1.5
+body_radius = 0.95
+body_height = 3.2
+max_hp = 2600.0
+phys_attack = 58.0
+magic_attack = 20.0
+phys_defense = 46.0
+magic_defense = 22.0
+move_speed = 3.3
+weak_element = 1
+strong_element = 5
+preferred_range = 3.0
+skills = Array[ExtResource("7_wixqh")]([ExtResource("8_q6mkc"), ExtResource("9_7rxdr")])
+xp_reward = 90
+mana_crystals = Vector2i(10, 16)
+drops = Array[ExtResource("1_u7s1y")]([SubResource("Resource_plmje"), SubResource("Resource_uyh18"), SubResource("Resource_hf5yg")])

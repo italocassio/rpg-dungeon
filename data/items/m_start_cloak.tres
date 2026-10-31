@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_3dv54"]
+
+[resource]
+script = ExtResource("1_3dv54")
+id = &"m_start_cloak"
+display_name = "Manto do Novato"
+description = "Mais resistente, menos mana."
+kind = 4
+icon = &"robe"
+class_id = &"mage"
+stat_bonuses = Dictionary[StringName, float]({
+&"magic_defense": 10.0,
+&"max_hp": 40.0,
+&"phys_defense": 6.0
+})
+armor_tint = Color(0.29411766, 0.24705882, 0.56078434, 1)

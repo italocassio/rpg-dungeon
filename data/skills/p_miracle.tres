@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_f3gr5"]
+
+[resource]
+script = ExtResource("1_f3gr5")
+id = &"p_miracle"
+display_name = "Milagre"
+description = "Consome 1 Faísca: cura todo o grupo e revive caídos."
+icon = &"miracle"
+color = Color(1, 0.9647059, 0.8156863, 1)
+delivery = 6
+skill_range = 44.0
+revives_allies = true
+damage_kind = 2
+power = 4.5
+cast_time = 0.8
+cooldown = 24.0
+chi_cost = 100.0
+animation = &"cast"

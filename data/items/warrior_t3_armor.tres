@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_7jd5g"]
+
+[resource]
+script = ExtResource("1_7jd5g")
+id = &"warrior_t3_armor"
+display_name = "Armadura do Monarca Gélido"
+description = "Armadura lendária do Portão Gélido."
+kind = 4
+rarity = 4
+icon = &"armor"
+class_id = &"warrior"
+required_level = 7
+stat_bonuses = Dictionary[StringName, float]({
+&"magic_defense": 52.0,
+&"max_hp": 340.0,
+&"phys_defense": 115.0
+})
+armor_tint = Color(0.49803922, 0.83137256, 1, 1)

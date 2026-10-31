@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_n0crc"]
+
+[resource]
+script = ExtResource("1_n0crc")
+id = &"p_smite"
+display_name = "Luz Sagrada"
+description = "Raio de luz. Gera Chi ao acertar."
+icon = &"smite"
+color = Color(1, 0.9137255, 0.65882355, 1)
+delivery = 2
+skill_range = 38.0
+damage_kind = 1
+element = 2
+power = 0.95
+cooldown = 0.85
+chi_gain = 10.0
+animation = &"cast_quick"

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_vs4i1"]
+
+[resource]
+script = ExtResource("1_vs4i1")
+id = &"w_monarch"
+display_name = "Lâmina do Monarca"
+description = "Consome 1 Faísca de Chi em um golpe devastador."
+icon = &"crown"
+color = Color(0.4862745, 0.7764706, 1, 1)
+skill_range = 7.0
+cone_degrees = 150.0
+element = 1
+power = 5.0
+cast_time = 0.35
+cooldown = 18.0
+chi_cost = 100.0
+animation = &"overhead"

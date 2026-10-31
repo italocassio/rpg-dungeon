@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="GateRankData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/gate_rank_data.gd" id="1_jwauj"]
+
+[resource]
+script = ExtResource("1_jwauj")

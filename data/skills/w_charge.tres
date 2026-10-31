@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_ry6tc"]
+[ext_resource type="Resource" path="res://data/effects/stun.tres" id="2_8s3nh"]
+
+[resource]
+script = ExtResource("1_ry6tc")
+id = &"w_charge"
+display_name = "Investida"
+description = "Avança contra o alvo e atordoa quem estiver no caminho."
+icon = &"charge"
+color = Color(1, 0.41568628, 0.23529412, 1)
+delivery = 8
+skill_range = 13.0
+radius = 2.6
+element = 1
+power = 1.5
+threat_multiplier = 2.0
+cooldown = 9.0
+mp_cost = 14.0
+chi_gain = 20.0
+target_effect = ExtResource("2_8s3nh")
+animation = &"thrust"

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_qg7vt"]
+
+[resource]
+script = ExtResource("1_qg7vt")
+id = &"mat_cloth"
+display_name = "Trapo Congelado"
+description = "Tecido duro de gelo, ainda útil."
+icon = &"cloth"

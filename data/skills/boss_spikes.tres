@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_kert1"]
+
+[resource]
+script = ExtResource("1_kert1")
+id = &"boss_spikes"
+display_name = "Linha de Estacas"
+color = Color(0.62352943, 0.8901961, 1, 1)
+delivery = 1
+skill_range = 22.0
+line_width = 3.6
+element = 3
+power = 2.1
+cast_time = 1.15
+cooldown = 9.0
+telegraph = true
+animation = &"thrust"

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="EffectData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/effect_data.gd" id="1_un4g5"]
+
+[resource]
+script = ExtResource("1_un4g5")
+id = &"stun"
+display_name = "Atordoado"
+duration = 1.4
+is_debuff = true
+color = Color(1, 0.84313726, 0.41568628, 1)
+stuns = true

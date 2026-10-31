@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="EffectData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/effect_data.gd" id="1_wseju"]
+
+[resource]
+script = ExtResource("1_wseju")
+id = &"freeze"
+display_name = "Congelado"
+duration = 2.4
+is_debuff = true
+color = Color(0.62352943, 0.8901961, 1, 1)
+stuns = true

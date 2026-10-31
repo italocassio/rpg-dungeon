@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_vh0eg"]
+
+[resource]
+script = ExtResource("1_vh0eg")
+id = &"mat_bone"
+display_name = "Osso Antigo"
+description = "Osso de morto-vivo, resistente ao frio."
+icon = &"bone"

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_dvraj"]
+
+[resource]
+script = ExtResource("1_dvraj")
+id = &"mat_ore"
+display_name = "Ferro Negro"
+description = "Minério arrancado do corpo dos golens."
+rarity = 1
+icon = &"ore"

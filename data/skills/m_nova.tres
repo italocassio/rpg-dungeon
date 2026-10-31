@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_afq2s"]
+[ext_resource type="Resource" path="res://data/effects/freeze.tres" id="2_sbwfv"]
+
+[resource]
+script = ExtResource("1_afq2s")
+id = &"m_nova"
+display_name = "Nova Elemental"
+description = "Consome 1 Faísca: congela e fere todos ao redor."
+icon = &"nova"
+color = Color(0.49803922, 0.8784314, 1, 1)
+delivery = 4
+radius = 10.0
+damage_kind = 1
+element = 3
+power = 4.2
+cast_time = 0.5
+cooldown = 18.0
+chi_cost = 100.0
+target_effect = ExtResource("2_sbwfv")
+animation = &"cast"

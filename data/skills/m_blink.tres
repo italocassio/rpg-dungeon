@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_sywti"]
+
+[resource]
+script = ExtResource("1_sywti")
+id = &"m_blink"
+display_name = "Piscar"
+description = "Teleporta alguns metros na direção da mira."
+icon = &"blink"
+color = Color(0.7058824, 0.54901963, 1, 1)
+delivery = 9
+skill_range = 10.0
+damage_kind = 3
+power = 0.0
+cooldown = 8.0
+triggers_global_cooldown = false
+mp_cost = 12.0
+animation = &"cast_quick"

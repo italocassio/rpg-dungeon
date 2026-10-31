@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_e2dxf"]
+[ext_resource type="Resource" path="res://data/effects/warcry.tres" id="2_cac88"]
+[ext_resource type="Resource" path="res://data/effects/taunt.tres" id="3_bk5jx"]
+
+[resource]
+script = ExtResource("1_e2dxf")
+id = &"w_warcry"
+display_name = "Grito de Guerra"
+description = "Provoca os inimigos próximos e aumenta suas defesas."
+icon = &"shout"
+color = Color(1, 0.7019608, 0.3529412, 1)
+delivery = 4
+radius = 14.0
+damage_kind = 3
+power = 0.0
+threat_multiplier = 4.0
+cooldown = 14.0
+mp_cost = 10.0
+chi_gain = 25.0
+target_effect = ExtResource("3_bk5jx")
+self_effect = ExtResource("2_cac88")
+animation = &"shout"

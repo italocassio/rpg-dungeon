@@ -1,0 +1,49 @@
+[gd_resource type="Resource" script_class="MonsterData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/drop_entry.gd" id="1_hqs3e"]
+[ext_resource type="Resource" path="res://data/items/mat_essence.tres" id="2_dornr"]
+[ext_resource type="Resource" path="res://data/items/mat_bone.tres" id="3_0obvi"]
+[ext_resource type="Resource" path="res://data/items/potion_mp.tres" id="4_dywpt"]
+[ext_resource type="Script" path="res://src/rpg/data/boss_phase_data.gd" id="5_0won6"]
+[ext_resource type="Script" path="res://src/rpg/data/monster_data.gd" id="6_iv72c"]
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="7_4qbf7"]
+[ext_resource type="Resource" path="res://data/skills/mon_frostbolt.tres" id="8_s714k"]
+
+[sub_resource type="Resource" id="Resource_x2inp"]
+script = ExtResource("1_hqs3e")
+item = ExtResource("2_dornr")
+chance = 0.65
+max_count = 2
+
+[sub_resource type="Resource" id="Resource_q0svr"]
+script = ExtResource("1_hqs3e")
+item = ExtResource("3_0obvi")
+chance = 0.4
+
+[sub_resource type="Resource" id="Resource_a811h"]
+script = ExtResource("1_hqs3e")
+item = ExtResource("4_dywpt")
+chance = 0.08
+
+[resource]
+script = ExtResource("6_iv72c")
+id = &"shaman"
+display_name = "Xamã do Inverno"
+level = 3
+visual = &"shaman"
+body_radius = 0.42
+body_height = 1.8
+max_hp = 340.0
+phys_attack = 12.0
+magic_attack = 42.0
+phys_defense = 10.0
+magic_defense = 28.0
+move_speed = 3.4
+attack_element = 3
+weak_element = 4
+strong_element = 3
+preferred_range = 14.0
+skills = Array[ExtResource("7_4qbf7")]([ExtResource("8_s714k")])
+xp_reward = 28
+mana_crystals = Vector2i(2, 4)
+drops = Array[ExtResource("1_hqs3e")]([SubResource("Resource_x2inp"), SubResource("Resource_q0svr"), SubResource("Resource_a811h")])

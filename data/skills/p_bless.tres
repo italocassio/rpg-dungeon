@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_ifsr4"]
+[ext_resource type="Resource" path="res://data/effects/blessing.tres" id="2_8sjiu"]
+
+[resource]
+script = ExtResource("1_ifsr4")
+id = &"p_bless"
+display_name = "Bênção"
+description = "Fortalece o grupo e concede um escudo."
+icon = &"bless"
+color = Color(1, 0.9137255, 0.65882355, 1)
+delivery = 6
+skill_range = 34.0
+damage_kind = 3
+power = 0.0
+cast_time = 0.6
+cooldown = 26.0
+mp_cost = 28.0
+target_effect = ExtResource("2_8sjiu")
+animation = &"cast"

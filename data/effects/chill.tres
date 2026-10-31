@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EffectData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/effect_data.gd" id="1_7tba0"]
+
+[resource]
+script = ExtResource("1_7tba0")
+id = &"chill"
+display_name = "Lentidão Gélida"
+duration = 4.0
+is_debuff = true
+color = Color(0.49803922, 0.76862746, 1, 1)
+stat_multipliers = Dictionary[StringName, float]({
+&"move_speed": 0.55
+})

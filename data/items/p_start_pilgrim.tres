@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_huqgk"]
+
+[resource]
+script = ExtResource("1_huqgk")
+id = &"p_start_pilgrim"
+display_name = "Vestes do Peregrino"
+description = "Mais vida para sobreviver na linha de frente."
+kind = 4
+icon = &"robe"
+class_id = &"priest"
+stat_bonuses = Dictionary[StringName, float]({
+&"magic_defense": 8.0,
+&"max_hp": 50.0,
+&"phys_defense": 8.0
+})
+armor_tint = Color(0.7882353, 0.7490196, 0.62352943, 1)

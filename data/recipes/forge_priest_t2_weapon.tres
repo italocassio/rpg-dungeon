@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_6mjg0"]
+[ext_resource type="Resource" path="res://data/items/boss_core.tres" id="2_i8oj1"]
+[ext_resource type="Resource" path="res://data/items/mat_shard.tres" id="3_64qr2"]
+[ext_resource type="Resource" path="res://data/items/mat_essence.tres" id="4_q2s2u"]
+[ext_resource type="Resource" path="res://data/items/priest_t2_weapon.tres" id="5_sockl"]
+[ext_resource type="Script" path="res://src/rpg/data/recipe_data.gd" id="6_taxco"]
+
+[resource]
+script = ExtResource("6_taxco")
+id = &"forge_priest_t2_weapon"
+result = ExtResource("5_sockl")
+ingredients = Dictionary[ExtResource("1_6mjg0"), int]({
+ExtResource("2_i8oj1"): 1,
+ExtResource("3_64qr2"): 8,
+ExtResource("4_q2s2u"): 14
+})
+mana_crystal_cost = 300
+tier = 2

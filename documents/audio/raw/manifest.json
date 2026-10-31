@@ -1,0 +1,26 @@
+{
+	"w_slash_1": {
+		"model": "Stable Audio 3",
+		"seed": "12788",
+		"seconds": 1,
+		"prompt": "Fantasy sword slash sound effect.\n\nFast steel blade swinging through the air,\nsharp metallic swish with a light ringing edge.\n\nQuick, clean and aggressive.\nVery short single swing, about 0.4 seconds.\n\nDry recording. No music, no voices."
+	},
+	"w_slash_2": {
+		"model": "Stable Audio 3",
+		"seed": "13752",
+		"seconds": 1,
+		"prompt": "Fantasy sword slash sound effect.\n\nFast steel blade swinging through the air,\nsharp metallic swish with a light ringing edge.\n\nQuick, clean and aggressive.\nVery short single swing, about 0.4 seconds.\n\nDry recording. No music, no voices."
+	},
+	"w_slash_3": {
+		"model": "Stable Audio 3",
+		"seed": "4089",
+		"seconds": 1,
+		"prompt": "Fantasy sword slash sound effect.\n\nFast steel blade swinging through the air,\nsharp metallic swish with a light ringing edge.\n\nQuick, clean and aggressive.\nVery short single swing, about 0.4 seconds.\n\nDry recording. No music, no voices."
+	},
+	"w_charge_rush": {
+		"model": "Stable Audio 3",
+		"seed": "29453",
+		"seconds": 1,
+		"prompt": "Heavy armored warrior dash sound effect.\n\nFast rush of air, clinking plate armor,\nheavy boots pushing off a stone floor.\n\nExplosive, forceful acceleration.\nShort burst rising in speed, about 0.5 seconds.\n\nDry recording. No music, no voices."
+	}
+}

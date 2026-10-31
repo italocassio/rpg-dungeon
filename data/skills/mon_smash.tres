@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_basu1"]
+
+[resource]
+script = ExtResource("1_basu1")
+id = &"mon_smash"
+display_name = "Esmagar"
+color = Color(1, 0.3529412, 0.3529412, 1)
+delivery = 3
+skill_range = 9.0
+radius = 3.6
+power = 2.0
+cast_time = 1.15
+cooldown = 6.0
+telegraph = true
+animation = &"overhead"

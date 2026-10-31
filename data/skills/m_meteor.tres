@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_b85sk"]
+
+[resource]
+script = ExtResource("1_b85sk")
+id = &"m_meteor"
+display_name = "Meteoro"
+description = "Invoca um meteoro no ponto da mira."
+icon = &"meteor"
+color = Color(1, 0.3529412, 0.18039216, 1)
+delivery = 3
+skill_range = 30.0
+radius = 6.0
+impact_delay = 0.7
+damage_kind = 1
+element = 4
+power = 3.4
+cast_time = 1.4
+cooldown = 12.0
+mp_cost = 38.0
+chi_gain = 20.0
+animation = &"cast"

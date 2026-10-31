@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_a0rlu"]
+
+[resource]
+script = ExtResource("1_a0rlu")
+id = &"mon_club"
+display_name = "Porrada"
+color = Color(1, 0.3529412, 0.3529412, 1)
+skill_range = 2.6
+cone_degrees = 100.0
+cast_time = 0.35
+cooldown = 1.7

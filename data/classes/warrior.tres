@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="ClassData" format=3]
+
+[ext_resource type="Resource" path="res://data/skills/w_slash.tres" id="1_clxre"]
+[ext_resource type="Script" path="res://src/rpg/data/class_data.gd" id="2_oip5p"]
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="3_w1bym"]
+[ext_resource type="Resource" path="res://data/skills/w_charge.tres" id="4_bhkx4"]
+[ext_resource type="Resource" path="res://data/skills/w_whirl.tres" id="5_he2rp"]
+[ext_resource type="Resource" path="res://data/skills/w_warcry.tres" id="6_bkjqd"]
+[ext_resource type="Resource" path="res://data/skills/w_seismic.tres" id="7_a5s2i"]
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="8_rujjv"]
+[ext_resource type="Resource" path="res://data/items/w_start_mail.tres" id="9_jwgmo"]
+[ext_resource type="Resource" path="res://data/items/w_start_plate.tres" id="10_2ir2t"]
+[ext_resource type="Resource" path="res://data/items/w_start_sword.tres" id="11_8ov8c"]
+[ext_resource type="Resource" path="res://data/items/w_start_axe.tres" id="12_fwuxe"]
+[ext_resource type="Resource" path="res://data/skills/w_monarch.tres" id="13_48voe"]
+
+[resource]
+script = ExtResource("2_oip5p")
+id = &"warrior"
+display_name = "Guerreiro"
+description = "Linha de frente. Armadura pesada, gera Chi a cada golpe e protege o grupo."
+role = 0
+armor_type = 0
+color = Color(0.8784314, 0.3764706, 0.22745098, 1)
+strength = 12
+vitality = 12
+agility = 6
+intelligence = 3
+base_hp = 240.0
+base_mp = 60.0
+hp_per_level = 36.0
+mp_per_level = 8.0
+base_move_speed = 5.9
+basic_attack = ExtResource("1_clxre")
+skills = Array[ExtResource("3_w1bym")]([ExtResource("4_bhkx4"), ExtResource("5_he2rp"), ExtResource("6_bkjqd"), ExtResource("7_a5s2i")])
+ultimate = ExtResource("13_48voe")
+guard_damage_multiplier = 0.4
+starter_weapons = Array[ExtResource("8_rujjv")]([ExtResource("11_8ov8c"), ExtResource("12_fwuxe")])
+starter_armors = Array[ExtResource("8_rujjv")]([ExtResource("9_jwgmo"), ExtResource("10_2ir2t")])

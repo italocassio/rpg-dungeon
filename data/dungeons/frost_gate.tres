@@ -1,0 +1,265 @@
+[gd_resource type="Resource" script_class="DungeonData" format=3]
+
+[ext_resource type="Resource" path="res://data/monsters/frost_king.tres" id="1_hf24q"]
+[ext_resource type="Script" path="res://src/rpg/data/drop_entry.gd" id="2_iybpn"]
+[ext_resource type="Resource" path="res://data/items/mat_shard.tres" id="3_htnc4"]
+[ext_resource type="Resource" path="res://data/items/mat_essence.tres" id="4_258op"]
+[ext_resource type="Resource" path="res://data/items/mat_ore.tres" id="5_eppyf"]
+[ext_resource type="Resource" path="res://data/items/potion_hp.tres" id="6_7thdi"]
+[ext_resource type="Resource" path="res://data/items/potion_mp.tres" id="7_ckpft"]
+[ext_resource type="Script" path="res://src/rpg/data/corridor_data.gd" id="8_y6mcf"]
+[ext_resource type="Script" path="res://src/rpg/data/gate_rank_data.gd" id="9_b4pod"]
+[ext_resource type="Resource" path="res://data/dungeons/rank_e.tres" id="10_1j4ru"]
+[ext_resource type="Resource" path="res://data/dungeons/rank_d.tres" id="11_cbskp"]
+[ext_resource type="Script" path="res://src/rpg/data/room_data.gd" id="12_0el2k"]
+[ext_resource type="Script" path="res://src/rpg/data/dungeon_data.gd" id="13_mf4f6"]
+[ext_resource type="Script" path="res://src/rpg/data/spawn_group_data.gd" id="14_oa6fi"]
+[ext_resource type="Resource" path="res://data/monsters/goblin.tres" id="15_ukse2"]
+[ext_resource type="Resource" path="res://data/monsters/frost_wolf.tres" id="16_8dv1a"]
+[ext_resource type="Resource" path="res://data/monsters/shaman.tres" id="17_w8kx7"]
+[ext_resource type="Resource" path="res://data/monsters/skeleton.tres" id="18_vmwx8"]
+[ext_resource type="Resource" path="res://data/monsters/crystal_golem.tres" id="19_tlqj5"]
+
+[sub_resource type="Resource" id="Resource_lbwfb"]
+script = ExtResource("2_iybpn")
+item = ExtResource("3_htnc4")
+chance = 0.6
+
+[sub_resource type="Resource" id="Resource_fqriq"]
+script = ExtResource("2_iybpn")
+item = ExtResource("4_258op")
+chance = 1.0
+max_count = 2
+
+[sub_resource type="Resource" id="Resource_k35x5"]
+script = ExtResource("2_iybpn")
+item = ExtResource("5_eppyf")
+
+[sub_resource type="Resource" id="Resource_mwlvo"]
+script = ExtResource("2_iybpn")
+item = ExtResource("6_7thdi")
+chance = 1.0
+max_count = 2
+
+[sub_resource type="Resource" id="Resource_y445a"]
+script = ExtResource("2_iybpn")
+item = ExtResource("7_ckpft")
+chance = 1.0
+max_count = 2
+
+[sub_resource type="Resource" id="Resource_8ciqq"]
+script = ExtResource("8_y6mcf")
+points = PackedVector2Array(0, 12, 0, 51)
+vault_height = 2.4
+
+[sub_resource type="Resource" id="Resource_jwuy6"]
+script = ExtResource("8_y6mcf")
+points = PackedVector2Array(11, 64, 28, 62, 34, 44)
+width = 6.5
+vault_height = 2.4
+
+[sub_resource type="Resource" id="Resource_b4r5k"]
+script = ExtResource("8_y6mcf")
+points = PackedVector2Array(37, 24, 44, 2, 72, 4)
+width = 6.5
+vault_height = 2.4
+
+[sub_resource type="Resource" id="Resource_a7ieg"]
+script = ExtResource("8_y6mcf")
+points = PackedVector2Array(88, -10, 98, -30, 137, -30)
+width = 6.0
+vault_height = 2.4
+
+[sub_resource type="Resource" id="Resource_5ifmm"]
+script = ExtResource("8_y6mcf")
+points = PackedVector2Array(82, 14, 78, 56, 63, 93)
+width = 6.0
+vault_height = 2.4
+
+[sub_resource type="Resource" id="Resource_jhgba"]
+script = ExtResource("8_y6mcf")
+points = PackedVector2Array(96, 6, 118, 8, 132, 23)
+width = 6.5
+vault_height = 2.4
+
+[sub_resource type="Resource" id="Resource_xkj6t"]
+script = ExtResource("8_y6mcf")
+points = PackedVector2Array(134, 45, 128, 81)
+width = 8.5
+wall_height = 7.0
+vault_height = 3.2
+has_gate_door = true
+
+[sub_resource type="Resource" id="Resource_k3ot0"]
+script = ExtResource("12_0el2k")
+id = &"forge_hall"
+display_name = "Salão da Forja"
+kind = 0
+radius = 14.0
+wall_height = 8.0
+dome_height = 5.0
+
+[sub_resource type="Resource" id="Resource_vq7ep"]
+script = ExtResource("12_0el2k")
+id = &"frost_hall"
+display_name = "Corredor Gélido"
+center = Vector2(0, 62)
+radius = 12.5
+
+[sub_resource type="Resource" id="Resource_vhw1d"]
+script = ExtResource("12_0el2k")
+id = &"wolf_den"
+display_name = "Covil das Presas"
+center = Vector2(36, 34)
+radius = 11.5
+wall_height = 6.5
+
+[sub_resource type="Resource" id="Resource_yigcy"]
+script = ExtResource("12_0el2k")
+id = &"crossroads"
+display_name = "Encruzilhada do Uivo"
+center = Vector2(84, 2)
+radius = 13.0
+wall_height = 7.5
+dome_height = 5.0
+
+[sub_resource type="Resource" id="Resource_gdk7s"]
+script = ExtResource("12_0el2k")
+id = &"ossuary"
+display_name = "Ossuário Esquecido"
+kind = 2
+center = Vector2(146, -30)
+radius = 10.0
+wall_height = 6.5
+dome_height = 3.5
+has_chest = true
+
+[sub_resource type="Resource" id="Resource_7nldi"]
+script = ExtResource("12_0el2k")
+id = &"crystal_cave"
+display_name = "Gruta de Cristal"
+kind = 2
+center = Vector2(60, 104)
+dome_height = 4.5
+has_chest = true
+
+[sub_resource type="Resource" id="Resource_v6y17"]
+script = ExtResource("12_0el2k")
+id = &"antechamber"
+display_name = "Antecâmara Real"
+kind = 3
+center = Vector2(136, 34)
+radius = 12.5
+wall_height = 7.5
+dome_height = 4.5
+
+[sub_resource type="Resource" id="Resource_n0q8q"]
+script = ExtResource("12_0el2k")
+id = &"throne"
+display_name = "Trono do Rei Gélido"
+kind = 4
+center = Vector2(124, 106)
+radius = 27.0
+wall_height = 11.0
+dome_height = 9.0
+
+[sub_resource type="Resource" id="Resource_xn3dn"]
+script = ExtResource("14_oa6fi")
+monster = ExtResource("15_ukse2")
+count = 5
+position = Vector2(0, 62)
+spread = 7.0
+
+[sub_resource type="Resource" id="Resource_xnsqy"]
+script = ExtResource("14_oa6fi")
+monster = ExtResource("15_ukse2")
+count = 2
+position = Vector2(24, 62)
+spread = 1.5
+
+[sub_resource type="Resource" id="Resource_2hrr6"]
+script = ExtResource("14_oa6fi")
+monster = ExtResource("16_8dv1a")
+count = 5
+position = Vector2(36, 34)
+spread = 6.0
+
+[sub_resource type="Resource" id="Resource_e8ya8"]
+script = ExtResource("14_oa6fi")
+monster = ExtResource("16_8dv1a")
+count = 2
+position = Vector2(46, 3)
+spread = 1.5
+
+[sub_resource type="Resource" id="Resource_6sqap"]
+script = ExtResource("14_oa6fi")
+monster = ExtResource("15_ukse2")
+count = 3
+position = Vector2(80, -1)
+spread = 5.0
+
+[sub_resource type="Resource" id="Resource_vw1k3"]
+script = ExtResource("14_oa6fi")
+monster = ExtResource("17_w8kx7")
+count = 2
+position = Vector2(88, 7)
+spread = 3.0
+
+[sub_resource type="Resource" id="Resource_1ig1g"]
+script = ExtResource("14_oa6fi")
+monster = ExtResource("18_vmwx8")
+count = 2
+position = Vector2(112, 8)
+spread = 1.5
+
+[sub_resource type="Resource" id="Resource_3y3xo"]
+script = ExtResource("14_oa6fi")
+monster = ExtResource("19_tlqj5")
+position = Vector2(136, 37)
+spread = 0.5
+
+[sub_resource type="Resource" id="Resource_6rt4y"]
+script = ExtResource("14_oa6fi")
+monster = ExtResource("18_vmwx8")
+count = 3
+position = Vector2(131, 31)
+spread = 3.0
+
+[sub_resource type="Resource" id="Resource_334jl"]
+script = ExtResource("14_oa6fi")
+monster = ExtResource("18_vmwx8")
+count = 3
+position = Vector2(143, -30)
+
+[sub_resource type="Resource" id="Resource_5y7i1"]
+script = ExtResource("14_oa6fi")
+monster = ExtResource("17_w8kx7")
+count = 2
+position = Vector2(150, -28)
+spread = 3.0
+
+[sub_resource type="Resource" id="Resource_fb6jt"]
+script = ExtResource("14_oa6fi")
+monster = ExtResource("19_tlqj5")
+position = Vector2(60, 106)
+spread = 0.5
+
+[sub_resource type="Resource" id="Resource_d8ig5"]
+script = ExtResource("14_oa6fi")
+monster = ExtResource("16_8dv1a")
+count = 2
+position = Vector2(54, 98)
+spread = 2.0
+
+[resource]
+script = ExtResource("13_mf4f6")
+id = &"frost_gate"
+display_name = "Portão Gélido"
+description = "Um Portão azul se abriu sobre uma cripta congelada. No fundo, o Rei Gélido guarda o núcleo da masmorra."
+rooms = Array[ExtResource("12_0el2k")]([SubResource("Resource_k3ot0"), SubResource("Resource_vq7ep"), SubResource("Resource_vhw1d"), SubResource("Resource_yigcy"), SubResource("Resource_gdk7s"), SubResource("Resource_7nldi"), SubResource("Resource_v6y17"), SubResource("Resource_n0q8q")])
+corridors = Array[ExtResource("8_y6mcf")]([SubResource("Resource_8ciqq"), SubResource("Resource_jwuy6"), SubResource("Resource_b4r5k"), SubResource("Resource_a7ieg"), SubResource("Resource_5ifmm"), SubResource("Resource_jhgba"), SubResource("Resource_xkj6t")])
+spawn_groups = Array[ExtResource("14_oa6fi")]([SubResource("Resource_xn3dn"), SubResource("Resource_xnsqy"), SubResource("Resource_2hrr6"), SubResource("Resource_e8ya8"), SubResource("Resource_6sqap"), SubResource("Resource_vw1k3"), SubResource("Resource_1ig1g"), SubResource("Resource_3y3xo"), SubResource("Resource_6rt4y"), SubResource("Resource_334jl"), SubResource("Resource_5y7i1"), SubResource("Resource_fb6jt"), SubResource("Resource_d8ig5")])
+boss = ExtResource("1_hf24q")
+ranks = Array[ExtResource("9_b4pod")]([ExtResource("10_1j4ru"), ExtResource("11_cbskp")])
+kills_to_open_gate = 20
+chest_drops = Array[ExtResource("2_iybpn")]([SubResource("Resource_lbwfb"), SubResource("Resource_fqriq"), SubResource("Resource_k35x5"), SubResource("Resource_mwlvo"), SubResource("Resource_y445a")])

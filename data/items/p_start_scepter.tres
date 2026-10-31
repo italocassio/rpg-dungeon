@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_tu3yk"]
+
+[resource]
+script = ExtResource("1_tu3yk")
+id = &"p_start_scepter"
+display_name = "Cetro do Noviço"
+description = "Equilibra ataque e poder de cura."
+kind = 2
+icon = &"scepter"
+class_id = &"priest"
+stat_bonuses = Dictionary[StringName, float]({
+&"heal_power": 0.1,
+&"magic_attack": 11.0
+})
+weapon_model = &"scepter"

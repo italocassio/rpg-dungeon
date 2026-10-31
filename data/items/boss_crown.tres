@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_5c1b6"]
+
+[resource]
+script = ExtResource("1_5c1b6")
+id = &"boss_crown"
+display_name = "Estilhaço da Coroa"
+description = "Item lendário. Só cai em Portões de Rank D."
+rarity = 4
+icon = &"crownshard"

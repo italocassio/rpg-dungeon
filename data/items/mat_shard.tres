@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_r7r4w"]
+
+[resource]
+script = ExtResource("1_r7r4w")
+id = &"mat_shard"
+display_name = "Fragmento de Cristal"
+description = "Coração de um golem de elite."
+rarity = 2

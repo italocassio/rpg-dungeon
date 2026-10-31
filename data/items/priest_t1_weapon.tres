@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_78nik"]
+
+[resource]
+script = ExtResource("1_78nik")
+id = &"priest_t1_weapon"
+display_name = "Cetro Gélido"
+description = "Forjada com materiais dos monstros do Portão."
+kind = 2
+rarity = 1
+icon = &"scepter"
+class_id = &"priest"
+required_level = 2
+stat_bonuses = Dictionary[StringName, float]({
+&"crit_chance": 0.02,
+&"heal_power": 0.2,
+&"magic_attack": 24.0
+})
+weapon_model = &"scepter"

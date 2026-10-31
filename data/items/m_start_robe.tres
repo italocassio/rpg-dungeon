@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_8jgbe"]
+
+[resource]
+script = ExtResource("1_8jgbe")
+id = &"m_start_robe"
+display_name = "Túnica de Aprendiz"
+description = "Tecido encantado que amplia a mana."
+kind = 4
+icon = &"robe"
+class_id = &"mage"
+stat_bonuses = Dictionary[StringName, float]({
+&"magic_defense": 14.0,
+&"max_mp": 40.0
+})
+armor_tint = Color(0.24705882, 0.37254903, 0.68235296, 1)

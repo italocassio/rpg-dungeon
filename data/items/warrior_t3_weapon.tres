@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_jde5f"]
+
+[resource]
+script = ExtResource("1_jde5f")
+id = &"warrior_t3_weapon"
+display_name = "Lâmina do Monarca Gélido"
+description = "Arma lendária do Portão Gélido."
+kind = 2
+rarity = 4
+icon = &"sword"
+class_id = &"warrior"
+required_level = 7
+stat_bonuses = Dictionary[StringName, float]({
+&"crit_chance": 0.07,
+&"heal_power": 0.0,
+&"phys_attack": 98.0
+})
+weapon_model = &"sword_shield"

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_og02w"]
+
+[resource]
+script = ExtResource("1_og02w")
+id = &"mage_t2_armor"
+display_name = "Manto Real"
+description = "Exige itens raros do Rei Gélido."
+kind = 4
+rarity = 2
+icon = &"robe"
+class_id = &"mage"
+required_level = 4
+stat_bonuses = Dictionary[StringName, float]({
+&"magic_defense": 72.0,
+&"max_hp": 190.0,
+&"phys_defense": 30.0
+})
+armor_tint = Color(0.84705883, 0.7058824, 0.39215687, 1)

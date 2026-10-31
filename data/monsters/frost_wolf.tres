@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="MonsterData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/drop_entry.gd" id="1_fxo83"]
+[ext_resource type="Resource" path="res://data/items/mat_hide.tres" id="2_cckee"]
+[ext_resource type="Resource" path="res://data/items/mat_fang.tres" id="3_6ddxr"]
+[ext_resource type="Script" path="res://src/rpg/data/boss_phase_data.gd" id="4_mavmf"]
+[ext_resource type="Script" path="res://src/rpg/data/monster_data.gd" id="5_lrtiw"]
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="6_bdn0d"]
+[ext_resource type="Resource" path="res://data/skills/mon_bite.tres" id="7_60lmi"]
+[ext_resource type="Resource" path="res://data/skills/mon_pounce.tres" id="8_jcj0l"]
+
+[sub_resource type="Resource" id="Resource_88nmr"]
+script = ExtResource("1_fxo83")
+item = ExtResource("2_cckee")
+chance = 0.72
+max_count = 2
+
+[sub_resource type="Resource" id="Resource_woxfo"]
+script = ExtResource("1_fxo83")
+item = ExtResource("3_6ddxr")
+chance = 0.45
+
+[resource]
+script = ExtResource("5_lrtiw")
+id = &"frost_wolf"
+display_name = "Lobo de Gelo"
+level = 2
+visual = &"wolf"
+body_radius = 0.55
+body_height = 1.1
+max_hp = 360.0
+phys_attack = 33.0
+magic_attack = 10.0
+phys_defense = 12.0
+magic_defense = 14.0
+move_speed = 6.4
+attack_element = 3
+weak_element = 4
+strong_element = 3
+preferred_range = 1.9
+skills = Array[ExtResource("6_bdn0d")]([ExtResource("7_60lmi"), ExtResource("8_jcj0l")])
+drops = Array[ExtResource("1_fxo83")]([SubResource("Resource_88nmr"), SubResource("Resource_woxfo")])

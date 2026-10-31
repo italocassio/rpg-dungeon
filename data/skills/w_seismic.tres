@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_dakl7"]
+
+[resource]
+script = ExtResource("1_dakl7")
+id = &"w_seismic"
+display_name = "Corte Sísmico"
+description = "Lança uma onda de choque em linha reta."
+icon = &"quake"
+color = Color(1, 0.6392157, 0.2901961, 1)
+delivery = 1
+skill_range = 11.0
+line_width = 3.4
+element = 5
+power = 2.5
+cast_time = 0.3
+cooldown = 10.0
+mp_cost = 22.0
+animation = &"overhead"

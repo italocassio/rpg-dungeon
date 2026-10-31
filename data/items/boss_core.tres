@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_pyie0"]
+
+[resource]
+script = ExtResource("1_pyie0")
+id = &"boss_core"
+display_name = "Núcleo do Rei Gélido"
+description = "Item raro de chefe. Essencial para a forja Real."
+rarity = 2
+icon = &"core"

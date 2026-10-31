@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="EffectData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/effect_data.gd" id="1_0u48c"]
+
+[resource]
+script = ExtResource("1_0u48c")
+id = &"taunt"
+display_name = "Provocado"
+is_debuff = true
+color = Color(1, 0.3529412, 0.2901961, 1)
+taunts = true

@@ -1,0 +1,105 @@
+[gd_resource type="Resource" script_class="MonsterData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/drop_entry.gd" id="1_oi0tc"]
+[ext_resource type="Resource" path="res://data/items/boss_core.tres" id="2_trenn"]
+[ext_resource type="Resource" path="res://data/items/boss_plate.tres" id="3_hq1ia"]
+[ext_resource type="Resource" path="res://data/items/boss_crown.tres" id="4_k06sp"]
+[ext_resource type="Resource" path="res://data/items/mat_shard.tres" id="5_3ci0f"]
+[ext_resource type="Resource" path="res://data/items/mat_ore.tres" id="6_trpj5"]
+[ext_resource type="Resource" path="res://data/items/potion_hp.tres" id="7_7yycs"]
+[ext_resource type="Resource" path="res://data/items/potion_mp.tres" id="8_kuhqh"]
+[ext_resource type="Script" path="res://src/rpg/data/boss_phase_data.gd" id="9_drh3a"]
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="10_upoq4"]
+[ext_resource type="Resource" path="res://data/skills/boss_strike.tres" id="11_j8c23"]
+[ext_resource type="Resource" path="res://data/skills/boss_cleave.tres" id="12_gj2c0"]
+[ext_resource type="Resource" path="res://data/skills/boss_slam.tres" id="13_tluct"]
+[ext_resource type="Resource" path="res://data/skills/boss_spikes.tres" id="14_3i6df"]
+[ext_resource type="Resource" path="res://data/skills/boss_nova.tres" id="15_7fda4"]
+[ext_resource type="Script" path="res://src/rpg/data/monster_data.gd" id="16_0rmpm"]
+
+[sub_resource type="Resource" id="Resource_t7cl2"]
+script = ExtResource("1_oi0tc")
+item = ExtResource("2_trenn")
+chance = 1.0
+
+[sub_resource type="Resource" id="Resource_fkjty"]
+script = ExtResource("1_oi0tc")
+item = ExtResource("3_hq1ia")
+chance = 0.45
+
+[sub_resource type="Resource" id="Resource_lhovn"]
+script = ExtResource("1_oi0tc")
+item = ExtResource("4_k06sp")
+chance = 0.4
+min_rank_index = 1
+
+[sub_resource type="Resource" id="Resource_h08p8"]
+script = ExtResource("1_oi0tc")
+item = ExtResource("5_3ci0f")
+chance = 1.0
+min_count = 2
+max_count = 3
+
+[sub_resource type="Resource" id="Resource_0xml1"]
+script = ExtResource("1_oi0tc")
+item = ExtResource("6_trpj5")
+chance = 1.0
+min_count = 2
+max_count = 4
+
+[sub_resource type="Resource" id="Resource_yq6bt"]
+script = ExtResource("1_oi0tc")
+item = ExtResource("7_7yycs")
+chance = 0.6
+max_count = 2
+
+[sub_resource type="Resource" id="Resource_l8qxp"]
+script = ExtResource("1_oi0tc")
+item = ExtResource("8_kuhqh")
+chance = 0.6
+max_count = 2
+
+[sub_resource type="Resource" id="Resource_eigb7"]
+script = ExtResource("9_drh3a")
+hp_ratio = 0.62
+announcement = "O Rei Gélido convoca sua guarda!"
+skills = Array[ExtResource("10_upoq4")]([ExtResource("11_j8c23"), ExtResource("12_gj2c0"), ExtResource("13_tluct"), ExtResource("14_3i6df")])
+summon_id = &"skeleton"
+summon_count = 3
+
+[sub_resource type="Resource" id="Resource_a8svo"]
+script = ExtResource("9_drh3a")
+hp_ratio = 0.3
+announcement = "O Rei Gélido entra em fúria: Inverno Absoluto!"
+skills = Array[ExtResource("10_upoq4")]([ExtResource("11_j8c23"), ExtResource("12_gj2c0"), ExtResource("13_tluct"), ExtResource("14_3i6df"), ExtResource("15_7fda4")])
+speed_multiplier = 1.2
+damage_multiplier = 1.2
+summon_id = &"skeleton"
+summon_count = 2
+
+[resource]
+script = ExtResource("16_0rmpm")
+id = &"frost_king"
+display_name = "Rei Gélido Vargoth"
+tier = 2
+level = 5
+visual = &"frost_king"
+scale = 2.5
+body_radius = 1.5
+body_height = 5.8
+max_hp = 30000.0
+phys_attack = 92.0
+magic_attack = 92.0
+phys_defense = 48.0
+magic_defense = 40.0
+attack_element = 3
+weak_element = 4
+strong_element = 3
+aggro_radius = 20.0
+leash_radius = 60.0
+preferred_range = 4.4
+skills = Array[ExtResource("10_upoq4")]([ExtResource("11_j8c23"), ExtResource("12_gj2c0"), ExtResource("13_tluct")])
+phases = Array[ExtResource("9_drh3a")]([SubResource("Resource_eigb7"), SubResource("Resource_a8svo")])
+xp_reward = 420
+mana_crystals = Vector2i(80, 120)
+drops = Array[ExtResource("1_oi0tc")]([SubResource("Resource_t7cl2"), SubResource("Resource_fkjty"), SubResource("Resource_lhovn"), SubResource("Resource_h08p8"), SubResource("Resource_0xml1"), SubResource("Resource_yq6bt"), SubResource("Resource_l8qxp")])

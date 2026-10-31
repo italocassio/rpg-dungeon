@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_2eyxv"]
+[ext_resource type="Resource" path="res://data/effects/chill.tres" id="2_cijdc"]
+
+[resource]
+script = ExtResource("1_2eyxv")
+id = &"boss_slam"
+display_name = "Terremoto Gélido"
+color = Color(0.49803922, 0.83137256, 1, 1)
+delivery = 4
+radius = 8.0
+element = 3
+power = 2.4
+cast_time = 1.7
+cooldown = 12.0
+target_effect = ExtResource("2_cijdc")
+telegraph = true
+animation = &"overhead"

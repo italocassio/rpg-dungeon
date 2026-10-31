@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_3rffm"]
+
+[resource]
+script = ExtResource("1_3rffm")
+id = &"p_circle"
+display_name = "Círculo Sagrado"
+description = "Cria uma área que cura aliados ao longo do tempo."
+icon = &"circle"
+color = Color(0.65882355, 1, 0.8156863, 1)
+delivery = 10
+skill_range = 26.0
+radius = 6.0
+zone_duration = 7.0
+damage_kind = 2
+power = 0.55
+cast_time = 0.6
+cooldown = 13.0
+mp_cost = 30.0
+chi_gain = 12.0
+animation = &"cast"

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_sd7x0"]
+
+[resource]
+script = ExtResource("1_sd7x0")
+id = &"priest_t1_boots"
+display_name = "Botas Gélidas"
+description = "Peça do conjunto Gélido."
+kind = 5
+rarity = 1
+icon = &"boots"
+class_id = &"priest"
+required_level = 2
+stat_bonuses = Dictionary[StringName, float]({
+&"magic_defense": 8.0,
+&"move_speed": 0.4
+})

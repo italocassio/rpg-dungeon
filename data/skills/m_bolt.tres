@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_vf55g"]
+
+[resource]
+script = ExtResource("1_vf55g")
+id = &"m_bolt"
+display_name = "Seta Arcana"
+description = "Projétil rápido. Gera Chi ao acertar."
+icon = &"bolt"
+color = Color(0.56078434, 0.72156864, 1, 1)
+delivery = 2
+skill_range = 42.0
+projectile_speed = 34.0
+damage_kind = 1
+element = 3
+cooldown = 0.8
+chi_gain = 10.0
+animation = &"cast_quick"

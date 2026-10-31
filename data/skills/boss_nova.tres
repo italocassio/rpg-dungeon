@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_ppdg3"]
+
+[resource]
+script = ExtResource("1_ppdg3")
+id = &"boss_nova"
+display_name = "Inverno Absoluto"
+color = Color(0.7490196, 0.91764706, 1, 1)
+delivery = 4
+radius = 16.0
+damage_kind = 1
+element = 3
+power = 3.4
+cast_time = 2.4
+cooldown = 24.0
+telegraph = true
+animation = &"overhead"

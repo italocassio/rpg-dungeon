@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_a3t8n"]
+[ext_resource type="Resource" path="res://data/effects/stun.tres" id="2_fs1ik"]
+
+[resource]
+script = ExtResource("1_a3t8n")
+id = &"p_judgement"
+display_name = "Julgamento"
+description = "Punição divina no ponto da mira: fere e atordoa."
+icon = &"judgement"
+color = Color(1, 0.9411765, 0.6901961, 1)
+delivery = 3
+skill_range = 26.0
+radius = 4.6
+impact_delay = 0.25
+damage_kind = 1
+element = 2
+power = 2.2
+cast_time = 0.5
+cooldown = 9.0
+mp_cost = 22.0
+chi_gain = 14.0
+target_effect = ExtResource("2_fs1ik")
+animation = &"cast"

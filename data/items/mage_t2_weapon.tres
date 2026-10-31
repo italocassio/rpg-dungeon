@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_vw032"]
+
+[resource]
+script = ExtResource("1_vw032")
+id = &"mage_t2_weapon"
+display_name = "Cajado Real"
+description = "Exige o Núcleo do Rei Gélido."
+kind = 2
+rarity = 2
+icon = &"staff"
+class_id = &"mage"
+required_level = 4
+stat_bonuses = Dictionary[StringName, float]({
+&"crit_chance": 0.04,
+&"heal_power": 0.0,
+&"magic_attack": 58.0
+})
+weapon_model = &"staff"

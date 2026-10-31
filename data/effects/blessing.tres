@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EffectData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/effect_data.gd" id="1_00g30"]
+
+[resource]
+script = ExtResource("1_00g30")
+id = &"blessing"
+display_name = "Bênção"
+duration = 22.0
+color = Color(1, 0.9137255, 0.65882355, 1)
+stat_multipliers = Dictionary[StringName, float]({
+&"magic_attack": 1.18,
+&"magic_defense": 1.15,
+&"phys_attack": 1.18,
+&"phys_defense": 1.15
+})
+shield_power = 1.1

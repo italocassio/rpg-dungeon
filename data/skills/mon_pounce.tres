@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_ndmkn"]
+
+[resource]
+script = ExtResource("1_ndmkn")
+id = &"mon_pounce"
+display_name = "Bote"
+color = Color(1, 0.3529412, 0.3529412, 1)
+delivery = 8
+skill_range = 9.0
+radius = 2.2
+power = 1.5
+cast_time = 0.5
+cooldown = 8.0
+animation = &"bite"

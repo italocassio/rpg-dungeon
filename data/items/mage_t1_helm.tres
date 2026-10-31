@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/item_data.gd" id="1_0glee"]
+
+[resource]
+script = ExtResource("1_0glee")
+id = &"mage_t1_helm"
+display_name = "Capuz Gélido"
+description = "Peça do conjunto Gélido."
+kind = 3
+rarity = 1
+icon = &"hood"
+class_id = &"mage"
+required_level = 2
+stat_bonuses = Dictionary[StringName, float]({
+&"magic_defense": 12.0,
+&"max_hp": 40.0,
+&"phys_defense": 6.0
+})

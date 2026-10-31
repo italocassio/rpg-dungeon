@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_j7v1j"]
+[ext_resource type="Resource" path="res://data/effects/burn.tres" id="2_hac6y"]
+
+[resource]
+script = ExtResource("1_j7v1j")
+id = &"m_fireball"
+display_name = "Bola de Fogo"
+description = "Explode ao impacto e queima os atingidos."
+icon = &"fireball"
+color = Color(1, 0.47843137, 0.18039216, 1)
+delivery = 2
+skill_range = 42.0
+radius = 3.8
+projectile_speed = 24.0
+damage_kind = 1
+element = 4
+power = 2.3
+cast_time = 1.0
+cooldown = 4.0
+mp_cost = 22.0
+chi_gain = 16.0
+target_effect = ExtResource("2_hac6y")
+animation = &"cast"

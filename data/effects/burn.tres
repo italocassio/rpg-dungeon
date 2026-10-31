@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="EffectData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/effect_data.gd" id="1_swyfr"]
+
+[resource]
+script = ExtResource("1_swyfr")
+id = &"burn"
+display_name = "Queimadura"
+duration = 4.0
+is_debuff = true
+color = Color(1, 0.5411765, 0.23529412, 1)
+tick_power = 0.28
