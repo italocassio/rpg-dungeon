@@ -11,6 +11,10 @@ const ELEMENT_NAMES: Dictionary = {
 	Element.NONE: "Neutro", Element.METAL: "Metal", Element.WOOD: "Madeira",
 	Element.WATER: "Água", Element.FIRE: "Fogo", Element.EARTH: "Terra",
 }
+const DAMAGE_KIND_NAMES: Dictionary = {
+	DamageKind.PHYSICAL: "Físico", DamageKind.MAGICAL: "Mágico",
+	DamageKind.HEAL: "Cura", DamageKind.NONE: "Suporte",
+}
 
 @export var id: StringName
 @export var display_name: String
@@ -28,7 +32,9 @@ const ELEMENT_NAMES: Dictionary = {
 ## Atraso entre o fim do cast e o impacto (ex.: meteoro).
 @export var impact_delay: float = 0.0
 @export var zone_duration: float = 0.0
+@export var zone_tick_interval: float = 1.0
 @export var revives_allies: bool = false
+@export_range(0.0, 1.0) var revive_hp_ratio: float = 0.5
 
 @export_group("Dano")
 @export var damage_kind: DamageKind = DamageKind.PHYSICAL
@@ -52,3 +58,18 @@ const ELEMENT_NAMES: Dictionary = {
 ## Monstros: mostra a área de perigo no chão durante o cast.
 @export var telegraph: bool = false
 @export var animation: StringName = &"swing"
+
+
+func cast_duration(stats: StatBlock) -> float:
+	return cast_time / maxf(stats.cast_speed, 0.1)
+
+
+## Velocidade de ataque só encurta a recarga de habilidades instantâneas.
+func recovery_time(stats: StatBlock) -> float:
+	var speed: float = stats.attack_speed if cast_time <= 0.0 else 1.0
+	return cooldown / maxf(speed, 0.1)
+
+
+## O primeiro pulso da zona é imediato, por isso arredonda para cima.
+func zone_tick_count() -> int:
+	return ceili(zone_duration / zone_tick_interval)

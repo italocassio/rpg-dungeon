@@ -7,7 +7,7 @@
 script = ExtResource("1_ry6tc")
 id = &"w_charge"
 display_name = "Investida"
-description = "Avança contra o alvo e atordoa quem estiver no caminho."
+description = "Avança contra o alvo e atordoa quem estiver perto do ponto de chegada."
 icon = &"charge"
 color = Color(1, 0.41568628, 0.23529412, 1)
 delivery = 8

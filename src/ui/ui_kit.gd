@@ -217,22 +217,6 @@ static func item_tooltip(item: ItemData) -> String:
 	return "\n".join(lines)
 
 
-static func skill_tooltip(skill: SkillData) -> String:
-	var lines: Array[String] = [skill.display_name, skill.description]
-	var facts: Array[String] = []
-	if skill.mp_cost > 0.0:
-		facts.append("Mana %d" % skill.mp_cost)
-	if skill.chi_cost > 0.0:
-		facts.append("Chi %d" % skill.chi_cost)
-	if skill.cast_time > 0.0:
-		facts.append("Conjuração %.1fs" % skill.cast_time)
-	if skill.cooldown > 1.0:
-		facts.append("Recarga %.0fs" % skill.cooldown)
-	if not facts.is_empty():
-		lines.append(" · ".join(facts))
-	return "\n".join(lines)
-
-
 static func fit_rect(control: Control, anchor_left: float, anchor_top: float, anchor_right: float, anchor_bottom: float, offset := Rect2()) -> void:
 	control.anchor_left = anchor_left
 	control.anchor_top = anchor_top

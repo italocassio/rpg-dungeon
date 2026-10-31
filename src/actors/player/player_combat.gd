@@ -231,6 +231,7 @@ func _set_guard(active: bool) -> void:
 	player.viewmodel.set_guard(active)
 	if active:
 		player.caster.interrupt()
+		Events.guard_raised.emit(class_data.id, unit)
 
 
 func is_guarding() -> bool:

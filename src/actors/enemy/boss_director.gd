@@ -27,6 +27,7 @@ func _on_state_changed(_previous: StringName, next: StringName) -> void:
 		_engaged = false
 		_reset_phases()
 		encounter_reset.emit()
+		Events.boss_disengaged.emit(enemy.combatant)
 
 
 func _reset_phases() -> void:

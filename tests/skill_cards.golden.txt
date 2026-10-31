@@ -1,0 +1,196 @@
+Corte
+Físico · Metal
+Golpe em arco que atinge os inimigos à frente e gera Chi.
+Dano: 50 (45 a 55)
+Área: Cone de 110° · alcance de 3,6 m
+Custo: Nenhum
+Chi: +14 ao acertar
+Conjuração: Instantânea
+Recarga: 0,39 s
+Dano direto antes da defesa e do elemento do alvo. Variação de ±10%; crítico multiplica por 2.
+
+Investida
+Físico · Metal
+Avança contra o alvo e atordoa quem estiver perto do ponto de chegada.
+Dano: 75 (68 a 83)
+Área: Avanço até 13 m · impacto de raio 2,6 m na chegada
+Efeito no alvo: Atordoado por 1,4 s: não age (chefes são imunes)
+Ameaça: Elevada
+Custo: 14 de Mana
+Chi: +20 ao acertar
+Conjuração: Instantânea
+Recarga: 5,62 s
+Dano direto antes da defesa e do elemento do alvo. Variação de ±10%; crítico multiplica por 2.
+
+Giro de Lâminas
+Físico · Metal
+Gira a arma, atingindo todos ao redor.
+Dano: 85 (77 a 94)
+Área: Raio de 5,4 m ao seu redor
+Ameaça: Elevada
+Custo: 16 de Mana
+Chi: +18 ao acertar
+Conjuração: Instantânea
+Recarga: 4,38 s
+Dano direto antes da defesa e do elemento do alvo. Variação de ±10%; crítico multiplica por 2.
+
+Grito de Guerra
+Suporte
+Provoca os inimigos próximos e aumenta suas defesas.
+Área: Raio de 14 m ao seu redor
+Efeito no alvo: Provocado por 5 s: inimigos atacam você
+Efeito em você: Grito de Guerra por 8 s: +25% Defesa Mágica, +40% Defesa Física
+Ameaça: Elevada
+Custo: 10 de Mana
+Chi: +25 ao acertar
+Conjuração: Instantânea
+Recarga: 8,75 s
+
+Corte Sísmico
+Físico · Terra
+Lança uma onda de choque em linha reta.
+Dano: 125 (113 a 138)
+Área: Linha de 11 × 3,4 m
+Custo: 22 de Mana
+Conjuração: 0,24 s
+Recarga: 10 s
+Dano direto antes da defesa e do elemento do alvo. Variação de ±10%; crítico multiplica por 2.
+
+Lâmina do Monarca
+Físico · Metal
+Converte Chi em um golpe devastador à frente.
+Dano: 250 (225 a 275)
+Área: Cone de 150° · alcance de 7 m
+Custo: 100 de Chi (1 Faísca)
+Conjuração: 0,28 s
+Recarga: 18 s
+Dano direto antes da defesa e do elemento do alvo. Variação de ±10%; crítico multiplica por 2.
+
+Seta Arcana
+Mágico · Água
+Projétil rápido. Gera Chi ao acertar.
+Dano: 100 (90 a 110)
+Área: Projétil até 42 m · atinge o primeiro alvo
+Custo: Nenhum
+Chi: +10 ao acertar
+Conjuração: Instantânea
+Recarga: 0,5 s
+Dano direto antes da defesa e do elemento do alvo. Variação de ±10%; crítico multiplica por 2.
+
+Bola de Fogo
+Mágico · Fogo
+Explode ao impacto e queima os atingidos.
+Dano: 230 (207 a 253)
+Área: Projétil até 42 m · explosão de raio 3,8 m
+Efeito no alvo: Queimadura por 4 s: 28 de dano a cada 1 s, 112 no total
+Custo: 22 de Mana
+Chi: +16 ao acertar
+Conjuração: 0,8 s
+Recarga: 4 s
+Dano direto antes da defesa e do elemento do alvo. Variação de ±10%; crítico multiplica por 2. Dano periódico antes da defesa, sem elemento, variação nem crítico.
+
+Lança de Gelo
+Mágico · Água
+Dispara instantaneamente e reduz a velocidade do alvo.
+Dano: 150 (135 a 165)
+Área: Projétil até 42 m · atinge o primeiro alvo
+Efeito no alvo: Lentidão Gélida por 4 s: -45% Velocidade
+Custo: 16 de Mana
+Chi: +12 ao acertar
+Conjuração: Instantânea
+Recarga: 3,12 s
+Dano direto antes da defesa e do elemento do alvo. Variação de ±10%; crítico multiplica por 2.
+
+Meteoro
+Mágico · Fogo
+Invoca um meteoro no ponto da mira.
+Dano: 340 (306 a 374)
+Área: Ponto da mira até 30 m · raio de 6 m · impacto após 0,7 s
+Custo: 38 de Mana
+Chi: +20 ao acertar
+Conjuração: 1,12 s
+Recarga: 12 s
+Dano direto antes da defesa e do elemento do alvo. Variação de ±10%; crítico multiplica por 2.
+
+Piscar
+Suporte
+Teleporta alguns metros na direção da mira.
+Área: Teleporte até 10 m
+Custo: 12 de Mana
+Conjuração: Instantânea
+Recarga: 5 s
+
+Nova Elemental
+Mágico · Água
+Libera uma explosão elemental que fere e congela todos ao redor.
+Dano: 420 (378 a 462)
+Área: Raio de 10 m ao seu redor
+Efeito no alvo: Congelado por 2,4 s: não age (chefes são imunes)
+Custo: 100 de Chi (1 Faísca)
+Conjuração: 0,4 s
+Recarga: 18 s
+Dano direto antes da defesa e do elemento do alvo. Variação de ±10%; crítico multiplica por 2.
+
+Luz Sagrada
+Mágico · Madeira
+Raio de luz. Gera Chi ao acertar.
+Dano: 95 (86 a 105)
+Área: Projétil até 38 m · atinge o primeiro alvo
+Custo: Nenhum
+Chi: +10 ao acertar
+Conjuração: Instantânea
+Recarga: 0,53 s
+Dano direto antes da defesa e do elemento do alvo. Variação de ±10%; crítico multiplica por 2.
+
+Cura
+Cura
+Cura o aliado selecionado ou, sem seleção, o mais ferido ao alcance.
+Cura: 600 (540 a 660)
+Área: Um aliado · busca automática até 34 m
+Custo: 18 de Mana
+Chi: +8 com cura efetiva
+Conjuração: 0,72 s
+Recarga: 1,2 s
+Variação de ±10%; cura não tem crítico.
+
+Círculo Sagrado
+Cura
+Cria uma área que cura aliados ao longo do tempo.
+Cura: 165 por pulso (149 a 182) · 7 pulsos · 1155 no total
+Área: Zona de raio 6 m a até 26 m · dura 7 s
+Custo: 30 de Mana
+Conjuração: 0,48 s
+Recarga: 13 s
+Variação de ±10%; cura não tem crítico.
+
+Bênção
+Suporte
+Fortalece o grupo e concede um escudo.
+Área: Todo o grupo, em qualquer distância
+Efeito no grupo: Bênção por 22 s: +18% Ataque Mágico, +15% Defesa Mágica, +18% Ataque Físico, +15% Defesa Física, escudo de 220
+Custo: 28 de Mana
+Conjuração: 0,48 s
+Recarga: 26 s
+
+Julgamento
+Mágico · Madeira
+Punição divina no ponto da mira: fere e atordoa.
+Dano: 220 (198 a 242)
+Área: Ponto da mira até 26 m · raio de 4,6 m · impacto após 0,25 s
+Efeito no alvo: Atordoado por 1,4 s: não age (chefes são imunes)
+Custo: 22 de Mana
+Chi: +14 ao acertar
+Conjuração: 0,4 s
+Recarga: 9 s
+Dano direto antes da defesa e do elemento do alvo. Variação de ±10%; crítico multiplica por 2.
+
+Milagre
+Cura
+Cura todo o grupo e revive os caídos.
+Cura: 1350 (1215 a 1485)
+Reviver: Caídos voltam com 50% da vida
+Área: Todo o grupo, em qualquer distância
+Custo: 100 de Chi (1 Faísca)
+Conjuração: 0,64 s
+Recarga: 24 s
+Variação de ±10%; cura não tem crítico.

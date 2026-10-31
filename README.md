@@ -23,8 +23,8 @@ Ou abra o `project.godot` no editor e aperte F5.
 | Poção de vida / mana | Q / X |
 | Alvo seguinte / aliados / limpar alvo | Tab / F2–F4 / T |
 | Interagir (forja, baú, porta, portal) | E |
-| Inventário / status / forja / mapa | I / C / P / M |
-| Soltar o cursor | Segurar Alt |
+| Inventário / status / árvore de habilidades / forja / mapa | I / C / K / P / M |
+| Soltar o cursor (e ler as habilidades passando o mouse na barra) | Segurar Alt |
 | Pausa | Esc |
 | Mostrar FPS / trocar qualidade gráfica | F9 / F10 |
 
@@ -41,6 +41,9 @@ src/actors/  Jogador, monstros, chefe e bots (máquinas de estados)
 src/world/   Geração da masmorra (campo SDF → malhas, colisão e navegação) e regras da partida
 src/visuals/ Modelos e armas procedurais
 src/ui/      HUD, janelas e saguão
+src/audio/   Música e sons de habilidade: escutam Events, a gameplay não os conhece
+assets/audio/  Faixas e efeitos usados pelo jogo
+documents/audio/raw/  MP3 originais do Stable Audio, com prompts e seeds no manifest.json
 tests/       Testes automatizados e capturas visuais
 tools/       Gerador das texturas (node tools/bake_textures.mjs)
 ```
@@ -57,6 +60,8 @@ tools/       Gerador das texturas (node tools/bake_textures.mjs)
 - **Balanceamento:** edite `data/balance.tres` ou o recurso do monstro, item ou receita no Inspector.
 - **Masmorra nova:** crie um `DungeonData` com salas, corredores, grupos de monstros e ranks, e adicione ao `catalog.tres`. Ela precisa ter sala de entrada, sala do chefe e `boss`; os testes falham se faltar. O saguão hoje só lista a primeira masmorra do catálogo.
 - **Texturas:** ajuste `tools/bake_textures.mjs` e rode com Node.
+- **Música:** troque as faixas, volumes e fades em `data/music.tres`.
+- **Som de habilidade:** coloque o WAV em `assets/audio/sfx/` e ligue-o em `data/skill_sounds.tres`, pelo id da habilidade (`guard_<classe>` para a defesa). Cada momento (conjuração, disparo, impacto, contínuo) é um `SoundClip` com variações, ganho e variação de tom. Skill sem entrada fica em silêncio. Depois, atualize a planilha `SHEET` em `tests/sfx_tests.gd`.
 
 ## Testes
 
@@ -68,6 +73,9 @@ $G --headless --path . res://tests/check_scripts.tscn
 
 # Regras do jogo
 $G --headless --path . res://tests/unit_tests.tscn
+
+# Sons de habilidade: planilha completa, vozes e cortes
+$G --headless --path . res://tests/sfx_tests.tscn
 
 # Fluxo completo pela interface: saguão, janelas, forja, vitória, retorno e save
 $G --headless --fixed-fps 60 --path . res://tests/flow_test.tscn

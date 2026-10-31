@@ -11,6 +11,7 @@ var ratio_provider: Callable = Callable()
 var seconds_provider: Callable = Callable()
 var usable_provider: Callable = Callable()
 var count_provider: Callable = Callable()
+var selected: bool = false
 
 var _ratio: float = 0.0
 var _seconds: float = 0.0
@@ -40,6 +41,8 @@ func _draw() -> void:
 	if _ratio > 0.0:
 		_draw_sweep(area)
 	draw_rect(area, UiKit.BRONZE if _usable else UiKit.BRONZE_DARK, false, 1.5)
+	if selected:
+		draw_rect(area, UiKit.GOLD_BRIGHT, false, 3.0)
 	var font: Font = UiKit.bold_font()
 	draw_string_outline(font, Vector2(4.0, 15.0), key_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 13, 3, Color.BLACK)
 	draw_string(font, Vector2(4.0, 15.0), key_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 13, UiKit.GOLD_BRIGHT)

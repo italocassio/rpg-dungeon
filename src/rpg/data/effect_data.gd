@@ -19,3 +19,7 @@ extends Resource
 @export_group("Escudo")
 ## Escudo absorve dano; valor = ataque mágico da fonte * shield_power.
 @export var shield_power: float = 0.0
+
+
+func tick_count() -> int:
+	return floori(duration / tick_interval)

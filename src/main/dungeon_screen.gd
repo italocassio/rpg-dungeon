@@ -45,10 +45,12 @@ func _ready() -> void:
 	var greetings: Array[String] = ["bora, tanque na frente", "boa sorte pessoal", "cuidado com as áreas no chão"]
 	for i in run.bots.size():
 		Events.chat_message.emit("GRUPO", run.bots[i].combatant.display_name, greetings[i % greetings.size()])
+	Events.dungeon_entered.emit()
 
 
 func _exit_tree() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Events.dungeon_exited.emit()
 	if run != null and run.sheet != null and run.sheet.changed.is_connected(run.refresh_player_stats):
 		run.sheet.changed.disconnect(run.refresh_player_stats)
 
@@ -74,7 +76,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if get_tree().paused:
 		return
-	for action: StringName in [&"menu_inventory", &"menu_character", &"menu_forge", &"menu_map"]:
+	for action: StringName in [&"menu_inventory", &"menu_character", &"menu_skills", &"menu_forge", &"menu_map"]:
 		if event.is_action_pressed(action):
 			toggle_window(action)
 			return
@@ -93,6 +95,8 @@ func _update_cursor() -> void:
 	_cursor_free = Input.is_action_pressed(&"cursor_toggle")
 	var free: bool = _cursor_free or _window != null or get_tree().paused or run.is_finished
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if free else Input.MOUSE_MODE_CAPTURED
+	# Nos resultados a partida acabou: o card só cobriria a janela.
+	hud.set_cursor_free(free and not run.is_finished)
 	run.player.input_enabled = _window == null and not get_tree().paused and not run.is_finished
 
 
@@ -121,6 +125,13 @@ func toggle_window(action: StringName) -> void:
 			title = "Status do Caçador"
 			window_size = Vector2(620.0, 380.0)
 			system_look = true
+		&"menu_skills":
+			var view := SkillTreeView.new()
+			view.bind(run.sheet, run.skill_info)
+			content = view
+			title = "Árvore de Habilidades"
+			window_size = SkillTreeView.WINDOW_SIZE
+			system_look = true
 		&"menu_forge":
 			var view := ForgeView.new()
 			view.bind(run.sheet)
@@ -139,6 +150,8 @@ func toggle_window(action: StringName) -> void:
 	_window.closed.connect(close_window)
 	_window_action = action
 	_update_cursor()
+	# O card fica acima das janelas: não pode continuar sobre a que acabou de abrir.
+	hud.dismiss_skill_tooltip()
 
 
 func _frame(title: String, content: Control, window_size: Vector2, system_look: bool) -> WindowFrame:
@@ -163,7 +176,7 @@ func _open_pause() -> void:
 	column.add_child(UiKit.button("Sair do Jogo", func() -> void:
 		Session.save_game()
 		get_tree().quit(), 17))
-	column.add_child(UiKit.label("WASD mover · Mouse mirar · LMB atacar · RMB defender\n1-4 habilidades · R suprema · Ctrl esquiva · Shift correr\nTab alvo · F2-F4 aliados · Q/X poções · E interagir\nI inventário · C status · P forja · M mapa · Alt cursor\nF9 FPS · F10 gráficos", 13, UiKit.MUTED))
+	column.add_child(UiKit.label("WASD mover · Mouse mirar · LMB atacar · RMB defender\n1-4 habilidades · R suprema · Ctrl esquiva · Shift correr\nTab alvo · F2-F4 aliados · Q/X poções · E interagir\nI inventário · C status · K habilidades · P forja · M mapa\nAlt cursor (passe sobre a barra para ler as habilidades)\nF9 FPS · F10 gráficos", 13, UiKit.MUTED))
 	_pause_view = WindowFrame.wrap("Pausa", column, Vector2(460.0, 400.0))
 	(_pause_view as WindowFrame).closed.connect(_resume)
 	_pause_view.theme = UiKit.theme()
@@ -196,6 +209,7 @@ func _on_run_finished(victory: bool) -> void:
 	results.return_requested.connect(_leave)
 	_window = _frame("Portão Concluído", results, Vector2(560.0, 560.0), true)
 	_window.closed.connect(_leave)
+	_update_cursor()
 
 
 func _leave() -> void:

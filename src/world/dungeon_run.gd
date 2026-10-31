@@ -312,6 +312,12 @@ func _on_level_up(new_level: int) -> void:
 	Vfx.heal_glow(get_tree(), player.global_position, Color("7fd4ff"))
 
 
+## Sempre o bloco de atributos do golpe real, com buffs ativos; Combatant.stats é recriado a cada recálculo.
+func skill_info(skill: SkillData) -> SkillInfo:
+	var unit: Combatant = player.combatant
+	return SkillInfo.describe(skill, unit.stats, unit.balance, unit.damage_multiplier)
+
+
 ## Aplica mudanças feitas no painel (atributos ou equipamento) durante a partida.
 func refresh_player_stats() -> void:
 	player.combatant.base_stats = sheet.derived_stats()

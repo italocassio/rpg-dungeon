@@ -25,6 +25,27 @@ static func element_multiplier(element: SkillData.Element, target: StatBlock, ba
 	return 1.0
 
 
+## Dano antes de defesa, elemento, variação e crítico; `power` já inclui multiplicadores externos.
+static func nominal_damage(stats: StatBlock, kind: SkillData.DamageKind, power: float) -> float:
+	var attack: float = stats.phys_attack if kind == SkillData.DamageKind.PHYSICAL else stats.magic_attack
+	return attack * power
+
+
+## Cura antes da variação. Cura não tem crítico.
+static func nominal_heal(stats: StatBlock, power: float) -> float:
+	return stats.magic_attack * power * stats.heal_power
+
+
+## Efeito periódico: sempre pelo ataque mágico da fonte, sem crítico nem elemento.
+static func periodic_amount(stats: StatBlock, tick_power: float) -> float:
+	return stats.magic_attack * tick_power
+
+
+## Escudo não usa `heal_power`.
+static func shield_amount(stats: StatBlock, shield_power: float) -> float:
+	return stats.magic_attack * shield_power
+
+
 static func compute(
 		attacker: StatBlock,
 		defender: StatBlock,
@@ -39,12 +60,11 @@ static func compute(
 		return outcome
 
 	var is_physical: bool = kind == SkillData.DamageKind.PHYSICAL
-	var attack: float = attacker.phys_attack if is_physical else attacker.magic_attack
 	var defense: float = defender.phys_defense if is_physical else defender.magic_defense
 	outcome.element_bonus = element_multiplier(element, defender, balance)
 
 	var variance: float = 1.0 + rng.randf_range(-balance.damage_variance, balance.damage_variance)
-	var amount: float = attack * power * mitigation(defense, balance) * outcome.element_bonus * variance
+	var amount: float = nominal_damage(attacker, kind, power) * mitigation(defense, balance) * outcome.element_bonus * variance
 	if rng.randf() < attacker.crit_chance:
 		outcome.is_crit = true
 		amount *= attacker.crit_multiplier
@@ -54,4 +74,4 @@ static func compute(
 
 static func heal_amount(healer: StatBlock, power: float, balance: BalanceConfig, rng: RandomNumberGenerator) -> float:
 	var variance: float = 1.0 + rng.randf_range(-balance.damage_variance, balance.damage_variance)
-	return healer.magic_attack * power * healer.heal_power * variance
+	return nominal_heal(healer, power) * variance

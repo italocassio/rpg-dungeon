@@ -2,18 +2,20 @@ class_name Hotbar
 extends HBoxContainer
 ## Barra de habilidades: ataque, defesa, quatro habilidades, suprema, esquiva e poções.
 
+const BASIC_KEY := "LMB"
+const SKILL_KEYS: Array[String] = ["1", "2", "3", "4", "R"]
 
-func bind(player: PlayerController, combat: PlayerCombat, sheet: CharacterSheet) -> void:
+
+func bind(player: PlayerController, combat: PlayerCombat, sheet: CharacterSheet, tooltip: SkillTooltip) -> void:
 	add_theme_constant_override(&"separation", 4)
 	var class_data: ClassData = sheet.class_data
 	var caster: SkillCaster = player.caster
-	_skill_slot("LMB", class_data.basic_attack, caster, player)
+	_skill_slot(BASIC_KEY, class_data.basic_attack, caster, player, tooltip)
 	_custom_slot("RMB", &"shield", class_data.color, class_data.guard_name, Callable(), Callable())
 	add_child(_gap())
-	var keys: Array[String] = ["1", "2", "3", "4", "R"]
 	var skills: Array[SkillData] = combat.hotbar()
 	for i in skills.size():
-		_skill_slot(keys[i], skills[i], caster, player)
+		_skill_slot(SKILL_KEYS[i], skills[i], caster, player, tooltip)
 	add_child(_gap())
 	_custom_slot("Ctrl", &"dodge", Color("9fe3ff"), "Esquiva: breve invulnerabilidade", player.dodge_cooldown_ratio, Callable())
 	var potion_ratio := combat.potion_cooldown_ratio
@@ -28,12 +30,12 @@ func _gap() -> Control:
 	return gap
 
 
-func _skill_slot(key: String, skill: SkillData, caster: SkillCaster, player: PlayerController) -> void:
+func _skill_slot(key: String, skill: SkillData, caster: SkillCaster, player: PlayerController, tooltip: SkillTooltip) -> void:
 	var slot := SkillSlot.new()
 	slot.key_text = key
 	slot.tint = skill.color
 	slot.icon_texture = UiKit.icon(skill.icon)
-	slot.tooltip_text = UiKit.skill_tooltip(skill)
+	tooltip.attach(slot, skill)
 	slot.ratio_provider = caster.cooldown_ratio.bind(skill)
 	slot.seconds_provider = caster.cooldown_left.bind(skill)
 	slot.usable_provider = func() -> bool:

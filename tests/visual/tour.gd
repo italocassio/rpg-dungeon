@@ -158,7 +158,7 @@ func _request_panel(shot_name: String, _action: StringName) -> void:
 
 func _capture_panels() -> void:
 	_busy = true
-	for entry: Array in [[&"menu_inventory", "21_inventory"], [&"menu_character", "22_character"], [&"menu_forge", "23_forge"], [&"menu_map", "24_map"]]:
+	for entry: Array in [[&"menu_inventory", "21_inventory"], [&"menu_character", "22_character"], [&"menu_forge", "23_forge"], [&"menu_map", "24_map"], [&"menu_skills", "25_skills"]]:
 		_screen.toggle_window(entry[0])
 		await _wait(4)
 		await _capture(entry[1])

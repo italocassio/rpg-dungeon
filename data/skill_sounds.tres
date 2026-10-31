@@ -1,0 +1,307 @@
+[gd_resource type="Resource" script_class="SkillSoundBank" format=3]
+
+[ext_resource type="Script" path="res://src/audio/skill_sound_bank.gd" id="1_bank"]
+[ext_resource type="Script" path="res://src/audio/skill_sound_data.gd" id="2_sound"]
+[ext_resource type="Script" path="res://src/audio/sound_clip.gd" id="3_clip"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/m_blink.wav" id="m_blink"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/m_bolt_cast.wav" id="m_bolt_cast"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/m_bolt_hit.wav" id="m_bolt_hit"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/m_fire_charge.wav" id="m_fire_charge"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/m_fireball_cast.wav" id="m_fireball_cast"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/m_fireball_hit.wav" id="m_fireball_hit"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/m_icelance_cast.wav" id="m_icelance_cast"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/m_icelance_hit.wav" id="m_icelance_hit"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/m_meteor_fall.wav" id="m_meteor_fall"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/m_meteor_hit.wav" id="m_meteor_hit"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/m_nova.wav" id="m_nova"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/p_bless.wav" id="p_bless"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/p_circle_loop.wav" id="p_circle_loop"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/p_circle_start.wav" id="p_circle_start"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/p_heal.wav" id="p_heal"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/p_holy_charge.wav" id="p_holy_charge"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/p_judgement.wav" id="p_judgement"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/p_miracle.wav" id="p_miracle"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/p_smite_cast.wav" id="p_smite_cast"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/p_smite_hit.wav" id="p_smite_hit"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/w_charge_hit.wav" id="w_charge_hit"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/w_charge_rush.wav" id="w_charge_rush"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/w_guard.wav" id="w_guard"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/w_monarch.wav" id="w_monarch"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/w_seismic.wav" id="w_seismic"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/w_slash_1.wav" id="w_slash_1"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/w_slash_2.wav" id="w_slash_2"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/w_slash_3.wav" id="w_slash_3"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/w_warcry.wav" id="w_warcry"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/w_whirl.wav" id="w_whirl"]
+
+[sub_resource type="Resource" id="clip_w_slash"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("w_slash_1"), ExtResource("w_slash_2"), ExtResource("w_slash_3")])
+volume_db = -2.0
+pitch_jitter = 0.05
+
+[sub_resource type="Resource" id="clip_w_charge_rush"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("w_charge_rush")])
+volume_db = -1.0
+pitch_jitter = 0.03
+
+[sub_resource type="Resource" id="clip_w_charge_hit"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("w_charge_hit")])
+volume_db = -4.0
+pitch_jitter = 0.03
+
+[sub_resource type="Resource" id="clip_w_whirl"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("w_whirl")])
+volume_db = 0.0
+pitch_jitter = 0.03
+
+[sub_resource type="Resource" id="clip_w_warcry"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("w_warcry")])
+volume_db = 0.0
+
+[sub_resource type="Resource" id="clip_w_seismic"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("w_seismic")])
+volume_db = -0.5
+
+[sub_resource type="Resource" id="clip_w_monarch"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("w_monarch")])
+volume_db = -0.5
+
+[sub_resource type="Resource" id="clip_w_guard"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("w_guard")])
+volume_db = -1.5
+pitch_jitter = 0.03
+
+[sub_resource type="Resource" id="clip_m_bolt_cast"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("m_bolt_cast")])
+volume_db = -1.5
+pitch_jitter = 0.05
+
+[sub_resource type="Resource" id="clip_m_bolt_hit"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("m_bolt_hit")])
+volume_db = -3.5
+pitch_jitter = 0.05
+
+[sub_resource type="Resource" id="clip_m_fire_charge"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("m_fire_charge")])
+volume_db = -5.5
+
+[sub_resource type="Resource" id="clip_m_fireball_cast"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("m_fireball_cast")])
+volume_db = 1.0
+pitch_jitter = 0.03
+
+[sub_resource type="Resource" id="clip_m_fireball_hit"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("m_fireball_hit")])
+volume_db = -1.5
+
+[sub_resource type="Resource" id="clip_m_icelance_cast"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("m_icelance_cast")])
+volume_db = 0.0
+pitch_jitter = 0.03
+
+[sub_resource type="Resource" id="clip_m_icelance_hit"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("m_icelance_hit")])
+volume_db = 0.0
+pitch_jitter = 0.03
+
+[sub_resource type="Resource" id="clip_m_meteor_fall"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("m_meteor_fall")])
+volume_db = -1.0
+pitch_jitter = 0.03
+
+[sub_resource type="Resource" id="clip_m_meteor_hit"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("m_meteor_hit")])
+volume_db = 0.0
+
+[sub_resource type="Resource" id="clip_m_blink"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("m_blink")])
+volume_db = 0.0
+pitch_jitter = 0.03
+
+[sub_resource type="Resource" id="clip_m_nova"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("m_nova")])
+volume_db = 0.5
+
+[sub_resource type="Resource" id="clip_p_holy_charge"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("p_holy_charge")])
+volume_db = -2.5
+
+[sub_resource type="Resource" id="clip_p_smite_cast"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("p_smite_cast")])
+volume_db = -3.0
+pitch_jitter = 0.05
+
+[sub_resource type="Resource" id="clip_p_smite_hit"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("p_smite_hit")])
+volume_db = -6.0
+pitch_jitter = 0.05
+
+[sub_resource type="Resource" id="clip_p_heal"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("p_heal")])
+volume_db = 4.5
+pitch_jitter = 0.03
+
+[sub_resource type="Resource" id="clip_p_circle_start"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("p_circle_start")])
+volume_db = -1.5
+pitch_jitter = 0.03
+
+[sub_resource type="Resource" id="clip_p_circle_loop"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("p_circle_loop")])
+volume_db = -8.5
+
+[sub_resource type="Resource" id="clip_p_bless"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("p_bless")])
+volume_db = 1.5
+pitch_jitter = 0.03
+
+[sub_resource type="Resource" id="clip_p_judgement"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("p_judgement")])
+volume_db = 0.0
+
+[sub_resource type="Resource" id="clip_p_miracle"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("p_miracle")])
+volume_db = 3.0
+
+[sub_resource type="Resource" id="sound_w_slash"]
+script = ExtResource("2_sound")
+id = &"w_slash"
+fire = SubResource("clip_w_slash")
+
+[sub_resource type="Resource" id="sound_w_charge"]
+script = ExtResource("2_sound")
+id = &"w_charge"
+fire = SubResource("clip_w_charge_rush")
+impact = SubResource("clip_w_charge_hit")
+
+[sub_resource type="Resource" id="sound_w_whirl"]
+script = ExtResource("2_sound")
+id = &"w_whirl"
+fire = SubResource("clip_w_whirl")
+
+[sub_resource type="Resource" id="sound_w_warcry"]
+script = ExtResource("2_sound")
+id = &"w_warcry"
+fire = SubResource("clip_w_warcry")
+
+[sub_resource type="Resource" id="sound_w_seismic"]
+script = ExtResource("2_sound")
+id = &"w_seismic"
+fire = SubResource("clip_w_seismic")
+
+[sub_resource type="Resource" id="sound_w_monarch"]
+script = ExtResource("2_sound")
+id = &"w_monarch"
+cast = SubResource("clip_w_monarch")
+cut_cast_on_fire = false
+
+[sub_resource type="Resource" id="sound_guard_warrior"]
+script = ExtResource("2_sound")
+id = &"guard_warrior"
+fire = SubResource("clip_w_guard")
+
+[sub_resource type="Resource" id="sound_m_bolt"]
+script = ExtResource("2_sound")
+id = &"m_bolt"
+fire = SubResource("clip_m_bolt_cast")
+impact = SubResource("clip_m_bolt_hit")
+
+[sub_resource type="Resource" id="sound_m_fireball"]
+script = ExtResource("2_sound")
+id = &"m_fireball"
+cast = SubResource("clip_m_fire_charge")
+fire = SubResource("clip_m_fireball_cast")
+impact = SubResource("clip_m_fireball_hit")
+
+[sub_resource type="Resource" id="sound_m_icelance"]
+script = ExtResource("2_sound")
+id = &"m_icelance"
+fire = SubResource("clip_m_icelance_cast")
+impact = SubResource("clip_m_icelance_hit")
+
+[sub_resource type="Resource" id="sound_m_meteor"]
+script = ExtResource("2_sound")
+id = &"m_meteor"
+cast = SubResource("clip_m_fire_charge")
+fire = SubResource("clip_m_meteor_fall")
+impact = SubResource("clip_m_meteor_hit")
+
+[sub_resource type="Resource" id="sound_m_blink"]
+script = ExtResource("2_sound")
+id = &"m_blink"
+fire = SubResource("clip_m_blink")
+
+[sub_resource type="Resource" id="sound_m_nova"]
+script = ExtResource("2_sound")
+id = &"m_nova"
+cast = SubResource("clip_m_nova")
+cut_cast_on_fire = false
+
+[sub_resource type="Resource" id="sound_p_smite"]
+script = ExtResource("2_sound")
+id = &"p_smite"
+fire = SubResource("clip_p_smite_cast")
+impact = SubResource("clip_p_smite_hit")
+
+[sub_resource type="Resource" id="sound_p_heal"]
+script = ExtResource("2_sound")
+id = &"p_heal"
+cast = SubResource("clip_p_holy_charge")
+fire = SubResource("clip_p_heal")
+
+[sub_resource type="Resource" id="sound_p_circle"]
+script = ExtResource("2_sound")
+id = &"p_circle"
+cast = SubResource("clip_p_holy_charge")
+fire = SubResource("clip_p_circle_start")
+loop = SubResource("clip_p_circle_loop")
+
+[sub_resource type="Resource" id="sound_p_bless"]
+script = ExtResource("2_sound")
+id = &"p_bless"
+cast = SubResource("clip_p_holy_charge")
+fire = SubResource("clip_p_bless")
+
+[sub_resource type="Resource" id="sound_p_judgement"]
+script = ExtResource("2_sound")
+id = &"p_judgement"
+cast = SubResource("clip_p_holy_charge")
+fire = SubResource("clip_p_judgement")
+
+[sub_resource type="Resource" id="sound_p_miracle"]
+script = ExtResource("2_sound")
+id = &"p_miracle"
+cast = SubResource("clip_p_holy_charge")
+fire = SubResource("clip_p_miracle")
+
+[resource]
+script = ExtResource("1_bank")
+sounds = Array[ExtResource("2_sound")]([SubResource("sound_w_slash"), SubResource("sound_w_charge"), SubResource("sound_w_whirl"), SubResource("sound_w_warcry"), SubResource("sound_w_seismic"), SubResource("sound_w_monarch"), SubResource("sound_guard_warrior"), SubResource("sound_m_bolt"), SubResource("sound_m_fireball"), SubResource("sound_m_icelance"), SubResource("sound_m_meteor"), SubResource("sound_m_blink"), SubResource("sound_m_nova"), SubResource("sound_p_smite"), SubResource("sound_p_heal"), SubResource("sound_p_circle"), SubResource("sound_p_bless"), SubResource("sound_p_judgement"), SubResource("sound_p_miracle")])

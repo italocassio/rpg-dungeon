@@ -22,5 +22,161 @@
 		"seed": "29453",
 		"seconds": 1,
 		"prompt": "Heavy armored warrior dash sound effect.\n\nFast rush of air, clinking plate armor,\nheavy boots pushing off a stone floor.\n\nExplosive, forceful acceleration.\nShort burst rising in speed, about 0.5 seconds.\n\nDry recording. No music, no voices."
+	},
+	"w_charge_hit": {
+		"model": "Stable Audio 3",
+		"seed": "18312",
+		"seconds": 1,
+		"prompt": "Shield bash impact sound effect.\n\nHeavy metal slam against a body,\ndeep low thump, sharp steel clang\nand a short stunning ring.\n\nBrutal and solid.\nSingle hit with a fast decay, about 1 second.\n\nDry recording. No music, no voices."
+	},
+	"w_whirl": {
+		"model": "Stable Audio 3",
+		"seed": "26933",
+		"seconds": 1,
+		"prompt": "Spinning blade attack sound effect.\n\nHeavy steel blade whirling in a full circle,\nrhythmic whooshing air, metallic ringing edge.\n\nFast, violent and continuous.\nOne spin, rising then fading, about 1 second.\n\nDry recording. No music, no voices."
+	},
+	"w_warcry": {
+		"model": "Stable Audio 3",
+		"seed": "29945",
+		"seconds": 2,
+		"prompt": "Warrior battle cry sound effect.\n\nSingle powerful human roar from the chest,\nlow and rough, with a deep rumble underneath\nand armor rattling.\n\nFierce, commanding and intimidating.\nOne wordless shout with a sudden attack, about 1.5 seconds.\n\nDry recording. No music, no words."
+	},
+	"w_seismic": {
+		"model": "Stable Audio 3",
+		"seed": "7070",
+		"seconds": 2,
+		"prompt": "Seismic ground slam sound effect.\n\nHeavy blade striking a stone floor,\nrock cracking, deep earth rumble,\ndebris rolling forward as a shockwave.\n\nMassive, heavy and destructive.\nSudden impact followed by a rolling rumble, about 2 seconds.\n\nDry recording. No music, no voices."
+	},
+	"w_monarch": {
+		"model": "Stable Audio 3",
+		"seed": "21971",
+		"seconds": 3,
+		"prompt": "Ultimate sword strike sound effect, dark fantasy.\n\nShort rising hum of cold blue energy,\nthen a colossal blade slash,\ndeep sub bass impact, ringing steel\nand a shimmering energy tail.\n\nOverwhelming, royal and devastating.\nQuick charge into one huge hit, about 2.5 seconds.\n\nNo music, no voices."
+	},
+	"m_bolt_cast": {
+		"model": "Stable Audio 3",
+		"seed": "22757",
+		"seconds": 1,
+		"prompt": "Arcane magic bolt sound effect.\n\nBright crystalline zap, thin electric shimmer,\nfast airy whoosh leaving the hand.\n\nQuick, clean and precise.\nVery short single shot, about 0.4 seconds.\n\nDry recording. No music, no voices."
+	},
+	"m_bolt_hit": {
+		"model": "Stable Audio 3",
+		"seed": "7303",
+		"seconds": 1,
+		"prompt": "Small arcane magic impact sound effect.\n\nSoft crystalline pop,\nglassy sparkle and a light energy burst.\n\nCrisp and light.\nVery short single hit, about 0.3 seconds.\n\nDry recording. No music, no voices."
+	},
+	"m_fire_charge": {
+		"model": "Stable Audio 3",
+		"seed": "7207",
+		"seconds": 2,
+		"prompt": "Fire spell charging sound effect.\n\nFlames swelling in the hands,\nlow roaring fire, crackling embers,\nrising magical hum.\n\nBuilding heat and growing tension.\nSteady upward swell with no impact or ending, about 2 seconds.\n\nDry recording. No music, no voices."
+	},
+	"m_fireball_cast": {
+		"model": "Stable Audio 3",
+		"seed": "15340",
+		"seconds": 1,
+		"prompt": "Fireball launch sound effect.\n\nBurst of flame thrown forward,\nfast fiery whoosh, crackling sparks.\n\nHot, forceful and quick.\nShort single launch, about 0.6 seconds.\n\nDry recording. No music, no voices."
+	},
+	"m_fireball_hit": {
+		"model": "Stable Audio 3",
+		"seed": "17354",
+		"seconds": 2,
+		"prompt": "Fireball explosion sound effect.\n\nSharp fiery blast, deep low boom,\nroaring flames and crackling embers fading out.\n\nViolent and hot.\nSudden explosion with a quick burning tail, about 1.5 seconds.\n\nDry recording. No music, no voices."
+	},
+	"m_icelance_cast": {
+		"model": "Stable Audio 3",
+		"seed": "2845",
+		"seconds": 1,
+		"prompt": "Ice spear launch sound effect.\n\nIce crystals forming with a sharp crack,\nicy whistle slicing fast through cold air.\n\nCold, sharp and instant.\nShort single shot, about 0.5 seconds.\n\nDry recording. No music, no voices."
+	},
+	"m_icelance_hit": {
+		"model": "Stable Audio 3",
+		"seed": "29187",
+		"seconds": 1,
+		"prompt": "Ice shard impact sound effect.\n\nSharp ice spike hitting a target,\nglassy shattering, small frozen fragments scattering,\ncold hiss.\n\nCrisp, brittle and piercing.\nSingle hit with a short tail, about 0.8 seconds.\n\nDry recording. No music, no voices."
+	},
+	"m_meteor_fall": {
+		"model": "Stable Audio 3",
+		"seed": "21765",
+		"seconds": 1,
+		"prompt": "Falling meteor sound effect.\n\nBurning rock tearing through the air,\ndescending whistle, roaring flames\ngrowing louder and closer.\n\nThreatening and accelerating.\nSteep descending rush with no impact, about 0.7 seconds.\n\nDry recording. No music, no voices."
+	},
+	"m_meteor_hit": {
+		"model": "Stable Audio 3",
+		"seed": "22765",
+		"seconds": 3,
+		"prompt": "Meteor impact explosion sound effect.\n\nGiant burning rock crashing into stone,\nmassive low boom, ground shaking,\nshattering rock, falling debris and roaring flames.\n\nCatastrophic, heavy and powerful.\nHuge single impact with a rumbling tail, about 3 seconds.\n\nNo music, no voices."
+	},
+	"m_blink": {
+		"model": "Stable Audio 3",
+		"seed": "28910",
+		"seconds": 1,
+		"prompt": "Teleport blink sound effect.\n\nSudden reversed air suction,\nquick magical shimmer and a soft bright pop.\n\nLight, instant and mysterious.\nVery short single teleport, about 0.5 seconds.\n\nDry recording. No music, no voices."
+	},
+	"m_nova": {
+		"model": "Stable Audio 3",
+		"seed": "28890",
+		"seconds": 3,
+		"prompt": "Frost nova ultimate spell sound effect.\n\nShort inward rush of freezing air,\nthen a powerful icy explosion,\ndeep low boom, ice cracking outward\nand frozen shards scattering.\n\nCold, vast and devastating.\nQuick inhale into one huge burst, about 2.5 seconds.\n\nNo music, no voices."
+	},
+	"p_holy_charge": {
+		"model": "Stable Audio 3",
+		"seed": "26716",
+		"seconds": 2,
+		"prompt": "Holy spell charging sound effect.\n\nSoft glowing shimmer, warm resonant tones,\ngentle airy sparkle slowly rising.\n\nSerene, sacred and luminous.\nSteady upward swell with no impact or ending, about 1.5 seconds.\n\nDry recording. No music, no voices."
+	},
+	"p_smite_cast": {
+		"model": "Stable Audio 3",
+		"seed": "10920",
+		"seconds": 1,
+		"prompt": "Holy light beam sound effect.\n\nBright radiant zap, soft glassy shimmer,\nwarm high tone shooting forward.\n\nPure, sharp and quick.\nVery short single shot, about 0.4 seconds.\n\nDry recording. No music, no voices."
+	},
+	"p_smite_hit": {
+		"model": "Stable Audio 3",
+		"seed": "1865",
+		"seconds": 1,
+		"prompt": "Small holy light impact sound effect.\n\nSoft radiant burst, bright glassy sparkle\nand a warm low thump.\n\nClean and luminous.\nVery short single hit, about 0.3 seconds.\n\nDry recording. No music, no voices."
+	},
+	"p_heal": {
+		"model": "Stable Audio 3",
+		"seed": "11939",
+		"seconds": 1,
+		"prompt": "Healing spell sound effect.\n\nWarm rising chime, soft shimmering sparkles,\ngentle airy glow.\n\nSoothing, pure and comforting.\nOne gentle upward sweep, fading softly, about 1 second.\n\nDry recording. No music, no voices."
+	},
+	"p_circle_start": {
+		"model": "Stable Audio 3",
+		"seed": "31526",
+		"seconds": 2,
+		"prompt": "Holy ground circle activation sound effect.\n\nSoft radiant pulse spreading outward across the floor,\nwarm deep hum, bright shimmering ring.\n\nCalm, sacred and protective.\nOne expanding swell that settles, about 1.5 seconds.\n\nDry recording. No music, no voices."
+	},
+	"p_circle_loop": {
+		"model": "Stable Audio 3",
+		"seed": "3833",
+		"seconds": 7,
+		"prompt": "Holy healing aura ambience sound effect.\n\nSteady warm hum, soft shimmering sparkles,\ngentle airy drone.\n\nCalm, peaceful and sacred.\nContinuous seamless loop with no beginning or ending,\nconstant volume, about 7 seconds.\n\nDry recording. No music, no melody, no voices."
+	},
+	"p_bless": {
+		"model": "Stable Audio 3",
+		"seed": "2775",
+		"seconds": 2,
+		"prompt": "Party blessing spell sound effect.\n\nBright ascending shimmer, warm radiant hum,\nsoft glassy shield forming with a gentle resonant ring.\n\nUplifting, strong and reassuring.\nOne rising swell that settles into a soft glow, about 2 seconds.\n\nDry recording. No music, no voices."
+	},
+	"p_judgement": {
+		"model": "Stable Audio 3",
+		"seed": "5335",
+		"seconds": 2,
+		"prompt": "Divine punishment strike sound effect.\n\nBlast of holy light slamming down from above,\nsharp bright crack like thunder,\ndeep heavy impact and radiant ringing.\n\nSevere, powerful and righteous.\nQuick descending strike into one hit, about 1.5 seconds.\n\nDry recording. No music, no voices."
+	},
+	"p_miracle": {
+		"model": "Stable Audio 3",
+		"seed": "32176",
+		"seconds": 3,
+		"prompt": "Ultimate holy miracle spell sound effect.\n\nImmense wave of radiant light,\nethereal choir-like tones, deep warm swell,\nsparkling air spreading outward.\n\nMajestic, sacred and life-giving.\nSlow bright rise into a grand glowing release, about 3 seconds.\n\nNo melody, no lyrics, no drums."
+	},
+	"w_guard": {
+		"model": "Stable Audio 3",
+		"seed": "15592",
+		"seconds": 1,
+		"prompt": "Shield raise sound effect.\n\nSteel shield snapping into guard position,\nleather creak, armor clink and a low solid thud.\n\nFirm, quick and defensive.\nVery short single movement, about 0.5 seconds.\n\nDry recording. No music, no voices."
 	}
 }

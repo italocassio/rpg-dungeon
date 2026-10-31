@@ -8,6 +8,12 @@ var _screen: Node
 
 func _ready() -> void:
 	Session.load_game()
+	var music := MusicDirector.new()
+	music.name = "MusicDirector"
+	add_child(music)
+	var sfx := SfxDirector.new()
+	sfx.name = "SfxDirector"
+	add_child(sfx)
 	show_lobby()
 
 

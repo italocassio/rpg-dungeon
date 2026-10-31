@@ -1,19 +1,25 @@
 extends Node
 ## Testes de regras. Executar: godot --headless --path . res://tests/unit_tests.tscn
 
+const MUSIC_TEST_FADE := 0.05
+
 var _passed: int = 0
 var _failed: int = 0
 var _current: String = ""
+var _errors := ScriptErrorCounter.new()
 
 
 func _ready() -> void:
+	OS.add_logger(_errors)
 	Session.save_path = "user://test_unit_save.json"
 	for method in get_method_list():
 		var method_name: String = method.name
 		if method_name.begins_with("test_"):
 			_current = method_name
 			await call(method_name)
-	print("\nRESULTADO: %d verificações ok, %d falhas" % [_passed, _failed])
+	_failed += _errors.count
+	print("\nRESULTADO: %d verificações ok, %d falhas (%d erros de script)" % [_passed, _failed, _errors.count])
+	OS.remove_logger(_errors)
 	DirAccess.remove_absolute(Session.save_path)
 	get_tree().quit(1 if _failed > 0 else 0)
 
@@ -549,3 +555,500 @@ func test_walkability_helpers() -> void:
 	var pushed: Vector2 = field.push_inside(entrance.center + Vector2(entrance.radius + 1.0, 0.0), 1.0)
 	check(field.is_walkable(pushed, 0.5), "push_inside devolve ponto válido")
 	check(field.floor_at(entrance.center) < 0.1, "centro plano para telegrafias")
+
+
+# ---------- Explicação das habilidades ----------
+
+func _player_skills() -> Array[SkillData]:
+	var skills: Array[SkillData] = []
+	for class_data in GameDB.catalog.classes:
+		skills.append(class_data.basic_attack)
+		skills.append_array(class_data.skills)
+		skills.append(class_data.ultimate)
+	return skills
+
+
+func _skill_named(id: StringName) -> SkillData:
+	for skill in _player_skills():
+		if skill.id == id:
+			return skill
+	check(false, "habilidade %s existe" % id)
+	return null
+
+
+func _exact_balance() -> BalanceConfig:
+	var balance: BalanceConfig = GameDB.balance.duplicate()
+	balance.damage_variance = 0.0
+	return balance
+
+
+## Atacante e curador sem crítico nem variação; físico e mágico diferem para flagrar o atributo errado.
+func _exact_caster(team: Combatant.Team = Combatant.Team.PARTY) -> Combatant:
+	var unit := _combatant(team)
+	unit.balance = _exact_balance()
+	unit.base_stats.phys_attack = 70.0
+	unit.base_stats.magic_attack = 90.0
+	unit.base_stats.heal_power = 1.2
+	unit.refresh_stats()
+	return unit
+
+
+## `receive_hit` usa o balance do alvo; a cura usa o do conjurador.
+func _exact_target(team: Combatant.Team = Combatant.Team.MONSTERS) -> Combatant:
+	var unit := _combatant(team, 100000000.0)
+	unit.balance = _exact_balance()
+	unit.base_stats.phys_defense = 0.0
+	unit.base_stats.magic_defense = 0.0
+	unit.base_stats.dodge_chance = 0.0
+	unit.refresh_stats()
+	return unit
+
+
+func _info_for(skill: SkillData, unit: Combatant) -> SkillInfo:
+	return SkillInfo.describe(skill, unit.stats, unit.balance, unit.damage_multiplier)
+
+
+func _near(actual: float, expected: float, message: String, tolerance: float = 0.01) -> void:
+	check(absf(actual - expected) < tolerance, "%s (obtido %f, esperado %f)" % [message, actual, expected])
+
+
+func _check_damage_parity(caster: Combatant, label: String) -> void:
+	for skill in _player_skills():
+		var info: SkillInfo = _info_for(skill, caster)
+		if info.damage <= 0.0:
+			continue
+		var target: Combatant = _exact_target()
+		var before: float = target.hp
+		SkillExecutor.strike(skill, caster, target)
+		_near(before - target.hp, info.damage, "%s: dano de %s" % [label, skill.id])
+
+
+func test_skill_catalog_is_described() -> void:
+	var digit: RegEx = RegEx.create_from_string("\\d")
+	var stats: StatBlock = _sheet().derived_stats()
+	var skills: Array[SkillData] = _player_skills()
+	equal(skills.size(), 18, "seis habilidades por classe")
+	for skill in skills:
+		check(not skill.display_name.is_empty(), "%s tem nome" % skill.id)
+		check(not skill.description.is_empty(), "%s tem descrição" % skill.id)
+		check(digit.search(skill.description) == null, "descrição de %s não tem número: %s" % [skill.id, skill.description])
+		var info: SkillInfo = SkillInfo.describe(skill, stats, GameDB.balance)
+		check(not info.rows.is_empty(), "%s gera linhas" % skill.id)
+		check(not info.subtitle.is_empty(), "%s tem subtítulo" % skill.id)
+		check(info.plain_text().contains(skill.display_name), "%s aparece no texto" % skill.id)
+
+
+func test_skill_info_damage_matches_combat() -> void:
+	_check_damage_parity(_exact_caster(), "base")
+	var weakened: Combatant = _exact_caster()
+	weakened.damage_multiplier = 0.6
+	_check_damage_parity(weakened, "multiplicador 0,6")
+	var blessed: Combatant = _exact_caster()
+	blessed.apply_effect(load("res://data/effects/blessing.tres"), blessed)
+	check(blessed.stats.phys_attack > blessed.base_stats.phys_attack, "bênção aumenta o ataque")
+	_check_damage_parity(blessed, "com bênção")
+
+
+func test_skill_info_damage_stays_inside_the_printed_range() -> void:
+	var caster: Combatant = _exact_caster()
+	caster.balance = GameDB.balance
+	for skill in _player_skills():
+		var info: SkillInfo = _info_for(skill, caster)
+		if info.damage <= 0.0:
+			continue
+		var target: Combatant = _exact_target()
+		target.balance = GameDB.balance
+		var lowest: float = INF
+		var highest: float = -INF
+		for _i in 500:
+			var before: float = target.hp
+			target.receive_hit(caster, skill)
+			lowest = minf(lowest, before - target.hp)
+			highest = maxf(highest, before - target.hp)
+		check(lowest >= info.damage_min - 0.001, "%s respeita o mínimo impresso" % skill.id)
+		check(highest <= info.damage_max + 0.001, "%s respeita o máximo impresso" % skill.id)
+		check(highest > lowest, "%s varia de fato" % skill.id)
+
+
+func test_skill_info_heal_matches_combat() -> void:
+	var priest: Combatant = _exact_caster()
+	var heal: SkillData = _skill_named(&"p_heal")
+	var ally: Combatant = _exact_target(Combatant.Team.PARTY)
+	ally.hp = 1000.0
+	var aim := SkillAim.new()
+	aim.target = ally
+	SkillExecutor.execute(heal, priest, aim)
+	_near(ally.hp - 1000.0, _info_for(heal, priest).heal, "cura direta com heal_power")
+	var miracle: SkillData = _skill_named(&"p_miracle")
+	var hurt: Combatant = _exact_target(Combatant.Team.PARTY)
+	hurt.hp = 1000.0
+	var fallen: Combatant = _exact_target(Combatant.Team.PARTY)
+	var fatal := SkillData.new()
+	fatal.power = 100000000.0
+	fallen.receive_hit(_exact_caster(Combatant.Team.MONSTERS), fatal)
+	check(not fallen.is_alive(), "aliado caiu")
+	SkillExecutor.execute(miracle, priest, SkillAim.new())
+	_near(hurt.hp - 1000.0, _info_for(miracle, priest).heal, "cura em grupo com heal_power")
+	_near(fallen.hp_ratio(), miracle.revive_hp_ratio, "reviver usa o campo da habilidade")
+	check(_info_for(miracle, priest).plain_text().contains("%d%%" % roundi(miracle.revive_hp_ratio * 100.0)), "texto mostra a vida ao reviver")
+
+
+## Além de conter os golpes, a faixa impressa não pode ser folgada: 500 curas chegam perto das duas pontas.
+func test_skill_info_heal_stays_inside_the_printed_range() -> void:
+	var priest: Combatant = _exact_caster()
+	priest.balance = GameDB.balance
+	var ally: Combatant = _exact_target(Combatant.Team.PARTY)
+	var aim := SkillAim.new()
+	aim.target = ally
+	for id: StringName in [&"p_heal", &"p_miracle"]:
+		var skill: SkillData = _skill_named(id)
+		var info: SkillInfo = _info_for(skill, priest)
+		var margin: float = (info.heal_max - info.heal_min) * 0.05
+		var lowest: float = INF
+		var highest: float = -INF
+		for _i in 500:
+			ally.hp = 1000.0
+			SkillExecutor.execute(skill, priest, aim)
+			lowest = minf(lowest, ally.hp - 1000.0)
+			highest = maxf(highest, ally.hp - 1000.0)
+		check(lowest >= info.heal_min - 0.001 and lowest <= info.heal_min + margin, "%s chega ao mínimo impresso (%f, %f)" % [id, lowest, info.heal_min])
+		check(highest <= info.heal_max + 0.001 and highest >= info.heal_max - margin, "%s chega ao máximo impresso (%f, %f)" % [id, highest, info.heal_max])
+
+
+func test_skill_info_zone_ticks_match_combat() -> void:
+	var priest: Combatant = _exact_caster()
+	var circle: SkillData = _skill_named(&"p_circle")
+	var info: SkillInfo = _info_for(circle, priest)
+	equal(info.heal_ticks, 7, "Círculo Sagrado promete 7 pulsos")
+	var ally: Combatant = _exact_target(Combatant.Team.PARTY)
+	ally.hp = 1000.0
+	var heals: Array[float] = []
+	ally.healed.connect(func(amount: float, _source: Combatant) -> void: heals.append(amount))
+	var zone := HealZone.new()
+	zone.skill = circle
+	zone.caster = priest
+	add_child(zone)
+	zone.set_process(false)
+	zone.global_position = ally.world_position()
+	for _i in roundi(circle.zone_duration * 60.0) + 120:
+		if zone.is_queued_for_deletion():
+			break
+		zone._process(1.0 / 60.0)
+	check(zone.is_queued_for_deletion(), "zona termina")
+	equal(heals.size(), info.heal_ticks, "pulsos reais iguais aos impressos")
+	_near(ally.hp - 1000.0, info.heal * info.heal_ticks, "total real igual ao impresso")
+
+
+func test_zone_tick_count_matches_combat_with_fractional_interval() -> void:
+	var slow: SkillData = _skill_named(&"p_circle").duplicate()
+	slow.zone_tick_interval = 1.5
+	equal(slow.zone_tick_count(), 5, "intervalo fracionário arredonda para cima")
+	var ally: Combatant = _exact_target(Combatant.Team.PARTY)
+	var heals: Array[float] = []
+	ally.healed.connect(func(amount: float, _source: Combatant) -> void: heals.append(amount))
+	var zone := HealZone.new()
+	zone.skill = slow
+	zone.caster = _exact_caster()
+	add_child(zone)
+	zone.set_process(false)
+	zone.global_position = ally.world_position()
+	for _i in roundi(slow.zone_duration * 60.0) + 120:
+		if zone.is_queued_for_deletion():
+			break
+		zone._process(1.0 / 60.0)
+	equal(heals.size(), slow.zone_tick_count(), "pulsos reais iguais à contagem")
+
+
+## Crítico certo, alvo fraco ao elemento e balance real: o rodapé promete que nada disso afeta o pulso.
+func test_skill_info_periodic_matches_combat() -> void:
+	var mage: Combatant = _exact_caster()
+	mage.damage_multiplier = 0.6
+	mage.base_stats.crit_chance = 1.0
+	mage.refresh_stats()
+	var fireball: SkillData = _skill_named(&"m_fireball")
+	var info: SkillInfo = _info_for(fireball, mage)
+	equal(info.periodic_ticks, 4, "queimadura promete 4 pulsos")
+	var target: Combatant = _exact_target()
+	target.balance = GameDB.balance
+	target.base_stats.weak_element = fireball.element
+	target.refresh_stats()
+	var ticks: Array[float] = []
+	target.damaged.connect(func(amount: float, _source: Combatant, _crit: bool, _threat: float) -> void: ticks.append(amount))
+	target.apply_effect(fireball.target_effect, mage)
+	var before: float = target.hp
+	for _i in 6:
+		target._process(1.0)
+	equal(ticks.size(), info.periodic_ticks, "pulsos reais iguais aos impressos")
+	for tick in ticks:
+		_near(tick, info.periodic, "pulso sem elemento, variação nem crítico")
+	_near(before - target.hp, info.periodic * info.periodic_ticks, "total real igual ao impresso")
+
+
+## O grupo é percorrido na ordem de entrada, então o conjurador passa por todas as posições.
+func test_skill_info_shield_matches_combat() -> void:
+	var bless: SkillData = _skill_named(&"p_bless")
+	for position in 4:
+		var group: Array[Combatant] = []
+		for i in 4:
+			group.append(_exact_caster() if i == position else _exact_target(Combatant.Team.PARTY))
+		var priest: Combatant = group[position]
+		var info: SkillInfo = _info_for(bless, priest)
+		check(info.shield > 0.0, "Bênção promete escudo")
+		SkillExecutor.execute(bless, priest, SkillAim.new())
+		for i in 4:
+			_near(group[i].shield, info.shield, "conjurador na posição %d: escudo real do membro %d" % [position, i])
+		var recast: SkillInfo = _info_for(bless, priest)
+		check(recast.shield > info.shield, "buff ativo aumenta o escudo impresso")
+		SkillExecutor.execute(bless, priest, SkillAim.new())
+		for i in 4:
+			_near(group[i].shield, recast.shield, "relançar na posição %d: escudo real do membro %d" % [position, i])
+
+
+func test_skill_info_times_match_caster() -> void:
+	var unit: Combatant = _exact_caster()
+	unit.base_stats.cast_speed = 1.1
+	unit.base_stats.attack_speed = 1.25
+	unit.refresh_stats()
+	var caster := SkillCaster.new()
+	unit.add_child(caster)
+	caster.combatant = unit
+	for skill in _player_skills():
+		var info: SkillInfo = _info_for(skill, unit)
+		# Só os tempos importam aqui: sem entrega, efeitos ou custos não há dependência de mundo.
+		var probe: SkillData = skill.duplicate()
+		probe.delivery = SkillData.Delivery.SELF_BUFF
+		probe.damage_kind = SkillData.DamageKind.NONE
+		probe.target_effect = null
+		probe.self_effect = null
+		probe.mp_cost = 0.0
+		probe.chi_cost = 0.0
+		caster.reset_all()
+		check(caster.try_cast(probe, SkillAim.new()), "%s conjura" % skill.id)
+		if skill.cast_time > 0.0:
+			_near(info.cast_time, caster._cast_total, "conjuração de %s" % skill.id, 0.00001)
+			caster._process(info.cast_time + 0.01)
+		else:
+			equal(info.cast_time, 0.0, "%s é instantânea" % skill.id)
+		_near(info.cooldown, caster._cooldown_totals[skill.id], "recarga de %s" % skill.id, 0.00001)
+
+
+## Lê a linha, não o texto todo: a descrição e o nome da habilidade repetem palavras das linhas.
+func _row_value(info: SkillInfo, label: String) -> String:
+	for row in info.rows:
+		if row.label == label:
+			return row.value
+	return ""
+
+
+func test_skill_info_text_is_truthful() -> void:
+	var stats: StatBlock = _sheet(&"priest").derived_stats()
+	var dotted_decimal: RegEx = RegEx.create_from_string("\\d\\.\\d")
+	var without_chi: Array[SkillData.Delivery] = [SkillData.Delivery.HEAL_ZONE, SkillData.Delivery.PARTY, SkillData.Delivery.BLINK, SkillData.Delivery.SELF_BUFF]
+	for skill in _player_skills():
+		var info: SkillInfo = SkillInfo.describe(skill, stats, GameDB.balance)
+		check(dotted_decimal.search(info.plain_text()) == null, "%s usa vírgula decimal" % skill.id)
+		var in_party: bool = skill.delivery == SkillData.Delivery.PARTY
+		if in_party:
+			equal(_row_value(info, "Área"), "Todo o grupo, em qualquer distância", "%s não promete alcance" % skill.id)
+		if skill.chi_gain > 0.0:
+			check(skill.delivery not in without_chi, "%s não paga Chi por essa entrega" % skill.id)
+			check(_row_value(info, "Chi").begins_with("+%d " % roundi(skill.chi_gain)), "%s mostra o ganho de Chi" % skill.id)
+		else:
+			equal(_row_value(info, "Chi"), "", "%s não promete Chi" % skill.id)
+		var effects: Dictionary = {"Efeito no grupo" if in_party else "Efeito no alvo": skill.target_effect, "Efeito em você": skill.self_effect}
+		for label: String in effects:
+			var effect: EffectData = effects[label]
+			var line: String = _row_value(info, label)
+			if effect == null:
+				equal(line, "", "%s não tem %s" % [skill.id, label])
+				continue
+			check(line.begins_with("%s por %s s" % [effect.display_name, SkillInfo.decimal(effect.duration)]), "%s explica %s" % [skill.id, effect.id])
+			for stat: StringName in effect.stat_multipliers:
+				check(StatBlock.LABELS.has(stat), "%s tem rótulo" % stat)
+				check(line.contains(str(StatBlock.LABELS.get(stat, "?"))), "%s mostra %s" % [skill.id, stat])
+			if effect.stuns:
+				check(line.contains("chefes são imunes"), "%s avisa sobre chefes" % skill.id)
+	check(SkillInfo.describe(_skill_named(&"w_warcry"), stats, GameDB.balance).plain_text().contains("Ameaça: Elevada"), "ameaça sem número")
+	check(SkillInfo.describe(_skill_named(&"p_miracle"), stats, GameDB.balance).plain_text().contains("1 Faísca"), "custo em Faísca vem dos dados")
+
+
+## Card e combate usam as mesmas fórmulas, então a paridade não vê mudança nelas: só valores absolutos
+## veem. Atributos fixos, sem ficha, nível ou equipamento. Mudança proposital nos dados muda este
+## arquivo junto, conferindo cada linha: regenerar a partir da saída, sem conferir, não prova nada.
+func test_skill_cards_match_the_golden_file() -> void:
+	var stats := StatBlock.new()
+	stats.phys_attack = 100.0
+	stats.magic_attack = 200.0
+	stats.cast_speed = 1.25
+	stats.attack_speed = 1.6
+	stats.heal_power = 1.5
+	stats.crit_multiplier = 2.0
+	var skills: Array[SkillData] = _player_skills()
+	var cards: PackedStringArray = FileAccess.get_file_as_string("res://tests/skill_cards.golden.txt").strip_edges().split("\n\n")
+	equal(cards.size(), skills.size(), "golden tem um card por habilidade")
+	for i in mini(cards.size(), skills.size()):
+		equal(SkillInfo.describe(skills[i], stats, GameDB.balance, 0.5).plain_text(), cards[i], "card de %s" % skills[i].id)
+
+
+func test_skill_info_decimal_format() -> void:
+	equal(SkillInfo.decimal(1.27), "1,27", "duas casas")
+	equal(SkillInfo.decimal(0.6), "0,6", "sem zero à direita")
+	equal(SkillInfo.decimal(7.0), "7", "inteiro sem vírgula")
+	equal(SkillInfo.decimal(10.0), "10", "zero à esquerda da vírgula é preservado")
+	equal(SkillInfo.decimal(0.0), "0", "zero")
+
+
+func test_skill_text_only_uses_glyphs_the_fonts_have() -> void:
+	var font: Font = UiKit.body_font()
+	check(not font.has_char(0x4E2D), "a verificação detecta glifo ausente")
+	var stats: StatBlock = _sheet().derived_stats()
+	for skill in _player_skills():
+		var text: String = SkillInfo.describe(skill, stats, GameDB.balance).plain_text().replace("\n", "")
+		var missing: String = ""
+		for i in text.length():
+			if not font.has_char(text.unicode_at(i)):
+				missing += text[i]
+		equal(missing, "", "%s só usa glifos da fonte" % skill.id)
+
+
+func test_skill_tooltip_stays_on_screen() -> void:
+	var slot := Vector2(58.0, 58.0)
+	var card := Vector2(SkillTooltip.WIDTH, 320.0)
+	for screen: Vector2 in [Vector2(1600.0, 900.0), Vector2(2133.0, 900.0), Vector2(1600.0, 1200.0), Vector2(3200.0, 900.0)]:
+		var bounds: Rect2 = Rect2(Vector2.ZERO, screen).grow(-SkillTooltip.SCREEN_MARGIN)
+		var anchors: Array[Rect2] = [
+			Rect2(Vector2.ZERO, slot),
+			Rect2(Vector2(screen.x - slot.x, 0.0), slot),
+			Rect2(Vector2(0.0, screen.y - slot.y), slot),
+			Rect2(screen - slot, slot),
+			Rect2(Vector2(screen.x * 0.5, screen.y - 74.0), slot),
+		]
+		for anchor in anchors:
+			var spot := Rect2(SkillTooltip.placement(anchor, card, bounds), card)
+			check(bounds.encloses(spot), "card em %s dentro de %s" % [anchor, screen])
+			check(not spot.intersects(anchor), "card não cobre a âncora %s em %s" % [anchor, screen])
+	var hotbar := Rect2(Vector2(800.0, 826.0), slot)
+	var bounds: Rect2 = Rect2(0.0, 0.0, 1600.0, 900.0).grow(-SkillTooltip.SCREEN_MARGIN)
+	var above: Vector2 = SkillTooltip.placement(hotbar, card, bounds)
+	equal(above.y + card.y + SkillTooltip.GAP, hotbar.position.y, "card fica logo acima do slot")
+	equal(above.x + card.x * 0.5, hotbar.get_center().x, "card centralizado no slot")
+
+
+func _music_director() -> MusicDirector:
+	var config: MusicConfig = (load(MusicDirector.CONFIG_PATH) as MusicConfig).duplicate()
+	config.crossfade_seconds = MUSIC_TEST_FADE
+	config.fade_out_seconds = MUSIC_TEST_FADE
+	var director := MusicDirector.new()
+	director.config = config
+	add_child(director)
+	return director
+
+
+func _music_fade_done() -> void:
+	await get_tree().create_timer(MUSIC_TEST_FADE * 4.0).timeout
+
+
+func test_music_config_has_looping_tracks() -> void:
+	var config: MusicConfig = load(MusicDirector.CONFIG_PATH) as MusicConfig
+	check(config != null, "music.tres carrega como MusicConfig")
+	for track: AudioStream in [config.dungeon_track, config.boss_track]:
+		var wav := track as AudioStreamWAV
+		check(wav != null, "faixa é AudioStreamWAV")
+		equal(wav.loop_mode, AudioStreamWAV.LOOP_FORWARD, "faixa em loop")
+		check(wav.loop_end > wav.loop_begin, "trecho de loop válido")
+
+
+func test_music_buses_exist() -> void:
+	check(AudioServer.get_bus_index(&"Music") >= 0, "bus Music existe")
+	check(AudioServer.get_bus_index(&"SFX") >= 0, "bus SFX existe")
+
+
+func test_music_starts_on_dungeon_entered() -> void:
+	var director := _music_director()
+	equal(director.current, MusicDirector.Track.NONE, "começa em silêncio")
+	Events.dungeon_entered.emit()
+	equal(director.current, MusicDirector.Track.DUNGEON, "entrar toca a masmorra")
+	check(director._dungeon_player.playing, "faixa da masmorra tocando")
+	equal(director._dungeon_player.bus, &"Music", "faixa da masmorra no bus Music")
+	equal(director._boss_player.bus, &"Music", "faixa do chefe no bus Music")
+	await _music_fade_done()
+	var target: float = db_to_linear(director.config.dungeon_volume_db)
+	check(absf(director._dungeon_player.volume_linear - target) < 0.001, "fade chega ao volume da mixagem")
+	director.free()
+
+
+func test_music_ignores_repeated_events() -> void:
+	var director := _music_director()
+	Events.dungeon_entered.emit()
+	var fade: Tween = director._fade
+	Events.dungeon_entered.emit()
+	check(director._fade == fade, "repetir a entrada não recria o fade")
+	Events.boss_engaged.emit(self)
+	check(director._fade != fade, "aggro cria um fade novo")
+	fade = director._fade
+	Events.boss_engaged.emit(self)
+	check(director._fade == fade, "repetir o aggro não recria o fade")
+	director.free()
+
+
+func test_music_crossfades_to_boss_and_stops_dungeon() -> void:
+	var director := _music_director()
+	Events.dungeon_entered.emit()
+	Events.boss_engaged.emit(self)
+	equal(director.current, MusicDirector.Track.BOSS, "aggro toca a batalha")
+	check(director._boss_player.playing, "faixa do chefe tocando")
+	await _music_fade_done()
+	check(not director._dungeon_player.playing, "masmorra para depois do fade")
+	check(director._boss_player.playing, "faixa do chefe continua")
+	director.free()
+
+
+func test_music_boss_defeated_returns_to_dungeon() -> void:
+	var director := _music_director()
+	Events.dungeon_entered.emit()
+	Events.boss_engaged.emit(self)
+	await _music_fade_done()
+	Events.boss_defeated.emit(self)
+	equal(director.current, MusicDirector.Track.DUNGEON, "chefe morto volta à masmorra")
+	check(director._dungeon_player.playing, "faixa da masmorra volta a tocar")
+	await _music_fade_done()
+	check(not director._boss_player.playing, "faixa do chefe para depois do fade")
+	director.free()
+
+
+func test_music_reversal_mid_fade_keeps_track_playing() -> void:
+	var director := _music_director()
+	Events.dungeon_entered.emit()
+	await _music_fade_done()
+	Events.boss_engaged.emit(self)
+	Events.boss_disengaged.emit(self)
+	equal(director.current, MusicDirector.Track.DUNGEON, "reversão volta à masmorra")
+	check(director._dungeon_player.playing, "faixa da masmorra não foi cortada")
+	await _music_fade_done()
+	check(director._dungeon_player.playing, "faixa da masmorra segue depois do fade")
+	check(not director._boss_player.playing, "faixa do chefe para depois da reversão")
+	var target: float = db_to_linear(director.config.dungeon_volume_db)
+	check(absf(director._dungeon_player.volume_linear - target) < 0.001, "volume volta à mixagem")
+	director.free()
+
+
+func test_music_late_boss_signals_stay_silent() -> void:
+	var director := _music_director()
+	Events.boss_defeated.emit(self)
+	Events.boss_disengaged.emit(self)
+	equal(director.current, MusicDirector.Track.NONE, "aviso tardio não liga a música")
+	check(not director._dungeon_player.playing, "faixa da masmorra segue parada")
+	check(not director._boss_player.playing, "faixa do chefe segue parada")
+	director.free()
+
+
+func test_music_dungeon_exited_fades_everything_out() -> void:
+	var director := _music_director()
+	Events.dungeon_entered.emit()
+	Events.boss_engaged.emit(self)
+	Events.dungeon_exited.emit()
+	equal(director.current, MusicDirector.Track.NONE, "sair silencia")
+	await _music_fade_done()
+	check(not director._dungeon_player.playing, "faixa da masmorra parou")
+	check(not director._boss_player.playing, "faixa do chefe parou")
+	director.free()

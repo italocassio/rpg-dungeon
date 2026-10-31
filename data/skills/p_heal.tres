@@ -6,7 +6,7 @@
 script = ExtResource("1_bnwy2")
 id = &"p_heal"
 display_name = "Cura"
-description = "Cura o aliado selecionado (F1–F4) ou o mais ferido."
+description = "Cura o aliado selecionado ou, sem seleção, o mais ferido ao alcance."
 icon = &"heal"
 color = Color(0.5529412, 1, 0.6901961, 1)
 delivery = 5

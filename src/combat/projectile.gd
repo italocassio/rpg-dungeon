@@ -73,8 +73,9 @@ func _first_target(from: Vector3, direction: Vector3, limit: float) -> Combatant
 func _impact(point: Vector3, target: Combatant) -> void:
 	if skill.radius > 0.0:
 		SkillExecutor.area_impact(skill, caster, point)
-	elif target != null:
-		if SkillExecutor.strike(skill, caster, target):
+	else:
+		Events.skill_impacted.emit(skill, caster, point)
+		if target != null and SkillExecutor.strike(skill, caster, target):
 			caster.add_chi(skill.chi_gain)
 	Vfx.hit_burst(get_tree(), point, skill.color)
 	queue_free()

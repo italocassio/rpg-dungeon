@@ -7,7 +7,7 @@
 script = ExtResource("1_afq2s")
 id = &"m_nova"
 display_name = "Nova Elemental"
-description = "Consome 1 Faísca: congela e fere todos ao redor."
+description = "Libera uma explosão elemental que fere e congela todos ao redor."
 icon = &"nova"
 color = Color(0.49803922, 0.8784314, 1, 1)
 delivery = 4

@@ -6,7 +6,7 @@
 script = ExtResource("1_f3gr5")
 id = &"p_miracle"
 display_name = "Milagre"
-description = "Consome 1 Faísca: cura todo o grupo e revive caídos."
+description = "Cura todo o grupo e revive os caídos."
 icon = &"miracle"
 color = Color(1, 0.9647059, 0.8156863, 1)
 delivery = 6

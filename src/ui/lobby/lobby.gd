@@ -21,12 +21,16 @@ var _status: Label
 var _rng := RandomNumberGenerator.new()
 var _search_serial: int = 0
 var _watched_sheet: CharacterSheet
+var _skill_tooltip: SkillTooltip
 
 
 func _ready() -> void:
 	theme = UiKit.theme()
 	UiKit.full_rect(self)
 	_rng.randomize()
+	_skill_tooltip = SkillTooltip.new()
+	add_child(_skill_tooltip)
+	_skill_tooltip.setup(_preview_info, true)
 	var dungeon: DungeonData = GameDB.catalog.dungeons[0]
 	selected_rank = dungeon.ranks[0]
 	selected_class = Session.active_sheet.class_data if Session.active_sheet != null else GameDB.catalog.classes[0]
@@ -197,8 +201,13 @@ func _class_detail() -> Control:
 	column.add_child(grid)
 	for skill in skills:
 		var row := UiKit.hbox(8)
+		row.name = "Skill_%s" % skill.id
 		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(UiKit.icon_tile(skill.icon, skill.color, 38.0))
+		var tile := UiKit.icon_tile(skill.icon, skill.color, 38.0)
+		# PanelContainer para o evento: sem isto, o ícone tiraria o hover da linha.
+		tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(tile)
+		_skill_tooltip.attach(row, skill)
 		var text := UiKit.vbox(0)
 		text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(text)
@@ -209,6 +218,16 @@ func _class_detail() -> Control:
 		text.add_child(details)
 		grid.add_child(row)
 	return column
+
+
+## Os números que a classe terá ao entrar: a ficha real ou, sem ficha, os itens escolhidos.
+func _preview_info(skill: SkillData) -> SkillInfo:
+	var sheet: CharacterSheet = Session.sheets.get(selected_class.id)
+	if sheet == null:
+		sheet = CharacterSheet.new(selected_class, GameDB.balance)
+		sheet.equip_directly(pending_weapon)
+		sheet.equip_directly(pending_armor)
+	return SkillInfo.describe(skill, sheet.derived_stats(), sheet.balance)
 
 
 # ---------- Itens ----------

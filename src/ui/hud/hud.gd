@@ -2,12 +2,13 @@ class_name Hud
 extends CanvasLayer
 ## Interface da masmorra, composta por widgets independentes.
 
-const MENU_ICONS: Array[Array] = [["I", &"menu_inventory", "Inventário", &"armor"], ["C", &"menu_character", "Personagem", &"helm"], ["P", &"menu_forge", "Forja", &"axe"], ["M", &"menu_map", "Mapa", &"cloth"]]
+const MENU_ICONS: Array[Array] = [["I", &"menu_inventory", "Inventário", &"armor"], ["C", &"menu_character", "Personagem", &"helm"], ["K", &"menu_skills", "Árvore de Habilidades", &"bolt"], ["P", &"menu_forge", "Forja", &"axe"], ["M", &"menu_map", "Mapa", &"cloth"]]
 
 signal menu_pressed(action: StringName)
 
 var feedback: CombatFeedback
 var toast: SystemToast
+var skill_tooltip: SkillTooltip
 
 var _run: DungeonRun
 var _coords: Label
@@ -77,12 +78,15 @@ func bind(run: DungeonRun) -> void:
 	bottom.alignment = BoxContainer.ALIGNMENT_CENTER
 	UiKit.fit_rect(bottom, 0.5, 1.0, 0.5, 1.0, Rect2(-290.0, -74.0, 290.0, -12.0))
 	root.add_child(bottom)
+	skill_tooltip = SkillTooltip.new()
+	add_child(skill_tooltip)
+	skill_tooltip.setup(run.skill_info)
 	var hotbar := Hotbar.new()
 	bottom.add_child(hotbar)
-	hotbar.bind(run.player, run.combat, run.sheet)
+	hotbar.bind(run.player, run.combat, run.sheet, skill_tooltip)
 
 	var menu := UiKit.hbox(4)
-	UiKit.fit_rect(menu, 1.0, 1.0, 1.0, 1.0, Rect2(-214.0, -62.0, -14.0, -14.0))
+	UiKit.fit_rect(menu, 1.0, 1.0, 1.0, 1.0, Rect2(-250.0, -62.0, -14.0, -14.0))
 	root.add_child(menu)
 	for entry: Array in MENU_ICONS:
 		var button := Button.new()
@@ -111,6 +115,14 @@ func set_quality_provider(provider: Callable) -> void:
 
 func toggle_stats() -> void:
 	_fps.visible = not _fps.visible
+
+
+func set_cursor_free(free: bool) -> void:
+	skill_tooltip.set_cursor_free(free)
+
+
+func dismiss_skill_tooltip() -> void:
+	skill_tooltip.dismiss()
 
 
 func _process(_delta: float) -> void:

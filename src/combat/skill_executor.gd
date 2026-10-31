@@ -3,7 +3,6 @@ extends RefCounted
 ## Aplica o efeito de uma habilidade no mundo, conforme seu tipo de entrega.
 
 const DASH_SPEED := 26.0
-const REVIVE_HP_RATIO := 0.5
 
 
 static func execute(skill: SkillData, caster: Combatant, aim: SkillAim) -> void:
@@ -48,7 +47,7 @@ static func strike(skill: SkillData, caster: Combatant, target: Combatant) -> bo
 	return hit
 
 
-static func _strike_all(skill: SkillData, caster: Combatant, targets: Array[Combatant]) -> void:
+static func _strike_all(skill: SkillData, caster: Combatant, targets: Array[Combatant]) -> bool:
 	var landed: bool = false
 	for target in targets:
 		if strike(skill, caster, target):
@@ -56,6 +55,7 @@ static func _strike_all(skill: SkillData, caster: Combatant, targets: Array[Comb
 			Vfx.hit_burst(caster.get_tree(), target.center_position(), skill.color)
 	if landed:
 		caster.add_chi(skill.chi_gain)
+	return landed
 
 
 static func _melee_cone(skill: SkillData, caster: Combatant, aim: SkillAim) -> void:
@@ -99,6 +99,7 @@ static func _ground_area(skill: SkillData, caster: Combatant, aim: SkillAim) -> 
 static func area_impact(skill: SkillData, caster: Combatant, point: Vector3) -> void:
 	_strike_all(skill, caster, CombatWorld.hostiles_near(caster, point, skill.radius))
 	Vfx.shockwave(caster.get_tree(), point, skill.radius, skill.color)
+	Events.skill_impacted.emit(skill, caster, point)
 
 
 static func _heal_ally(skill: SkillData, caster: Combatant, target: Combatant) -> void:
@@ -114,10 +115,14 @@ static func _heal_ally(skill: SkillData, caster: Combatant, target: Combatant) -
 
 
 static func _party(skill: SkillData, caster: Combatant) -> void:
-	for ally in CombatWorld.allies_of(caster, true):
+	var allies: Array[Combatant] = CombatWorld.allies_of(caster, true)
+	# O conjurador por último: o buff que ele recebe não pode inflar o que os aliados recebem.
+	allies.erase(caster)
+	allies.append(caster)
+	for ally in allies:
 		if not ally.is_alive():
 			if skill.revives_allies:
-				ally.revive(REVIVE_HP_RATIO)
+				ally.revive(skill.revive_hp_ratio)
 				Vfx.heal_glow(caster.get_tree(), ally.world_position(), skill.color)
 			continue
 		if skill.damage_kind == SkillData.DamageKind.HEAL:
@@ -144,7 +149,8 @@ static func _dash(skill: SkillData, caster: Combatant, aim: SkillAim) -> void:
 	tween.tween_property(actor, "global_position", destination, duration)
 	await tween.finished
 	if is_instance_valid(caster) and caster.is_alive():
-		_strike_all(skill, caster, CombatWorld.hostiles_near(caster, actor.global_position, skill.radius))
+		if _strike_all(skill, caster, CombatWorld.hostiles_near(caster, actor.global_position, skill.radius)):
+			Events.skill_impacted.emit(skill, caster, actor.global_position)
 		Vfx.shockwave(caster.get_tree(), actor.global_position, skill.radius, skill.color)
 
 

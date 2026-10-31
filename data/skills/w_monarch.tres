@@ -6,7 +6,7 @@
 script = ExtResource("1_vs4i1")
 id = &"w_monarch"
 display_name = "Lâmina do Monarca"
-description = "Consome 1 Faísca de Chi em um golpe devastador."
+description = "Converte Chi em um golpe devastador à frente."
 icon = &"crown"
 color = Color(0.4862745, 0.7764706, 1, 1)
 skill_range = 7.0

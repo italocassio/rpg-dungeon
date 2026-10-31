@@ -2,8 +2,6 @@ class_name HealZone
 extends Node3D
 ## Área que cura aliados periodicamente (Círculo Sagrado).
 
-const TICK_INTERVAL := 1.0
-
 var skill: SkillData
 var caster: Combatant
 var _life: float = 0.0
@@ -20,6 +18,7 @@ static func spawn(from_skill: SkillData, from_caster: Combatant, point: Vector3)
 	root_node.add_child(zone)
 	zone.global_position = point
 	Vfx.attach_zone_visual(zone, from_skill)
+	Events.heal_zone_opened.emit(zone)
 
 
 func _process(delta: float) -> void:
@@ -30,6 +29,6 @@ func _process(delta: float) -> void:
 	_tick -= delta
 	if _tick > 0.0:
 		return
-	_tick = TICK_INTERVAL
+	_tick = skill.zone_tick_interval
 	for ally in CombatWorld.allies_near(caster, global_position, skill.radius):
 		ally.receive_heal(DamageCalculator.heal_amount(caster.stats, skill.power, caster.balance, caster.rng), caster)

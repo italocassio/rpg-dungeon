@@ -18,5 +18,4 @@ power = 0.55
 cast_time = 0.6
 cooldown = 13.0
 mp_cost = 30.0
-chi_gain = 12.0
 animation = &"cast"

@@ -268,7 +268,7 @@ func apply_effect(data: EffectData, source: Combatant) -> void:
 
 func _apply_shield(data: EffectData, source: Combatant) -> void:
 	if data.shield_power > 0.0 and source != null:
-		shield = maxf(shield, source.stats.magic_attack * data.shield_power)
+		shield = maxf(shield, DamageCalculator.shield_amount(source.stats, data.shield_power))
 
 
 func _clear_effects() -> void:
@@ -341,9 +341,9 @@ func _apply_tick(effect: ActiveEffect) -> void:
 	var source: Combatant = effect.source if is_instance_valid(effect.source) else null
 	if source == null:
 		return
-	var attack: float = source.stats.magic_attack
+	var amount: float = DamageCalculator.periodic_amount(source.stats, effect.data.tick_power)
 	if effect.data.tick_is_heal:
-		receive_heal(attack * effect.data.tick_power, source)
+		receive_heal(amount, source)
 	else:
 		var mitigation: float = DamageCalculator.mitigation(stats.magic_defense, balance)
-		receive_periodic_damage(attack * effect.data.tick_power * mitigation * source.damage_multiplier, source)
+		receive_periodic_damage(amount * mitigation * source.damage_multiplier, source)

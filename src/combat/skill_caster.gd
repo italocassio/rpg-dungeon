@@ -66,7 +66,7 @@ func try_cast(skill: SkillData, aim: SkillAim) -> bool:
 	if refusal(skill) != Refusal.NONE:
 		return false
 	_aim = aim
-	var duration: float = skill.cast_time / maxf(combatant.stats.cast_speed, 0.1)
+	var duration: float = skill.cast_duration(combatant.stats)
 	if duration <= 0.0:
 		_fire(skill)
 		return true
@@ -76,6 +76,7 @@ func try_cast(skill: SkillData, aim: SkillAim) -> bool:
 	if skill.telegraph:
 		_telegraph = Telegraph.spawn(combatant, skill, aim, duration)
 	cast_started.emit(skill, duration)
+	Events.skill_cast_started.emit(skill, combatant)
 	return true
 
 
@@ -86,9 +87,12 @@ func interrupt() -> void:
 	_casting = null
 	_clear_telegraph()
 	cast_interrupted.emit(skill)
+	Events.skill_cast_stopped.emit(skill, combatant)
 
 
 func reset_all() -> void:
+	if _casting != null:
+		Events.skill_cast_stopped.emit(_casting, combatant)
 	_casting = null
 	_clear_telegraph()
 	_cooldowns.clear()
@@ -120,6 +124,7 @@ func _process(delta: float) -> void:
 		# Recursos podem ter acabado durante o cast.
 		if combatant.mp < skill.mp_cost or combatant.chi < skill.chi_cost:
 			cast_interrupted.emit(skill)
+			Events.skill_cast_stopped.emit(skill, combatant)
 			return
 		if aim_provider.is_valid():
 			_aim = aim_provider.call(skill)
@@ -129,12 +134,12 @@ func _process(delta: float) -> void:
 func _fire(skill: SkillData) -> void:
 	combatant.spend_mana(skill.mp_cost)
 	combatant.add_chi(-skill.chi_cost)
-	var attack_speed: float = combatant.stats.attack_speed if skill.cast_time <= 0.0 else 1.0
-	var cooldown: float = skill.cooldown / maxf(attack_speed, 0.1)
+	var cooldown: float = skill.recovery_time(combatant.stats)
 	if cooldown > 0.0:
 		_cooldowns[skill.id] = cooldown
 		_cooldown_totals[skill.id] = cooldown
 	if skill.triggers_global_cooldown:
 		_global_cooldown = minf(GLOBAL_COOLDOWN, cooldown)
+	Events.skill_fired.emit(skill, combatant)
 	SkillExecutor.execute(skill, combatant, _aim)
 	skill_fired.emit(skill, _aim)
