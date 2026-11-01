@@ -1,0 +1,342 @@
+# BLOCKOUT DA DIREÇÃO DE ARTE. Referência de medidas, não é código do jogo.
+# Rodou numa cópia descartável com as correções das OS-002 e OS-003 aplicadas.
+# Em conflito com documents/art/classes/*.md, vale a ficha de classe
+# (bronze final, mãos e peças de T1 a T3 só existem nas fichas).
+#
+class_name BoHeroes
+extends RefCounted
+## Blockout descartável das três classes: valida medidas, valor e silhueta no motor real.
+
+const F := preload("res://src/visuals/creature_factory.gd")
+
+static func steel() -> Material: return Look.matte(Color("B0AEA8"), 0.42, 0.35)
+static func dark() -> Material: return Look.matte(Color("23262E"), 0.75)
+static func crimson() -> Material: return Look.matte(Color("C23A22"), 0.85)
+static func bronze() -> Material: return Look.matte(Color("C8963F"), 0.4, 0.45)
+static func leather() -> Material: return Look.matte(Color("3A2A22"), 0.8)
+static func skin() -> Material: return Look.matte(Color("D9A981"), 0.7)
+
+
+## Luz de personagem: emissão igual ao albedo, energia .20. Peças de sombra ficam de fora.
+static func light_up(rig: Node, seen: Dictionary = {}) -> void:
+	for child in rig.get_children():
+		var m := child as MeshInstance3D
+		if m != null and m.material_override is StandardMaterial3D:
+			var src: StandardMaterial3D = m.material_override
+			var key: String = src.albedo_color.to_html(false).to_upper()
+			if not src.emission_enabled and key not in ["1A1410", "2A1E18", "3A2E25", "14231F"]:
+				if not seen.has(src):
+					var dup: StandardMaterial3D = src.duplicate()
+					dup.emission_enabled = true
+					dup.emission = src.albedo_color
+					dup.emission_energy_multiplier = 0.2
+					seen[src] = dup
+				m.material_override = seen[src]
+		light_up(child, seen)
+
+
+static func dbl(c: Color, r := 0.85) -> Material:
+	var m: StandardMaterial3D = Look.matte(c, r).duplicate()
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	return m
+
+
+static func mirror(p: PackedVector2Array) -> PackedVector2Array:
+	var o := PackedVector2Array()
+	for i in range(p.size() - 1, -1, -1):
+		o.append(Vector2(-p[i].x, p[i].y))
+	return o
+
+
+static func seal(rig: CreatureRig, parent: Node3D, pos: Vector3, color: Color, energy: float, back := false) -> void:
+	var rx: float = PI * 0.5
+	rig.part(parent, MeshKit.torus(0.055, 0.08, 16), bronze(), pos, Vector3(rx, 0.0, 0.0), Vector3(1.0, 0.6, 1.0))
+	rig.part(parent, MeshKit.sphere(0.055, 10), Look.glow(color, energy), pos, Vector3.ZERO, Vector3(1.0, 1.0, 0.35))
+
+
+static func head(rig: CreatureRig, mat: Material) -> Node3D:
+	var h: Node3D = rig.get_joint(&"head")
+	var rings: Array[Vector4] = [Vector4(0, 0.0, 0.04, 0.05), Vector4(0, 0.05, 0.075, 0.088), Vector4(0, 0.12, 0.095, 0.106), Vector4(0, 0.175, 0.098, 0.11), Vector4(0, 0.225, 0.072, 0.085), Vector4(0, 0.25, 0.02, 0.03)]
+	rig.part(h, MeshKit.loft(rings, 10), mat, Vector3(0, 0.02, 0))
+	rig.part(h, MeshKit.cylinder(0.055, 0.065, 0.1, 8), mat, Vector3(0, -0.02, 0.0))
+	for s: float in [-1.0, 1.0]:
+		rig.part(h, MeshKit.box(Vector3(0.036, 0.012, 0.012)), Look.matte(Color("1A1410"), 0.6), Vector3(s * 0.044, 0.135, -0.1))
+		rig.part(h, MeshKit.box(Vector3(0.05, 0.012, 0.02)), Look.matte(Color("2A1E18"), 0.6), Vector3(s * 0.045, 0.158, -0.098), Vector3(0, 0, s * -0.12))
+	var nose := MeshKit.loft([Vector4(0, 0, 0.018, 0.02), Vector4(0, 0.05, 0.008, 0.008)], 4, false)
+	rig.part(h, nose, mat, Vector3(0, 0.085, -0.108), Vector3.ZERO, Vector3(1.0, 1.0, 1.0))
+	rig.part(h, MeshKit.box(Vector3(0.04, 0.008, 0.008)), Look.matte(Color("7A4E3A"), 0.6), Vector3(0, 0.055, -0.092))
+	return h
+
+
+static func boots(rig: CreatureRig, mat: Material) -> void:
+	for side: StringName in [&"r", &"l"]:
+		var k: Node3D = rig.get_joint(StringName("knee_%s" % side))
+		var y: float = -0.46 * 1.0
+		rig.part(k, MeshKit.box(Vector3(0.11, 0.07, 0.25)), mat, Vector3(0, y + 0.0, -0.05))
+		rig.part(k, MeshKit.cylinder(0.078, 0.062, 0.16, 8), mat, Vector3(0, y + 0.1, 0))
+
+
+static func warrior() -> CreatureRig:
+	var rig := CreatureRig.new()
+	F._biped_skeleton(rig, 1.0, 1.0, 1.15)
+	var chest: Node3D = rig.get_joint(&"chest")
+	var pelvis: Node3D = rig.get_joint(&"pelvis")
+	var torso: Array[Vector4] = [Vector4(0, -0.1, 0.19, 0.135), Vector4(0, 0.1, 0.2, 0.145), Vector4(0, 0.3, 0.3, 0.19), Vector4(0, 0.46, 0.31, 0.18), Vector4(0, 0.55, 0.13, 0.11)]
+	rig.part(chest, MeshKit.loft(torso, 8, false), steel())
+	rig.part(chest, MeshKit.lathe(PackedVector2Array([Vector2(0.15, 0.5), Vector2(0.125, 0.56), Vector2(0.1, 0.58)]), 10), dark())
+	# faldas em degraus
+	var faulds := PackedVector2Array([Vector2(0.28, -0.3), Vector2(0.27, -0.22), Vector2(0.25, -0.22), Vector2(0.25, -0.13), Vector2(0.23, -0.13), Vector2(0.22, -0.04), Vector2(0.2, -0.04), Vector2(0.21, 0.05)])
+	rig.part(pelvis, MeshKit.lathe(faulds, 10, false), steel(), Vector3.ZERO, Vector3.ZERO, Vector3(1.0, 1.0, 0.78))
+	rig.part(pelvis, MeshKit.lathe(PackedVector2Array([Vector2(0.215, 0.0), Vector2(0.225, 0.07), Vector2(0.21, 0.1)]), 12), bronze(), Vector3(0, 0.02, 0), Vector3.ZERO, Vector3(1, 1, 0.78))
+	rig.part(pelvis, MeshKit.cloth(0.26, 0.32, 0.78, 0.05, 4, 5), dbl(Color("C23A22")), Vector3(0, 0.0, -0.245), Vector3(0, PI, 0))
+	var cape_joint: Node3D = rig.joint(&"cloth_back", chest, Vector3(0, 0.52, 0.17))
+	for sx: float in [1.0, -1.0]:
+		rig.part(cape_joint, MeshKit.cloth(0.25, 0.38, 1.2, 0.26, 6, 7), dbl(Color("B3301F")), Vector3(sx * 0.125, 0, 0), Vector3(0, sx * 0.07, 0))
+	seal(rig, chest, Vector3(0, 0.38, -0.205), Color("E0603A"), 1.0)
+	seal(rig, chest, Vector3(0, 0.54, 0.2), Color("E0603A"), 1.0)
+	for sx: float in [1.0, -1.0]:
+		var o := Vector3(sx * 0.21, 0.5, 0)
+		var top: Array[Vector4] = [Vector4(sx * 0.09, -0.13, 0.175, 0.2), Vector4(sx * 0.05, -0.05, 0.165, 0.195), Vector4(sx * 0.01, 0.05, 0.13, 0.17), Vector4(sx * -0.02, 0.115, 0.075, 0.11)]
+		var mid: Array[Vector4] = [Vector4(sx * 0.14, -0.24, 0.145, 0.185), Vector4(sx * 0.11, -0.14, 0.16, 0.195), Vector4(sx * 0.07, -0.07, 0.13, 0.165)]
+		var low: Array[Vector4] = [Vector4(sx * 0.17, -0.33, 0.115, 0.16), Vector4(sx * 0.15, -0.24, 0.135, 0.175), Vector4(sx * 0.11, -0.17, 0.11, 0.145)]
+		rig.part(chest, MeshKit.loft(low, 8, false), bronze(), o)
+		rig.part(chest, MeshKit.loft(mid, 8, false), steel(), o)
+		rig.part(chest, MeshKit.loft(top, 8, false), steel(), o)
+	for side: StringName in [&"r", &"l"]:
+		F._limb(rig, StringName("shoulder_%s" % side), 0.3, 0.08, 0.065, dark())
+		rig.part(rig.get_joint(StringName("elbow_%s" % side)), MeshKit.sphere(0.078, 8), steel())
+		F._limb(rig, StringName("elbow_%s" % side), 0.3, 0.08, 0.062, steel())
+		rig.part(rig.get_joint(StringName("hand_%s" % side)), MeshKit.box(Vector3(0.09, 0.11, 0.1)), steel(), Vector3(0, -0.03, 0))
+		F._limb(rig, StringName("hip_%s" % side), 0.46, 0.105, 0.08, dark())
+		rig.part(rig.get_joint(StringName("knee_%s" % side)), MeshKit.sphere(0.085, 8), steel(), Vector3(0, 0, -0.01))
+		F._limb(rig, StringName("knee_%s" % side), 0.46, 0.09, 0.07, dark())
+	boots(rig, steel())
+	var h := head(rig, skin())
+	var helm := MeshKit.lathe(PackedVector2Array([Vector2(0.125, 0.13), Vector2(0.128, 0.2), Vector2(0.105, 0.26), Vector2(0.06, 0.295), Vector2(0.0, 0.305)]), 8, false)
+	rig.part(h, helm, steel(), Vector3(0, 0.0, 0.0))
+	rig.part(h, MeshKit.box(Vector3(0.03, 0.14, 0.02)), bronze(), Vector3(0, 0.15, -0.128))
+	for s: float in [-1.0, 1.0]:
+		rig.part(h, MeshKit.box(Vector3(0.03, 0.15, 0.16)), steel(), Vector3(s * 0.115, 0.07, 0.0))
+	rig.part(h, MeshKit.lathe(PackedVector2Array([Vector2(0.125, -0.02), Vector2(0.14, 0.14)]), 8, false), steel(), Vector3(0, 0, 0.03), Vector3.ZERO, Vector3(1.0, 1.0, 0.9))
+	var crest := PackedVector2Array([Vector2(-0.15, 0.17), Vector2(-0.13, 0.27), Vector2(-0.06, 0.36), Vector2(0.05, 0.4), Vector2(0.17, 0.37), Vector2(0.25, 0.28), Vector2(0.27, 0.15), Vector2(0.1, 0.2)])
+	rig.part(h, WeaponKit._plate(crest, 0.05), Look.matte(Color("C23A22"), 0.5), Vector3.ZERO, Vector3(0, -PI * 0.5, 0))
+	# arma
+	var sword := Node3D.new()
+	rig.part(sword, MeshKit.cylinder(0.022, 0.026, 0.2, 8), leather())
+	rig.part(sword, MeshKit.box(Vector3(0.28, 0.04, 0.06)), bronze(), Vector3(0, 0.11, 0))
+	rig.part(sword, MeshKit.blade(0.98, 0.095, 0.026, 0.14), steel(), Vector3(0, 0.12, 0))
+	rig.get_joint(&"hand_r").add_child(sword)
+	sword.position = Vector3(0, -0.06, -0.02)
+	sword.rotation = Vector3(-2.45, 0.0, 0.0)
+	var shield := Node3D.new()
+	var profile := PackedVector2Array([Vector2(0.0, 0.03), Vector2(0.2, 0.025), Vector2(0.37, 0.0), Vector2(0.38, -0.02), Vector2(0.0, -0.02)])
+	rig.part(shield, MeshKit.lathe(profile, 16), Look.matte(Color("9A2A1F"), 0.5), Vector3.ZERO, Vector3(PI * 0.5, 0, 0))
+	rig.part(shield, MeshKit.torus(0.35, 0.4, 24), bronze(), Vector3.ZERO, Vector3(PI * 0.5, 0, 0), Vector3(1, 0.6, 1))
+	rig.part(shield, MeshKit.sphere(0.08, 10), bronze(), Vector3(0, 0, -0.03))
+	rig.get_joint(&"hand_l").add_child(shield)
+	shield.position = Vector3(-0.07, 0.03, 0)
+	shield.rotation_order = EULER_ORDER_XYZ
+	shield.rotation = Vector3(-1.5, 0.75, 0)
+	rig.joint_rest(&"elbow_l", Vector3(1.0, 0.25, 0))
+	rig.joint_rest(&"shoulder_l", Vector3(0.25, 0, -0.18))
+	rig.joint_rest(&"shoulder_r", Vector3(0.0, 0, 0.14))
+	rig.arm_swing_r = 0.45
+	rig.arm_swing_l = 0.15
+	light_up(rig)
+	return rig
+
+
+static func mage() -> CreatureRig:
+	var rig := CreatureRig.new()
+	F._biped_skeleton(rig, 1.02, 0.98, 0.86)
+	var chest: Node3D = rig.get_joint(&"chest")
+	var pelvis: Node3D = rig.get_joint(&"pelvis")
+	var ink := Color("6E2470")
+	var coat: Material = Look.matte(ink, 0.8)
+	var pale: Material = Look.matte(Color("D5D9E4"), 0.75)
+	var under: Material = Look.matte(Color("1B1830"), 0.8)
+	var torso: Array[Vector4] = [Vector4(0, -0.08, 0.16, 0.115), Vector4(0, 0.14, 0.145, 0.105), Vector4(0, 0.34, 0.195, 0.12), Vector4(0, 0.5, 0.205, 0.115), Vector4(0, 0.56, 0.09, 0.08)]
+	rig.part(chest, MeshKit.loft(torso, 12), coat)
+	rig.part(chest, MeshKit.loft([Vector4(0, 0.28, 0.255, 0.165), Vector4(0, 0.36, 0.25, 0.16), Vector4(0, 0.5, 0.2, 0.135), Vector4(0, 0.585, 0.085, 0.08)], 12), pale)
+	rig.part(pelvis, MeshKit.lathe(PackedVector2Array([Vector2(0.165, 0.0), Vector2(0.175, 0.08), Vector2(0.165, 0.1)]), 12), bronze(), Vector3(0, 0.0, 0), Vector3.ZERO, Vector3(1, 1, 0.72))
+	var tail_joint: Node3D = rig.joint(&"cloth_back", pelvis, Vector3(0, 0.04, 0.12))
+	rig.part(tail_joint, MeshKit.cloth(0.34, 0.66, 1.0, 0.2, 6, 7), dbl(ink))
+	for s: float in [-1.0, 1.0]:
+		rig.part(pelvis, MeshKit.cloth(0.15, 0.2, 0.86, 0.04, 3, 5), dbl(ink), Vector3(s * 0.14, 0.04, -0.11), Vector3(0, PI + s * 0.28, 0))
+		rig.part(pelvis, MeshKit.cloth(0.02, 0.022, 0.84, 0.04, 1, 5), dbl(Color("4F8DFF"), 0.6), Vector3(s * 0.05, 0.04, -0.125), Vector3(0, PI, 0))
+	seal(rig, chest, Vector3(0, 0.41, -0.165), Color("4F8DFF"), 1.0)
+	seal(rig, chest, Vector3(0, 0.43, 0.16), Color("4F8DFF"), 1.0)
+	# gola em duas asas (placas sólidas)
+	var wing := PackedVector2Array([Vector2(0.03, 0.0), Vector2(0.19, 0.0), Vector2(0.27, 0.2), Vector2(0.3, 0.44), Vector2(0.12, 0.3), Vector2(0.03, 0.12)])
+	var wing_in := PackedVector2Array([Vector2(0.05, 0.03), Vector2(0.17, 0.03), Vector2(0.245, 0.2), Vector2(0.27, 0.37), Vector2(0.125, 0.26), Vector2(0.05, 0.13)])
+	rig.part(chest, WeaponKit._plate(wing, 0.03), Look.matte(Color("D5D9E4"), 0.5), Vector3(0, 0.55, 0.1), Vector3(0.28, 0, 0))
+	rig.part(chest, WeaponKit._plate(mirror(wing), 0.03), Look.matte(Color("D5D9E4"), 0.5), Vector3(0, 0.55, 0.1), Vector3(0.28, 0, 0))
+	rig.part(chest, WeaponKit._plate(wing_in, 0.04), Look.matte(Color("4F8DFF"), 0.5), Vector3(0, 0.55, 0.09), Vector3(0.28, 0, 0))
+	rig.part(chest, WeaponKit._plate(mirror(wing_in), 0.04), Look.matte(Color("4F8DFF"), 0.5), Vector3(0, 0.55, 0.09), Vector3(0.28, 0, 0))
+	for side: StringName in [&"r", &"l"]:
+		F._limb(rig, StringName("shoulder_%s" % side), 0.3, 0.065, 0.058, coat)
+		rig.part(rig.get_joint(StringName("elbow_%s" % side)), MeshKit.sphere(0.06, 8), coat)
+		rig.part(rig.get_joint(StringName("elbow_%s" % side)), MeshKit.cylinder(0.095, 0.06, 0.28, 10), coat, Vector3(0, -0.15, 0))
+		rig.part(rig.get_joint(StringName("elbow_%s" % side)), MeshKit.cylinder(0.1, 0.098, 0.03, 10), pale, Vector3(0, -0.285, 0))
+		rig.part(rig.get_joint(StringName("hand_%s" % side)), MeshKit.box(Vector3(0.075, 0.1, 0.085)), skin(), Vector3(0, -0.03, 0))
+		F._limb(rig, StringName("hip_%s" % side), 0.46, 0.085, 0.062, under)
+		rig.part(rig.get_joint(StringName("knee_%s" % side)), MeshKit.sphere(0.065, 8), under)
+		F._limb(rig, StringName("knee_%s" % side), 0.46, 0.066, 0.052, under)
+	boots(rig, Look.matte(Color("2A2038"), 0.6))
+	var h := head(rig, skin())
+	var hair: Material = Look.matte(Color("CBD2E2"), 0.55)
+	var cap: Array[Vector4] = [Vector4(0, 0.185, 0.106, 0.122), Vector4(0, 0.235, 0.09, 0.106), Vector4(0, 0.28, 0.03, 0.04)]
+	rig.part(h, MeshKit.loft(cap, 10), hair, Vector3(0, 0.0, 0.008))
+	var nape: Array[Vector4] = [Vector4(0, 0.03, 0.075, 0.07), Vector4(0, 0.12, 0.105, 0.09), Vector4(0, 0.2, 0.1, 0.09)]
+	rig.part(h, MeshKit.loft(nape, 10), hair, Vector3(0, 0.0, 0.045))
+	rig.part(h, MeshKit.sphere(0.058, 8), hair, Vector3(0, 0.3, 0.05))
+	rig.part(h, MeshKit.cloth(0.1, 0.04, 0.62, 0.03, 2, 4), dbl(Color("CBD2E2"), 0.55), Vector3(0, 0.22, 0.125))
+	for s: float in [-1.0, 1.0]:
+		rig.part(h, MeshKit.cloth(0.05, 0.02, 0.22, 0.0, 1, 3), dbl(Color("CBD2E2"), 0.55), Vector3(s * 0.108, 0.2, -0.03), Vector3(0, PI * 0.5, 0))
+	# cajado
+	var staff := Node3D.new()
+	rig.part(staff, MeshKit.cylinder(0.022, 0.03, 2.1, 8), Look.matte(Color("2A2038"), 0.5), Vector3(0, -0.03, 0))
+	rig.part(staff, MeshKit.torus(0.135, 0.185, 20), bronze(), Vector3(0, 1.11, 0), Vector3(PI * 0.5, 0, 0))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 2
+	rig.part(staff, MeshKit.sphere(0.085, 12), Look.glow(Color("8A7BFF"), 0.9), Vector3(0, 1.11, 0), Vector3.ZERO, Vector3(1, 1.45, 1))
+	rig.get_joint(&"hand_r").add_child(staff)
+	staff.position = Vector3(0, -0.02, 0)
+	rig.joint_rest(&"shoulder_r", Vector3(0.32, 0, 0.3))
+	rig.joint_rest(&"elbow_r", Vector3(0.4, 0, 0))
+	staff.rotation = Vector3(-0.97, 0, -0.32)
+	rig.arm_swing_r = 0.2
+	rig.arm_swing_l = 0.6
+	light_up(rig)
+	return rig
+
+
+static func priest() -> CreatureRig:
+	var rig := CreatureRig.new()
+	F._biped_skeleton(rig, 0.95, 0.95, 1.0)
+	var chest: Node3D = rig.get_joint(&"chest")
+	var pelvis: Node3D = rig.get_joint(&"pelvis")
+	var jade := Color("247050")
+	var robe: Material = Look.matte(jade, 0.8)
+	var cream: Material = Look.matte(Color("E6DCC0"), 0.75)
+	var gold: Material = Look.matte(Color("C9A24F"), 0.35, 0.6)
+	var torso: Array[Vector4] = [Vector4(0, -0.08, 0.17, 0.125), Vector4(0, 0.16, 0.17, 0.125), Vector4(0, 0.34, 0.215, 0.135), Vector4(0, 0.47, 0.22, 0.13), Vector4(0, 0.54, 0.1, 0.09)]
+	rig.part(chest, MeshKit.loft(torso, 12), robe)
+	# colarinho cruzado creme
+	rig.part(chest, MeshKit.lathe(PackedVector2Array([Vector2(0.17, 0.44), Vector2(0.13, 0.52), Vector2(0.08, 0.56)]), 12), cream, Vector3.ZERO, Vector3.ZERO, Vector3(1, 1, 0.75))
+	# saia escura inteira, sobreveste clara curta
+	var skirt := PackedVector2Array([Vector2(0.41, -0.885), Vector2(0.405, -0.85), Vector2(0.325, -0.5), Vector2(0.235, -0.18), Vector2(0.195, 0.06)])
+	rig.part(pelvis, MeshKit.lathe(skirt, 20), robe, Vector3.ZERO, Vector3.ZERO, Vector3(1, 1, 0.86))
+	rig.part(pelvis, MeshKit.lathe(PackedVector2Array([Vector2(0.42, -0.89), Vector2(0.413, -0.82), Vector2(0.39, -0.82)]), 20), gold, Vector3.ZERO, Vector3.ZERO, Vector3(1, 1, 0.86))
+	var over := PackedVector2Array([Vector2(0.305, -0.3), Vector2(0.3, -0.27), Vector2(0.245, -0.1), Vector2(0.21, 0.06)])
+	rig.part(pelvis, MeshKit.lathe(over, 20), cream, Vector3.ZERO, Vector3.ZERO, Vector3(1, 1, 0.86))
+	rig.part(pelvis, MeshKit.lathe(PackedVector2Array([Vector2(0.2, -0.03), Vector2(0.205, 0.1), Vector2(0.19, 0.13)]), 14), gold, Vector3.ZERO, Vector3.ZERO, Vector3(1, 1, 0.72))
+	rig.part(pelvis, MeshKit.cloth(0.11, 0.13, 0.36, 0.1, 2, 4), dbl(Color("C9A24F"), 0.5), Vector3(0, 0.0, -0.21), Vector3(0, PI, 0))
+	seal(rig, chest, Vector3(0, 0.33, -0.14), Color("FFD76A"), 0.9)
+	seal(rig, chest, Vector3(0, 0.42, 0.14), Color("FFD76A"), 0.9)
+	for side: StringName in [&"r", &"l"]:
+		F._limb(rig, StringName("shoulder_%s" % side), 0.3, 0.07, 0.075, robe)
+		var elbow: Node3D = rig.get_joint(StringName("elbow_%s" % side))
+		rig.part(elbow, MeshKit.sphere(0.075, 8), robe)
+		var sleeve: Array[Vector4] = [Vector4(0, -0.32, 0.115, 0.12), Vector4(0, -0.2, 0.105, 0.11), Vector4(0, 0.02, 0.08, 0.085)]
+		rig.part(elbow, MeshKit.loft(sleeve, 12), Look.matte(Color("E6DCC0"), 0.75))
+		rig.part(elbow, MeshKit.lathe(PackedVector2Array([Vector2(0.12, -0.325), Vector2(0.122, -0.29)]), 12, true, false), gold)
+		rig.part(elbow, MeshKit.loft([Vector4(0, -0.322, 0.108, 0.112), Vector4(0, -0.316, 0.108, 0.112)], 12), Look.matte(Color("14231F"), 0.9))
+		rig.part(rig.get_joint(StringName("hand_%s" % side)), MeshKit.box(Vector3(0.075, 0.1, 0.085)), skin(), Vector3(0, -0.03, 0))
+	var h := head(rig, skin())
+	rig.part(h, MeshKit.loft([Vector4(0, 0.185, 0.106, 0.122), Vector4(0, 0.215, 0.1, 0.116), Vector4(0, 0.25, 0.08, 0.09)], 10), cream, Vector3(0, 0.0, 0.008))
+	rig.part(h, MeshKit.loft([Vector4(0, 0.03, 0.075, 0.07), Vector4(0, 0.12, 0.105, 0.09), Vector4(0, 0.2, 0.1, 0.09)], 10), cream, Vector3(0, 0.0, 0.04))
+	var hat := PackedVector2Array([Vector2(0.45, 0.0), Vector2(0.44, 0.02), Vector2(0.2, 0.125), Vector2(0.05, 0.195), Vector2(0.0, 0.2)])
+	rig.part(h, MeshKit.lathe(hat, 16, false), Look.matte(Color("E2D6B6"), 0.45), Vector3(0, 0.215, 0))
+	rig.part(h, MeshKit.lathe(PackedVector2Array([Vector2(0.44, 0.0), Vector2(0.0, 0.05)]), 16, false), Look.matte(Color("3A2E25"), 0.7), Vector3(0, 0.215, 0))
+	rig.part(h, MeshKit.torus(0.12, 0.145, 16), gold, Vector3(0, 0.27, 0), Vector3.ZERO, Vector3(1, 0.45, 1))
+	rig.part(h, MeshKit.cloth(0.24, 0.3, 0.26, 0.06, 4, 3), dbl(Color("E6DCC0")), Vector3(0, 0.22, 0.125))
+	# bastão-lanterna
+	var staff := Node3D.new()
+	rig.part(staff, MeshKit.cylinder(0.02, 0.026, 1.5, 8), Look.matte(Color("2B211B"), 0.55), Vector3(0, 0.2, 0))
+	var lantern := Node3D.new()
+	lantern.position = Vector3(0, 0.98, 0)
+	staff.add_child(lantern)
+	rig.part(lantern, MeshKit.lathe(PackedVector2Array([Vector2(0.03, 0.14), Vector2(0.115, 0.1), Vector2(0.125, 0.08), Vector2(0.09, 0.08)]), 6, false), gold)
+	rig.part(lantern, MeshKit.lathe(PackedVector2Array([Vector2(0.11, -0.13), Vector2(0.115, -0.11), Vector2(0.08, -0.16)]), 6, false), gold)
+	rig.part(lantern, MeshKit.sphere(0.075, 10), Look.glow(Color("FFD76A"), 0.9), Vector3(0, -0.02, 0), Vector3.ZERO, Vector3(1, 1.3, 1))
+	for i in 6:
+		var a: float = TAU * float(i) / 6.0
+		rig.part(lantern, MeshKit.box(Vector3(0.012, 0.2, 0.012)), gold, Vector3(cos(a) * 0.105, -0.015, sin(a) * 0.105))
+	rig.get_joint(&"hand_r").add_child(staff)
+	staff.position = Vector3(0, -0.02, 0)
+	rig.joint_rest(&"shoulder_r", Vector3(0.2, 0, 0.32))
+	rig.joint_rest(&"elbow_r", Vector3(0.5, 0, 0))
+	staff.rotation = Vector3(-0.95, 0, -0.42)
+	rig.joint_rest(&"shoulder_l", Vector3(0.1, 0, -0.08))
+	rig.joint_rest(&"elbow_l", Vector3(0.2, 0, 0))
+	rig.stride = 0.4
+	rig.arm_swing_r = 0.2
+	rig.arm_swing_l = 0.4
+	light_up(rig)
+	return rig
+
+
+
+## Variantes de arma: testam a empunhadura e a leitura sem o cajado ou a lanterna.
+static func axe_variant() -> CreatureRig:
+	var rig := warrior()
+	for joint_name: StringName in [&"hand_r", &"hand_l"]:
+		for child in rig.get_joint(joint_name).get_children():
+			if not (child is MeshInstance3D):
+				child.free()
+	var axe: Node3D = WeaponKit.build_main_hand(&"greataxe")
+	rig.get_joint(&"hand_r").add_child(axe)
+	rig.joint_rest(&"shoulder_r", Vector3(0.6, 0, 0.2))
+	rig.joint_rest(&"elbow_r", Vector3(1.35, 0, 0))
+	rig.joint_rest(&"shoulder_l", Vector3(0.05, 0, -0.12))
+	rig.joint_rest(&"elbow_l", Vector3(0.0, 0, 0))
+	axe.position = Vector3(0, -0.03, 0)
+	axe.rotation = Vector3(-1.215, 0, 0)
+	return rig
+
+
+static func orb_variant() -> CreatureRig:
+	var rig := mage()
+	for child in rig.get_joint(&"hand_r").get_children():
+		if not (child is MeshInstance3D):
+			child.free()
+	var holder := Node3D.new()
+	rig.get_joint(&"hand_r").add_child(holder)
+	rig.part(holder, MeshKit.sphere(0.1, 16), Look.glow(Color("8A7BFF"), 0.9), Vector3(0, 0.0, 0))
+	rig.part(holder, MeshKit.torus(0.13, 0.155, 24), bronze(), Vector3(0, 0.0, 0), Vector3(0.6, 0.0, 0.4))
+	rig.joint_rest(&"shoulder_r", Vector3(0.35, 0, 0.1))
+	rig.joint_rest(&"elbow_r", Vector3(1.2, 0, 0))
+	holder.position = Vector3(0, -0.2, -0.02)
+	return rig
+
+
+static func tome_variant() -> CreatureRig:
+	var rig := priest()
+	for child in rig.get_joint(&"hand_r").get_children():
+		if not (child is MeshInstance3D):
+			child.free()
+	var book := Node3D.new()
+	rig.get_joint(&"hand_l").add_child(book)
+	var cover: Material = Look.matte(Color("5A2A22"), 0.7)
+	var pages: Material = Look.matte(Color("E8DFCA"), 0.9)
+	for side: float in [-1.0, 1.0]:
+		rig.part(book, MeshKit.box(Vector3(0.21, 0.28, 0.02)), cover, Vector3(side * 0.11, 0, 0), Vector3(0, side * 0.24, 0))
+		rig.part(book, MeshKit.box(Vector3(0.19, 0.25, 0.03)), pages, Vector3(side * 0.105, 0, 0.022), Vector3(0, side * 0.24, 0))
+	rig.joint_rest(&"shoulder_l", Vector3(0.45, 0, -0.1))
+	rig.joint_rest(&"elbow_l", Vector3(1.35, 0, 0))
+	book.position = Vector3(0.02, -0.12, -0.03)
+	book.rotation_order = EULER_ORDER_XYZ
+	book.rotation = Vector3(-1.55, 0, 0)
+	rig.joint_rest(&"shoulder_r", Vector3(0.3, 0, 0.14))
+	rig.joint_rest(&"elbow_r", Vector3(1.0, 0, 0))
+	var mote := Node3D.new()
+	rig.get_joint(&"hand_r").add_child(mote)
+	rig.part(mote, MeshKit.sphere(0.06, 12), Look.glow(Color("FFD76A"), 0.9), Vector3(0, -0.2, -0.02))
+	# lanterna pequena no cinto: a identidade não sai de cena
+	var belt := Node3D.new()
+	rig.get_joint(&"pelvis").add_child(belt)
+	belt.position = Vector3(0.24, -0.2, -0.06)
+	rig.part(belt, MeshKit.sphere(0.05, 10), Look.glow(Color("FFD76A"), 0.9), Vector3.ZERO, Vector3.ZERO, Vector3(1, 1.3, 1))
+	rig.part(belt, MeshKit.lathe(PackedVector2Array([Vector2(0.02, 0.1), Vector2(0.07, 0.07), Vector2(0.08, 0.06)]), 6, false), bronze())
+	return rig

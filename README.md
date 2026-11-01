@@ -44,6 +44,7 @@ src/ui/      HUD, janelas e saguão
 src/audio/   Música e sons de habilidade: escutam Events, a gameplay não os conhece
 assets/audio/  Faixas e efeitos usados pelo jogo
 documents/audio/raw/  MP3 originais do Stable Audio, com prompts e seeds no manifest.json
+documents/art/  Guia de estilo, fichas das classes, conceitos e ordens de serviço da direção de arte
 tests/       Testes automatizados e capturas visuais
 tools/       Gerador das texturas (node tools/bake_textures.mjs)
 ```
@@ -62,6 +63,17 @@ tools/       Gerador das texturas (node tools/bake_textures.mjs)
 - **Texturas:** ajuste `tools/bake_textures.mjs` e rode com Node.
 - **Música:** troque as faixas, volumes e fades em `data/music.tres`.
 - **Som de habilidade:** coloque o WAV em `assets/audio/sfx/` e ligue-o em `data/skill_sounds.tres`, pelo id da habilidade (`guard_<classe>` para a defesa). Cada momento (conjuração, disparo, impacto, contínuo) é um `SoundClip` com variações, ganho e variação de tom. Skill sem entrada fica em silêncio. Depois, atualize a planilha `SHEET` em `tests/sfx_tests.gd`.
+
+## Build para Windows
+
+Requer os templates de exportação do Godot 4.7.2.
+
+```bash
+mkdir -p build/windows
+~/aplicativos/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --export-release "Windows Desktop" build/windows/CacadoresDePortais.exe
+```
+
+Distribua o `.exe` e o `.pck` na mesma pasta.
 
 ## Testes
 
