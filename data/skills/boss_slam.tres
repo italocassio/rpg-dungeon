@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_2eyxv"]
 [ext_resource type="Resource" path="res://data/effects/chill.tres" id="2_cijdc"]
+[ext_resource type="Resource" path="res://data/skill_fx/boss_slam.tres" id="fx_slam"]
 
 [resource]
 script = ExtResource("1_2eyxv")
@@ -17,3 +18,4 @@ cooldown = 12.0
 target_effect = ExtResource("2_cijdc")
 telegraph = true
 animation = &"overhead"
+fx = ExtResource("fx_slam")

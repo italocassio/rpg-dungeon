@@ -23,7 +23,7 @@ class Follow:
 		var goal: Vector3 = bot.formation_point()
 		var distance: float = bot.global_position.distance_to(goal)
 		if distance > PartyBot.CATCH_UP_DISTANCE:
-			bot.global_position = bot.leader.global_position + bot.leader.global_basis * bot.slot_offset.normalized()
+			bot.global_position = bot.safe_point(bot.leader.global_position + bot.leader.global_basis * bot.slot_offset.normalized())
 			return
 		if distance > PartyBot.FOLLOW_DISTANCE * 0.5:
 			bot.move_to(goal, unit.stats.move_speed * (1.35 if distance > 10.0 else 1.0), delta)
@@ -58,5 +58,5 @@ class Dead:
 			return
 		_wait -= delta
 		if _wait <= 0.0:
-			bot.global_position = bot.formation_point()
+			bot.global_position = bot.respawn_point()
 			bot.combatant.revive(0.6)

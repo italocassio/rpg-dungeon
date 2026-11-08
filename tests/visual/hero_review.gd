@@ -2,6 +2,11 @@ extends Node3D
 ## Renders e métricas fixos para a revisão de arte (OS-001). Só lê o jogo.
 ## godot --display-driver x11 --disable-vsync --resolution 1920x1080 --path . res://tests/visual/hero_review.tscn \
 ##   -- --out=DIR [--class=warrior] [--tier=0..3] [--variant=0, só com tier 0] [--weapon=sword_shield] [--rarity=0]
+## Monstro (não combina com as opções de herói): monta o modelo pelo CreatureFactory, na escala do MonsterData.
+## godot --display-driver x11 --disable-vsync --resolution 1920x1080 --path . res://tests/visual/hero_review.tscn \
+##   -- --out=DIR --monster=frost_king
+
+const MonsterMetrics := preload("res://tests/visual/monster_metrics.gd")
 
 ## Fixo em SubViewport: a janela real perde a altura da barra de título e varia com o gerenciador de janelas.
 const RESOLUTION := Vector2i(1920, 1080)
@@ -10,6 +15,7 @@ const ROOM_WARMUP_FRAMES := 10
 const CAMERA_NEAR := 0.06
 const CAMERA_FAR := 160.0
 
+const HERO_OPTIONS: PackedStringArray = ["class", "tier", "variant", "weapon", "rarity"]
 const AVAILABLE_TIERS: Array[int] = [0, 1, 2, 3]
 
 const DUNGEON_ID := &"frost_gate"
@@ -32,6 +38,14 @@ const NEUTRAL_LIGHT_ROTATION := Vector3(-0.8, 0.6, 0.0)
 const NEUTRAL_FOV := 26.0
 const NEUTRAL_EYE := Vector3(0.0, 1.2, 7.0)
 const NEUTRAL_TARGET := Vector3(0.0, 1.08, 0.0)
+
+## Monstro: a câmera se ajusta à caixa do modelo na escala de mundo. A altura visível é a do modelo vezes a margem.
+const MONSTER_MARGIN := 1.18
+const MONSTER_POSE_FOV := 40.0
+const MONSTER_POSE_SPAN := 2.1
+const MONSTER_POSE_LIFT := 0.15
+const MONSTER_POSE_CELL := 1080
+const MONSTER_POSES: Array[StringName] = [&"swing", &"overhead", &"thrust"]
 
 const LINE_SPACING := 1.8
 const SIDE_YAW := 90.0
@@ -125,6 +139,9 @@ var _tier: int = 0
 var _variant: int = 0
 var _weapon_filter := &""
 var _rarity: int = ItemData.Rarity.COMMON
+var _monster_id := &""
+var _monster: MonsterData
+var _hero_options: PackedStringArray = []
 
 var _classes: Array[StringName] = []
 var _models: Dictionary = {}
@@ -156,10 +173,13 @@ func _ready() -> void:
 	_stage.add_child(_camera)
 	_camera.make_current()
 
-	await _review_neutral_stage()
-	await _review_silhouettes()
-	await _review_room()
-	await _review_lobby()
+	if _monster != null:
+		await _review_monster()
+	else:
+		await _review_neutral_stage()
+		await _review_silhouettes()
+		await _review_room()
+		await _review_lobby()
 
 	var elapsed: float = (Time.get_ticks_msec() - started) / 1000.0
 	_write_report(elapsed)
@@ -172,6 +192,8 @@ func _read_arguments() -> String:
 		var pair: PackedStringArray = argument.trim_prefix("--").split("=", true, 1)
 		if pair.size() != 2:
 			return "argumento inválido: %s" % argument
+		if HERO_OPTIONS.has(pair[0]):
+			_hero_options.append(pair[0])
 		match pair[0]:
 			"out":
 				_out = pair[1]
@@ -185,12 +207,18 @@ func _read_arguments() -> String:
 				_weapon_filter = StringName(pair[1])
 			"rarity":
 				_rarity = pair[1].to_int()
+			"monster":
+				if pair[1].is_empty():
+					return "monstro sem id"
+				_monster_id = StringName(pair[1])
 			_:
 				return "argumento desconhecido: %s" % argument
 	return ""
 
 
 func _check_arguments() -> String:
+	if _monster_id != &"":
+		return _check_monster()
 	if not AVAILABLE_TIERS.has(_tier):
 		return "tier %d não existe" % _tier
 	if _tier != 0 and _variant != 0:
@@ -210,6 +238,15 @@ func _check_arguments() -> String:
 		return "classe desconhecida: %s" % _class_filter
 	if _weapon_filter != &"" and not weapon_models.has(_weapon_filter):
 		return "arma desconhecida: %s" % _weapon_filter
+	return ""
+
+
+func _check_monster() -> String:
+	if not _hero_options.is_empty():
+		return "--monster não combina com --%s" % _hero_options[0]
+	_monster = GameDB.monster(_monster_id)
+	if _monster == null:
+		return "monstro desconhecido: %s" % _monster_id
 	return ""
 
 
@@ -330,9 +367,9 @@ func _turnaround(rig: CreatureRig) -> Array[Image]:
 	return views
 
 
-func _center_cell(image: Image) -> Image:
-	var left: int = floori((image.get_width() - SHEET_CELL_WIDTH) * 0.5)
-	return image.get_region(Rect2i(left, 0, SHEET_CELL_WIDTH, image.get_height()))
+func _center_cell(image: Image, width: int = SHEET_CELL_WIDTH) -> Image:
+	var left: int = floori((image.get_width() - width) * 0.5)
+	return image.get_region(Rect2i(left, 0, width, image.get_height()))
 
 
 func _sheet(images: Array[Image], columns: int) -> Image:
@@ -428,12 +465,15 @@ func _shoot_rarity_shelf(model: StringName, off_hand: bool, file_name: String) -
 
 
 func _review_walk() -> void:
-	var rigs: Array[CreatureRig] = _spawn_line(Vector3.RIGHT, LINE_SPACING)
+	await _walk_shots(_spawn_line(Vector3.RIGHT, LINE_SPACING), WALK_SPEED)
+
+
+func _walk_shots(rigs: Array[CreatureRig], speed: float) -> void:
 	for rig in rigs:
 		for _frame in WALK_FRAMES:
-			rig.animate(WALK_DELTA, WALK_SPEED)
+			rig.animate(WALK_DELTA, speed)
 		rig._phase = PI * 0.5
-		rig.animate(0.0, WALK_SPEED)
+		rig.animate(0.0, speed)
 	_set_line_yaw(rigs, SIDE_YAW)
 	_save(await _shoot(), "walk_side.png")
 	_set_line_yaw(rigs, BACK_YAW)
@@ -480,7 +520,7 @@ func _review_swing() -> void:
 		if _weapon_filter != &"" and weapon_index > 0:
 			break
 		var rigs: Array[CreatureRig] = _spawn_line(Vector3.FORWARD, LINE_SPACING, weapon_index)
-		columns.append(await _swing_bands(rigs))
+		columns.append(await _strike_bands(rigs, &"swing"))
 		_despawn_line(rigs)
 	var bands: Array[Image] = []
 	for phase in columns[0].size():
@@ -489,14 +529,14 @@ func _review_swing() -> void:
 	_save(_sheet(bands, columns.size()), "pose_swing.png")
 
 
-func _swing_bands(rigs: Array[CreatureRig]) -> Array[Image]:
+func _strike_bands(rigs: Array[CreatureRig], action: StringName) -> Array[Image]:
 	var bands: Array[Image] = []
 	for rig in rigs:
-		rig.wind_up(&"swing", POSE_WINDUP_TIME)
+		rig.wind_up(action, POSE_WINDUP_TIME)
 	_animate_line(rigs, POSE_WINDUP_FRAMES)
 	bands.append(await _shoot())
 	for rig in rigs:
-		rig.strike(&"swing")
+		rig.strike(action)
 	_animate_line(rigs, SWING_IMPACT_FRAMES)
 	bands.append(await _shoot())
 	_animate_line(rigs, SWING_FINISH_FRAMES)
@@ -508,6 +548,89 @@ func _animate_line(rigs: Array[CreatureRig], frames: int) -> void:
 	for rig in rigs:
 		for _frame in frames:
 			rig.animate(POSE_DELTA, 0.0)
+
+
+## Palco neutro dos heróis com o monstro no lugar: volta, passo de lado e de costas, e os golpes.
+## Todo render usa o rig montado como no jogo (`CreatureFactory.build` + `rig.scale = MonsterData.scale`).
+func _review_monster() -> void:
+	_camera.environment = _flat_environment(NEUTRAL_BACKGROUND)
+	var sun := DirectionalLight3D.new()
+	sun.rotation = NEUTRAL_LIGHT_ROTATION
+	_stage.add_child(sun)
+
+	var rig: CreatureRig = _spawn_monster()
+	var box: AABB = _world_bounds(rig)
+	_models[_monster_id] = _monster_report(rig)
+	_aim_monster_front(box)
+	_save(_turn_sheet(await _turnaround(rig)), "neutral_%s.png" % _monster_id)
+	_despawn(rig)
+
+	var walkers: Array[CreatureRig] = [_spawn_monster()]
+	await _walk_shots(walkers, _monster.move_speed)
+
+	_aim_monster_side(box)
+	for action in MONSTER_POSES:
+		var fighters: Array[CreatureRig] = [_spawn_monster()]
+		var cells: Array[Image] = []
+		for band in await _strike_bands(fighters, action):
+			cells.append(_center_cell(band, MONSTER_POSE_CELL))
+		_save(_sheet(cells, cells.size()), "pose_%s.png" % action)
+		_despawn_line(fighters)
+	_despawn(sun)
+
+
+func _spawn_monster() -> CreatureRig:
+	var rig: CreatureRig = CreatureFactory.build(_monster.visual, _monster_glow())
+	rig.scale = Vector3.ONE * _monster.scale
+	_stage.add_child(rig)
+	rig.animate(0.0, 0.0)
+	return rig
+
+
+## A cor de olho vem da masmorra que usa o monstro (chefe ou grupo); sem nenhuma, a da sala de referência.
+func _monster_glow() -> Color:
+	for dungeon in GameDB.catalog.dungeons:
+		if dungeon.boss == _monster:
+			return dungeon.enemy_glow
+		for group in dungeon.spawn_groups:
+			if group.monster == _monster:
+				return dungeon.enemy_glow
+	return GameDB.dungeon(DUNGEON_ID).enemy_glow
+
+
+## Caixa de todas as malhas no mundo (rig na origem, com a escala do MonsterData).
+func _world_bounds(rig: CreatureRig) -> AABB:
+	var points := PackedVector3Array()
+	for instance: MeshInstance3D in rig.find_children("*", "MeshInstance3D", true, false):
+		if instance.mesh != null and instance.is_visible_in_tree():
+			points.append_array(instance.global_transform * instance.mesh.get_faces())
+	return _bounds(points)
+
+
+func _aim_monster_front(box: AABB) -> void:
+	var distance: float = box.size.y * 0.5 * MONSTER_MARGIN / tan(deg_to_rad(NEUTRAL_FOV * 0.5))
+	var center: Vector3 = box.get_center()
+	_aim(NEUTRAL_FOV, Vector3(0.0, center.y, distance), center)
+
+
+## De +X, como a câmera de pose dos heróis; o espaço extra no alto é para o braço erguido.
+func _aim_monster_side(box: AABB) -> void:
+	var distance: float = box.size.y * MONSTER_POSE_SPAN * 0.5 / tan(deg_to_rad(MONSTER_POSE_FOV * 0.5))
+	var center: Vector3 = box.get_center() + Vector3.UP * box.size.y * MONSTER_POSE_LIFT
+	_aim(MONSTER_POSE_FOV, Vector3(distance, center.y, 0.0), center)
+
+
+func _monster_report(rig: CreatureRig) -> Dictionary:
+	var stats: Dictionary = _mesh_stats(rig)
+	stats.erase("key_width_m")
+	stats["scale"] = _monster.scale
+	stats["world_height_m"] = snappedf(_world_bounds(rig).size.y, 0.001)
+	stats["joint_gaps"] = MonsterMetrics.joint_gaps(rig, _monster.scale)
+	stats["body"] = MonsterMetrics.body_vs_capsule(rig, _monster.scale, _monster.body_radius, _monster.body_height)
+	var probe: CreatureRig = _spawn_monster()
+	stats["weapon_poses"] = MonsterMetrics.weapon_poses(probe, _monster.scale)
+	_despawn(probe)
+	return stats
 
 
 func _review_silhouettes() -> void:
@@ -734,7 +857,7 @@ func _review_mannequin(lobby: LobbyStage) -> void:
 
 
 ## Partes, triângulos e medidas no espaço do próprio modelo, na pose atual.
-func _mesh_stats(root: Node3D, budget: Dictionary) -> Dictionary:
+func _mesh_stats(root: Node3D, budget: Dictionary = {}) -> Dictionary:
 	var to_root: Transform3D = root.global_transform.affine_inverse()
 	var parts: int = 0
 	var tris: int = 0
@@ -752,14 +875,16 @@ func _mesh_stats(root: Node3D, budget: Dictionary) -> Dictionary:
 			key_points.append_array(points)
 		if instance.material_override != null:
 			materials[instance.material_override] = true
-	return {
+	var stats: Dictionary = {
 		"parts": parts,
 		"tris": tris,
 		"materials": materials.size(),
 		"height_m": snappedf(_bounds(all_points).size.y, 0.001),
 		"key_width_m": snappedf(_bounds(key_points).size.x, 0.001),
-		"limit_ok": parts <= budget["parts"] and tris <= budget["tris"] and materials.size() <= budget["materials"],
 	}
+	if not budget.is_empty():
+		stats["limit_ok"] = parts <= budget["parts"] and tris <= budget["tris"] and materials.size() <= budget["materials"]
+	return stats
 
 
 ## Peças marcadas com `set_meta(&"tier", N)`: medidas no espaço do modelo, na pose atual.
@@ -1002,24 +1127,37 @@ func _rule_v4(class_id: StringName, pixels: Dictionary) -> Dictionary:
 	}
 
 
+func _report_settings() -> Dictionary:
+	if _monster != null:
+		return {
+			"monster": String(_monster_id),
+			"visual": String(_monster.visual),
+			"scale": _monster.scale,
+			"glow": "#" + _monster_glow().to_html(false),
+			"resolution": [RESOLUTION.x, RESOLUTION.y],
+		}
+	return {
+		"dungeon": String(DUNGEON_ID),
+		"quality": "medium",
+		"resolution": [RESOLUTION.x, RESOLUTION.y],
+		"tier": _tier,
+		"variant": _variant,
+		"weapon": String(_weapon_filter),
+		"rarity": _rarity,
+	}
+
+
 func _write_report(elapsed: float) -> void:
 	var models: Dictionary = {}
-	for class_id in _classes:
-		models[String(class_id)] = _models[class_id]
+	for model_id: StringName in _models:
+		models[String(model_id)] = _models[model_id]
 	var report: Dictionary = {
-		"settings": {
-			"dungeon": String(DUNGEON_ID),
-			"quality": "medium",
-			"resolution": [RESOLUTION.x, RESOLUTION.y],
-			"tier": _tier,
-			"variant": _variant,
-			"weapon": String(_weapon_filter),
-			"rarity": _rarity,
-		},
+		"settings": _report_settings(),
 		"elapsed_s": snappedf(elapsed, 0.1),
 		"models": models,
-		"mannequin": {"head_px": _mannequin.get("head_px", -1.0)},
 	}
+	if _monster == null:
+		report["mannequin"] = {"head_px": _mannequin.get("head_px", -1.0)}
 	var file: FileAccess = FileAccess.open(_out.path_join("report.json"), FileAccess.WRITE)
 	if file == null:
 		printerr("hero_review: falha ao gravar report.json: %s" % error_string(FileAccess.get_open_error()))

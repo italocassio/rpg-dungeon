@@ -27,7 +27,14 @@ const SHEET: Dictionary = {
 	&"p_bless": {"cast": ["p_holy_charge"], "fire": ["p_bless"]},
 	&"p_judgement": {"cast": ["p_holy_charge"], "fire": ["p_judgement"]},
 	&"p_miracle": {"cast": ["p_holy_charge"], "fire": ["p_miracle"]},
+	&"boss_strike": {"fire": ["boss_strike_1", "boss_strike_2"]},
+	&"boss_cleave": {"cast": ["boss_cleave_cast"], "fire": ["boss_cleave_fire"]},
+	&"boss_slam": {"cast": ["boss_slam_cast"], "impact": ["boss_slam_impact"]},
+	&"boss_spikes": {"cast": ["boss_spikes_cast"], "impact": ["boss_spikes_impact"]},
+	&"boss_nova": {"cast": ["boss_nova_cast"], "impact": ["boss_nova_impact"]},
 }
+## Habilidades do Rei Gélido com som, e o dono delas no banco.
+const BOSS_ID := &"frost_king"
 
 var _passed: int = 0
 var _failed: int = 0
@@ -254,11 +261,59 @@ func test_monster_skills_stay_silent() -> void:
 	var director: SfxDirector = _director()
 	var unit: Combatant = _unit(Combatant.Team.MONSTERS)
 	var monster_skill := SkillData.new()
-	monster_skill.id = &"boss_slam"
+	monster_skill.id = &"mon_smash"
 	Events.skill_cast_started.emit(monster_skill, unit)
 	Events.skill_fired.emit(monster_skill, unit)
 	Events.skill_impacted.emit(monster_skill, unit, Vector3.ZERO)
 	equal(_playing(director), [], "monstro sem som mapeado não toca nada")
+
+
+func _boss_skill(id: StringName) -> SkillData:
+	var boss: MonsterData = GameDB.monster(BOSS_ID)
+	var skills: Array[SkillData] = boss.skills.duplicate()
+	for phase: BossPhaseData in boss.phases:
+		skills.append_array(phase.skills)
+	for skill: SkillData in skills:
+		if skill.id == id:
+			return skill
+	return null
+
+
+## O chefe toca os sons dele no lugar onde está, mais baixo que o jogador (como todo som que não é do jogador).
+func test_boss_sounds_play_from_the_boss() -> void:
+	var spot := Vector3(7.0, 0.0, -3.0)
+	for id: StringName in [&"boss_strike", &"boss_cleave", &"boss_slam", &"boss_spikes", &"boss_nova"]:
+		var skill: SkillData = _boss_skill(id)
+		check(skill != null, "%s existe no chefe" % id)
+		if skill == null:
+			continue
+		var sound: SkillSoundData = _sound(id)
+		var director: SfxDirector = _director()
+		var boss: Combatant = _unit(Combatant.Team.MONSTERS, spot)
+		var cases: Array[Dictionary] = [
+			{"slot": "cast", "clip": sound.cast, "emit": func() -> void: Events.skill_cast_started.emit(skill, boss)},
+			{"slot": "fire", "clip": sound.fire, "emit": func() -> void: Events.skill_fired.emit(skill, boss)},
+			{"slot": "impact", "clip": sound.impact, "emit": func() -> void: Events.skill_impacted.emit(skill, boss, spot)},
+		]
+		for case in cases:
+			var clip: SoundClip = case["clip"]
+			for voice: AudioStreamPlayer3D in director._voices:
+				voice.stop()
+			case["emit"].call()
+			if clip == null:
+				equal(_playing(director), [], "%s: sem som de %s, nada toca" % [id, case["slot"]])
+				continue
+			var heard: Array = _playing(director)
+			equal(heard.size(), 1, "%s: %s toca uma voz" % [id, case["slot"]])
+			if heard.is_empty():
+				continue
+			check(_names(clip).has(heard[0]), "%s: %s toca um arquivo do próprio slot (%s)" % [id, case["slot"], heard[0]])
+			var voice: AudioStreamPlayer3D = _voice_of(director, heard[0])
+			equal(voice.global_position, spot, "%s: %s sai de onde o chefe está" % [id, case["slot"]])
+			equal(voice.attenuation_model, AudioStreamPlayer3D.ATTENUATION_INVERSE_DISTANCE, "%s: %s tem posição no mundo" % [id, case["slot"]])
+			equal(voice.volume_db, clip.volume_db + director.bank.ally_volume_db, "%s: %s não tem o volume do jogador" % [id, case["slot"]])
+			await get_tree().process_frame
+			await _frames(SfxDirector.MIN_REPEAT_FRAMES)
 
 
 func test_charge_is_cut_when_the_skill_fires() -> void:

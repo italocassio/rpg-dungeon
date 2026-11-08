@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="SkillData" format=3]
 
 [ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_ppdg3"]
+[ext_resource type="Resource" path="res://data/skill_fx/boss_nova.tres" id="fx_nova"]
 
 [resource]
 script = ExtResource("1_ppdg3")
@@ -16,3 +17,4 @@ cast_time = 2.4
 cooldown = 24.0
 telegraph = true
 animation = &"overhead"
+fx = ExtResource("fx_nova")

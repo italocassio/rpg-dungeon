@@ -35,6 +35,16 @@
 [ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/w_slash_3.wav" id="w_slash_3"]
 [ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/w_warcry.wav" id="w_warcry"]
 [ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/w_whirl.wav" id="w_whirl"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/boss_strike_1.wav" id="boss_strike_1"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/boss_strike_2.wav" id="boss_strike_2"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/boss_cleave_cast.wav" id="boss_cleave_cast"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/boss_cleave_fire.wav" id="boss_cleave_fire"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/boss_slam_cast.wav" id="boss_slam_cast"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/boss_slam_impact.wav" id="boss_slam_impact"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/boss_spikes_cast.wav" id="boss_spikes_cast"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/boss_spikes_impact.wav" id="boss_spikes_impact"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/boss_nova_cast.wav" id="boss_nova_cast"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/boss_nova_impact.wav" id="boss_nova_impact"]
 
 [sub_resource type="Resource" id="clip_w_slash"]
 script = ExtResource("3_clip")
@@ -326,6 +336,81 @@ id = &"p_miracle"
 cast = SubResource("clip_p_holy_charge")
 fire = SubResource("clip_p_miracle")
 
+[sub_resource type="Resource" id="clip_boss_strike"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("boss_strike_1"), ExtResource("boss_strike_2")])
+volume_db = -3.5
+pitch_jitter = 0.05
+
+[sub_resource type="Resource" id="clip_boss_cleave_cast"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("boss_cleave_cast")])
+volume_db = -4.0
+
+[sub_resource type="Resource" id="clip_boss_cleave_fire"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("boss_cleave_fire")])
+volume_db = -2.0
+
+[sub_resource type="Resource" id="clip_boss_slam_cast"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("boss_slam_cast")])
+volume_db = -3.5
+
+[sub_resource type="Resource" id="clip_boss_slam_impact"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("boss_slam_impact")])
+volume_db = -8.0
+
+[sub_resource type="Resource" id="clip_boss_spikes_cast"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("boss_spikes_cast")])
+volume_db = 3.5
+
+[sub_resource type="Resource" id="clip_boss_spikes_impact"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("boss_spikes_impact")])
+volume_db = 0.0
+
+[sub_resource type="Resource" id="clip_boss_nova_cast"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("boss_nova_cast")])
+volume_db = -2.0
+
+[sub_resource type="Resource" id="clip_boss_nova_impact"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("boss_nova_impact")])
+volume_db = -3.0
+
+[sub_resource type="Resource" id="sound_boss_strike"]
+script = ExtResource("2_sound")
+id = &"boss_strike"
+fire = SubResource("clip_boss_strike")
+
+[sub_resource type="Resource" id="sound_boss_cleave"]
+script = ExtResource("2_sound")
+id = &"boss_cleave"
+cast = SubResource("clip_boss_cleave_cast")
+fire = SubResource("clip_boss_cleave_fire")
+
+[sub_resource type="Resource" id="sound_boss_slam"]
+script = ExtResource("2_sound")
+id = &"boss_slam"
+cast = SubResource("clip_boss_slam_cast")
+impact = SubResource("clip_boss_slam_impact")
+
+[sub_resource type="Resource" id="sound_boss_spikes"]
+script = ExtResource("2_sound")
+id = &"boss_spikes"
+cast = SubResource("clip_boss_spikes_cast")
+impact = SubResource("clip_boss_spikes_impact")
+
+[sub_resource type="Resource" id="sound_boss_nova"]
+script = ExtResource("2_sound")
+id = &"boss_nova"
+cast = SubResource("clip_boss_nova_cast")
+impact = SubResource("clip_boss_nova_impact")
+
 [resource]
 script = ExtResource("1_bank")
-sounds = Array[ExtResource("2_sound")]([SubResource("sound_w_slash"), SubResource("sound_w_charge"), SubResource("sound_w_whirl"), SubResource("sound_w_warcry"), SubResource("sound_w_seismic"), SubResource("sound_w_monarch"), SubResource("sound_guard_warrior"), SubResource("sound_guard_mage"), SubResource("sound_guard_priest"), SubResource("sound_m_bolt"), SubResource("sound_m_fireball"), SubResource("sound_m_icelance"), SubResource("sound_m_meteor"), SubResource("sound_m_blink"), SubResource("sound_m_nova"), SubResource("sound_p_smite"), SubResource("sound_p_heal"), SubResource("sound_p_circle"), SubResource("sound_p_bless"), SubResource("sound_p_judgement"), SubResource("sound_p_miracle")])
+sounds = Array[ExtResource("2_sound")]([SubResource("sound_w_slash"), SubResource("sound_w_charge"), SubResource("sound_w_whirl"), SubResource("sound_w_warcry"), SubResource("sound_w_seismic"), SubResource("sound_w_monarch"), SubResource("sound_guard_warrior"), SubResource("sound_guard_mage"), SubResource("sound_guard_priest"), SubResource("sound_m_bolt"), SubResource("sound_m_fireball"), SubResource("sound_m_icelance"), SubResource("sound_m_meteor"), SubResource("sound_m_blink"), SubResource("sound_m_nova"), SubResource("sound_p_smite"), SubResource("sound_p_heal"), SubResource("sound_p_circle"), SubResource("sound_p_bless"), SubResource("sound_p_judgement"), SubResource("sound_p_miracle"), SubResource("sound_boss_strike"), SubResource("sound_boss_cleave"), SubResource("sound_boss_slam"), SubResource("sound_boss_spikes"), SubResource("sound_boss_nova")])

@@ -1,0 +1,100 @@
+{
+	"elapsed_s": 1.4,
+	"models": {
+		"frost_king": {
+			"body": {
+				"box_max_m": [
+					1.753,
+					5.622,
+					0.632
+				],
+				"box_min_m": [
+					-1.756,
+					-0.112,
+					-0.865
+				],
+				"box_size_m": [
+					3.509,
+					5.735,
+					1.497
+				],
+				"capsule_height_m": 5.8,
+				"capsule_radius_m": 1.5,
+				"fits": false,
+				"fits_height": true,
+				"fits_radius": false,
+				"height_ratio": 0.989,
+				"overflow_m": 0.533,
+				"radial_max_m": 1.77,
+				"radius_ratio": 1.18,
+				"vertices_outside": 95
+			},
+			"height_m": 2.294,
+			"joint_gaps": {
+				"elbow_hand": {
+					"l": {
+						"gap_m": -0.041,
+						"j2_ok": true,
+						"world_gap_m": -0.1025
+					},
+					"r": {
+						"gap_m": -0.041,
+						"j2_ok": true,
+						"world_gap_m": -0.1025
+					}
+				},
+				"hip_knee": {
+					"l": {
+						"gap_m": 0.0,
+						"j2_ok": false,
+						"world_gap_m": 0.0
+					},
+					"r": {
+						"gap_m": 0.0,
+						"j2_ok": false,
+						"world_gap_m": 0.0
+					}
+				},
+				"knee_foot": {
+					"l": {
+						"gap_m": -0.035,
+						"j2_ok": true,
+						"world_gap_m": -0.0875
+					},
+					"r": {
+						"gap_m": -0.035,
+						"j2_ok": true,
+						"world_gap_m": -0.0875
+					}
+				},
+				"shoulder_elbow": {
+					"l": {
+						"gap_m": 0.0456,
+						"j2_ok": false,
+						"world_gap_m": 0.114
+					},
+					"r": {
+						"gap_m": 0.0456,
+						"j2_ok": false,
+						"world_gap_m": 0.114
+					}
+				}
+			},
+			"materials": 9,
+			"parts": 44,
+			"scale": 2.5,
+			"tris": 1890,
+			"world_height_m": 5.735
+		}
+	},
+	"settings": {
+		"glow": "#7fe0ff",
+		"monster": "frost_king",
+		"resolution": [
+			1920,
+			1080
+		],
+		"scale": 2.5,
+		"visual": "frost_king"
+	}
+}

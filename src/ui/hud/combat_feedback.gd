@@ -55,6 +55,7 @@ func bind(run: DungeonRun) -> void:
 	for bot in run.bots:
 		bot.combatant.healed.connect(_on_ally_healed.bind(bot.combatant))
 	Events.zone_entered.connect(_on_zone_entered)
+	Events.camera_shake_requested.connect(_on_camera_shake_requested)
 
 
 func _build() -> void:
@@ -123,6 +124,21 @@ func _on_player_damaged(amount: float, _source: Combatant, _is_crit: bool, _thre
 	_player.add_trauma(clampf(share * 2.2, 0.1, 0.6))
 	_vignette_strength = minf(_vignette_strength + 0.35 + share * 1.5, 0.9)
 	Vfx.floating_text(get_tree(), _player.camera.global_position + _player.aim_direction() * 1.6 + Vector3.DOWN * 0.3, "-%d" % amount, Color("ff6a5a"), 34)
+
+
+## Tremor por evento (OS-022): sente quem está perto, acertado ou não. Soma com o de dano; `add_trauma` trava em 1,0.
+func _on_camera_shake_requested(origin: Vector3, strength: float, radius: float) -> void:
+	if not is_instance_valid(_player):
+		return
+	var trauma: float = shake_for(_player.global_position, origin, strength, radius)
+	if trauma > 0.0:
+		_player.add_trauma(trauma)
+
+
+## Trauma sentido por quem está em `listener`: a distância é a horizontal até `origin`.
+static func shake_for(listener: Vector3, origin: Vector3, strength: float, radius: float) -> float:
+	var distance: float = Vector2(listener.x - origin.x, listener.z - origin.z).length()
+	return SkillFxData.shake_trauma(strength, radius, distance)
 
 
 func _on_player_healed(amount: float, _source: Combatant) -> void:

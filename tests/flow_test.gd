@@ -70,6 +70,13 @@ func _ready() -> void:
 	await _test_forge_station_and_equip()
 	await _test_graphics_presets()
 	await _test_containment()
+	await _test_throne_is_solid()
+	await _test_boss_blocks_bodies()
+	await _test_gap_closers_stop_at_boss()
+	await _test_fallen_body_is_rescued()
+	await _test_summons_avoid_throne_block()
+	_test_ally_respawn_avoids_throne_block()
+	await _test_throne_platform_is_a_ramp()
 	await _test_guard_breaks_without_mana()
 	await _test_skill_sounds()
 	await _test_summons_belong_to_the_encounter()
@@ -153,7 +160,7 @@ func _test_lobby_skill_tooltip() -> void:
 func _test_new_character() -> void:
 	var lobby: Lobby = _lobby()
 	check(lobby != null, "saguão abre")
-	check(_music().current == MusicDirector.Track.NONE, "saguão começa sem música")
+	check(_music().current == MusicDirector.Track.LOBBY, "saguão começa com a música do saguão")
 	for class_data in GameDB.catalog.classes:
 		lobby._on_class_chosen(class_data)
 		await _frames(2)
@@ -559,6 +566,429 @@ func _test_containment() -> void:
 	check(run.containment_rescues == 1, "resgate registrado uma vez")
 
 
+## O trono é sólido para física e navegação: a câmera não entra nele nem no nicho atrás do encosto.
+func _test_throne_is_solid() -> void:
+	var run: DungeonRun = _screen().run
+	var player: PlayerController = run.player
+	var field: DungeonField = run.world.field
+	var blocks: Array[AABB] = run.world.props.block_obstacles
+	check(blocks.size() == 1, "trono registra um bloco sólido")
+	if blocks.is_empty():
+		return
+	var block: AABB = blocks[0]
+	var rescues_before: int = run.containment_rescues
+	# Inimigos e aliados ficam parados para não interferir na caminhada.
+	var frozen: Dictionary[Node, Node.ProcessMode] = {}
+	for node in get_tree().get_nodes_in_group(&"enemies"):
+		frozen[node] = node.process_mode
+	for bot in run.bots:
+		frozen[bot] = bot.process_mode
+	for node in frozen:
+		node.process_mode = Node.PROCESS_MODE_DISABLED
+
+	var camera_zone: AABB = block.grow(0.3)
+	var middle: Vector3 = block.get_center()
+	var lane_z: float = block.end.z - 4.0
+	var runs: Array[Dictionary] = [
+		{"name": "de frente", "start": Vector2(middle.x, block.position.z - 4.0), "target": Vector2(middle.x, middle.z)},
+		{"name": "pela lateral oeste", "start": Vector2(block.position.x - 3.5, lane_z), "target": Vector2(middle.x, lane_z)},
+		{"name": "pela lateral leste", "start": Vector2(block.end.x + 3.5, lane_z), "target": Vector2(middle.x, lane_z)},
+	]
+	for entry in runs:
+		var start: Vector2 = entry["start"]
+		var target: Vector2 = entry["target"]
+		check(field.is_walkable(start, 0.3), "trono (%s): ponto de partida é caminhável" % entry["name"])
+		player.teleport_to(run.world.ground_at(start, 0.1))
+		player.look_at_point(Vector3(target.x, player.camera.global_position.y, target.y))
+		await get_tree().physics_frame
+		Input.action_press(&"move_forward")
+		var camera_inside: bool = false
+		var closest: float = INF
+		for _i in 120:
+			await get_tree().physics_frame
+			var eye: Vector3 = player.camera.global_position
+			if camera_zone.has_point(eye):
+				camera_inside = true
+			closest = minf(closest, _distance_to_block_footprint(eye, block))
+		Input.action_release(&"move_forward")
+		check(not camera_inside, "trono (%s): câmera fica fora da caixa ampliada em 0,3 m (mais perto: %.2f m)" % [entry["name"], closest])
+		var reached := Vector2(player.global_position.x, player.global_position.z)
+		check(reached.distance_to(start) > 1.0, "trono (%s): jogador chegou a andar" % entry["name"])
+		await _frames(3)
+
+	var space: PhysicsDirectSpaceState3D = player.get_world_3d().direct_space_state
+	var rays: Array[Dictionary] = [
+		{"name": "frente do assento", "from": Vector3(middle.x, 1.6, block.position.z - 3.0), "to": Vector3(middle.x, 1.6, block.position.z + 1.0)},
+		{"name": "nicho vindo do oeste", "from": Vector3(block.position.x - 3.0, 1.6, lane_z), "to": Vector3(middle.x, 1.6, lane_z)},
+		{"name": "nicho vindo do leste", "from": Vector3(block.end.x + 3.0, 1.6, lane_z), "to": Vector3(middle.x, 1.6, lane_z)},
+	]
+	for entry in rays:
+		var query := PhysicsRayQueryParameters3D.create(entry["from"], entry["to"], 1)
+		var hit: Dictionary = space.intersect_ray(query)
+		check(not hit.is_empty(), "raio horizontal a 1,6 m (%s) acerta a camada 1" % entry["name"])
+
+	var map: RID = run.world.navigation_map()
+	var from_point: Vector3 = run.world.ground_at(Vector2(block.position.x - 3.5, lane_z))
+	var to_point: Vector3 = run.world.ground_at(Vector2(block.end.x + 3.5, lane_z))
+	var path: PackedVector3Array = NavigationServer3D.map_get_path(map, from_point, to_point, true)
+	check(path.size() >= 3, "navmesh acha caminho de um lado ao outro do trono (%d pontos)" % path.size())
+	var length: float = 0.0
+	var cuts_block: bool = false
+	var footprint := Rect2(Vector2(block.position.x, block.position.z), Vector2(block.size.x, block.size.z)).grow(0.4)  # raio do corpo do jogador
+	for i in range(1, path.size()):
+		length += path[i - 1].distance_to(path[i])
+		var segment_start := Vector2(path[i - 1].x, path[i - 1].z)
+		var segment_end := Vector2(path[i].x, path[i].z)
+		for step in 41:
+			if footprint.has_point(segment_start.lerp(segment_end, float(step) / 40.0)):
+				cuts_block = true
+	check(not cuts_block, "caminho da navmesh contorna o bloco do trono com folga para o corpo")
+	check(length > from_point.distance_to(to_point) + 2.0, "caminho é mais longo que a reta (%.1f m contra %.1f m)" % [length, from_point.distance_to(to_point)])
+
+	for node in frozen:
+		if is_instance_valid(node):
+			node.process_mode = frozen[node]
+	player.teleport_to(field.ground_position(Vector2(middle.x, block.position.z - 10.0), 0.1))
+	player.combatant.restore_full()
+	await _frames(3)
+	check(run.containment_rescues == rescues_before, "andar contra o trono não aciona resgate de contenção")
+
+
+## Distância horizontal de um ponto à pegada do bloco (0 quando está dentro).
+func _distance_to_block_footprint(point: Vector3, block: AABB) -> float:
+	var dx: float = maxf(maxf(block.position.x - point.x, point.x - block.end.x), 0.0)
+	var dz: float = maxf(maxf(block.position.z - point.z, point.z - block.end.z), 0.0)
+	return Vector2(dx, dz).length()
+
+
+## Anda contra `target` por `seconds` a partir de `start`. Devolve a posição final e a menor distância horizontal da câmera a `axis`.
+func _walk_toward(player: PlayerController, start: Vector3, target: Vector3, seconds: float, axis: Vector3) -> Dictionary:
+	player.teleport_to(start)
+	player.look_at_point(Vector3(target.x, player.camera.global_position.y, target.z))
+	await get_tree().physics_frame
+	Input.action_press(&"move_forward")
+	var closest_eye: float = INF
+	for _i in roundi(seconds * 60.0):
+		await get_tree().physics_frame
+		var eye: Vector3 = player.camera.global_position
+		closest_eye = minf(closest_eye, Vector2(eye.x - axis.x, eye.z - axis.z).length())
+	Input.action_release(&"move_forward")
+	await _frames(3)
+	return {"end": player.global_position, "closest_eye": closest_eye}
+
+
+func _flat_distance(a: Vector3, b: Vector3) -> float:
+	return Vector2(a.x - b.x, a.z - b.z).length()
+
+
+func _set_actors_active(actors: Array[Node], active: bool) -> void:
+	for actor in actors:
+		if is_instance_valid(actor):
+			actor.set_process(active)
+			actor.set_physics_process(active)
+
+
+## O chefe ocupa espaço para o jogador (a câmera não entra sob a armadura); monstros comuns continuam atravessáveis.
+func _test_boss_blocks_bodies() -> void:
+	var run: DungeonRun = _screen().run
+	var player: PlayerController = run.player
+	var field: DungeonField = run.world.field
+	var boss: Enemy = run.boss
+	check(boss.data.blocks_bodies, "chefe declara que bloqueia corpos")
+	check(boss.collision_layer & CombatWorld.SOLID_BODY_LAYER != 0, "chefe vivo está na camada de corpo sólido")
+	check(player.collision_mask & CombatWorld.SOLID_BODY_LAYER != 0, "máscara do jogador enxerga corpos sólidos")
+	check(run.bots[0].collision_mask & CombatWorld.SOLID_BODY_LAYER != 0, "máscara dos aliados enxerga corpos sólidos")
+	check(boss.collision_mask & CombatWorld.SOLID_BODY_LAYER == 0, "chefe não enxerga corpos sólidos (ele empurra)")
+	var rescues_before: int = run.containment_rescues
+	# Parados sem sair do espaço físico: PROCESS_MODE_DISABLED removeria os corpos da simulação.
+	var frozen: Array[Node] = []
+	for node in get_tree().get_nodes_in_group(&"enemies"):
+		frozen.append(node)
+	for bot in run.bots:
+		frozen.append(bot)
+	_set_actors_active(frozen, false)
+
+	var axis: Vector3 = boss.global_position
+	var start: Vector3 = field.ground_position(Vector2(axis.x, axis.z - 5.0), 0.1)
+	var reach: float = boss.data.body_radius + player.get_node("CollisionShape3D").shape.radius
+	var result: Dictionary = await _walk_toward(player, start, axis, 1.5, axis)
+	var end: Vector3 = result["end"]
+	var stopped_at: float = axis.z - end.z  # positivo = ainda do lado de cá do eixo
+	check(stopped_at >= 1.85, "jogador parado pelo chefe a %.2f m do eixo (mínimo 1,85 m)" % stopped_at)
+	var live_ray := PhysicsRayQueryParameters3D.create(Vector3(axis.x, 1.6, axis.z - 6.0), Vector3(axis.x, 1.6, axis.z), CombatWorld.SOLID_BODY_LAYER)
+	check(not player.get_world_3d().direct_space_state.intersect_ray(live_ray).is_empty(), "raio horizontal a 1,6 m acerta o chefe vivo na camada sólida")
+	check(_flat_distance(end, start) > 1.0, "jogador chegou a andar até o chefe")
+	check(float(result["closest_eye"]) >= boss.data.body_radius, "câmera não entra na cápsula do chefe (%.2f m do eixo)" % float(result["closest_eye"]))
+	check(reach >= 1.85, "teste usa um limite coerente com a soma dos raios (%.2f m)" % reach)
+
+	var goblin: Enemy = run.spawn_monster(load("res://data/monsters/goblin.tres"), field.ground_position(Vector2(axis.x - 14.0, axis.z - 6.0), 0.1))
+	goblin.is_summon = true
+	_set_actors_active([goblin], false)
+	check(goblin.collision_layer & CombatWorld.SOLID_BODY_LAYER == 0, "monstro comum fica fora da camada de corpo sólido")
+	await get_tree().physics_frame
+	var goblin_axis: Vector3 = goblin.global_position
+	var goblin_start: Vector3 = field.ground_position(Vector2(goblin_axis.x, goblin_axis.z - 3.0), 0.1)
+	var through: Dictionary = await _walk_toward(player, goblin_start, goblin_axis, 1.5, goblin_axis)
+	var goblin_end: Vector3 = through["end"]
+	check(goblin_end.z > goblin_axis.z + 1.0, "monstro comum continua atravessável (parou a %.2f m além do eixo)" % (goblin_end.z - goblin_axis.z))
+	goblin.free()
+
+	_set_actors_active(frozen, true)
+	player.teleport_to(field.ground_position(Vector2(axis.x, axis.z - 12.0), 0.1))
+	player.combatant.restore_full()
+	await _frames(3)
+	check(run.containment_rescues == rescues_before, "andar contra o chefe não aciona resgate de contenção")
+
+
+## Cadáver do chefe sai da camada sólida: nem corpo sólido nem raio de mira o encontram.
+func _check_boss_corpse_is_not_solid(boss: Enemy) -> void:
+	var player: PlayerController = _screen().run.player
+	check(boss.collision_layer == 0, "cadáver do chefe sai de todas as camadas")
+	var axis: Vector3 = boss.global_position
+	var query := PhysicsRayQueryParameters3D.create(Vector3(axis.x, 1.6, axis.z - 6.0), Vector3(axis.x, 1.6, axis.z), CombatWorld.SOLID_BODY_LAYER | 8)
+	var hit: Dictionary = player.get_world_3d().direct_space_state.intersect_ray(query)
+	check(hit.is_empty(), "raio contra o cadáver do chefe não acerta nada")
+
+
+func _actors_to_freeze(run: DungeonRun) -> Array[Node]:
+	var actors: Array[Node] = []
+	for node in get_tree().get_nodes_in_group(&"enemies"):
+		actors.append(node)
+	for bot in run.bots:
+		actors.append(bot)
+	return actors
+
+
+## Lampejo e investida sem alvo, de frente para o chefe, param antes do corpo dele e não derrubam o jogador.
+func _test_gap_closers_stop_at_boss() -> void:
+	var run: DungeonRun = _screen().run
+	var player: PlayerController = run.player
+	var field: DungeonField = run.world.field
+	var axis: Vector3 = run.boss.global_position
+	var frozen: Array[Node] = _actors_to_freeze(run)
+	_set_actors_active(frozen, false)
+	var rescues_before: int = run.containment_rescues
+	var cases: Array[Dictionary] = [
+		{"skill": load("res://data/skills/m_blink.tres"), "distance": 10.0},
+		{"skill": load("res://data/skills/w_charge.tres"), "distance": 13.0},
+	]
+	for entry in cases:
+		var skill: SkillData = entry["skill"]
+		var distance: float = entry["distance"]
+		var start: Vector3 = field.ground_position(Vector2(axis.x, axis.z - distance), 0.1)
+		player.teleport_to(start)
+		player.look_at_point(Vector3(axis.x, player.camera.global_position.y, axis.z))
+		await _frames(20)
+		var aim := SkillAim.new()
+		aim.origin = player.combatant.center_position()
+		aim.direction = Vector3(0.0, 0.0, 1.0)
+		SkillExecutor.execute(skill, player.combatant, aim)
+		await _frames(60)
+		var label: String = String(skill.id)
+		var stopped_at: float = axis.z - player.global_position.z
+		var floor_y: float = field.floor_at(Vector2(player.global_position.x, player.global_position.z))
+		check(stopped_at >= 1.85, "%s: para a %.2f m do eixo do chefe (mínimo 1,85 m)" % [label, stopped_at])
+		check(absf(player.global_position.y - floor_y) <= 0.2, "%s: termina no chão (y %.2f, piso %.2f)" % [label, player.global_position.y, floor_y])
+		await _frames(120)
+		floor_y = field.floor_at(Vector2(player.global_position.x, player.global_position.z))
+		check(absf(player.global_position.y - floor_y) <= 0.2, "%s: continua no chão 2 s depois (y %.2f)" % [label, player.global_position.y])
+	check(run.containment_rescues == rescues_before, "habilidades de avanço não dependem de resgate")
+	_set_actors_active(frozen, true)
+	player.teleport_to(field.ground_position(Vector2(axis.x, axis.z - 12.0), 0.1))
+	await _frames(3)
+
+
+## Quem acaba dentro do eixo do chefe (teleporte, empurrão) volta ao chão fora da cápsula.
+func _test_fallen_body_is_rescued() -> void:
+	var run: DungeonRun = _screen().run
+	var player: PlayerController = run.player
+	var field: DungeonField = run.world.field
+	var boss: Enemy = run.boss
+	var axis: Vector3 = boss.global_position
+	var frozen: Array[Node] = _actors_to_freeze(run)
+	_set_actors_active(frozen, false)
+	var rescues_before: int = run.containment_rescues
+	# A queda depende da penetração exata no Jolt: tenta algumas posições a até 0,1 m do eixo.
+	var center := Vector2(axis.x, axis.z)
+	for offset: Vector2 in [Vector2(0.05, 0.0), Vector2(0.1, 0.0), Vector2(0.0, -0.1)]:
+		player.teleport_to(field.ground_position(center + offset))
+		await _frames(120)
+		var here := Vector2(player.global_position.x, player.global_position.z)
+		var floor_y: float = field.floor_at(here)
+		check(absf(player.global_position.y - floor_y) <= 0.2, "jogador a %.2f m do eixo do chefe está no chão em 2 s (y %.2f, piso %.2f)" % [offset.length(), player.global_position.y, floor_y])
+		check(here.distance_to(center) >= boss.data.body_radius + 0.4, "e fora da cápsula do chefe (%.2f m do eixo)" % here.distance_to(center))
+	check(run.containment_rescues > rescues_before, "ao menos uma das quedas contou como resgate de contenção")
+	_set_actors_active(frozen, true)
+	player.teleport_to(field.ground_position(Vector2(axis.x, axis.z - 12.0), 0.1))
+	await _frames(3)
+
+
+## Invocações do chefe perto do trono nascem em chão seguro, fora do bloco, e ficam nele.
+func _test_summons_avoid_throne_block() -> void:
+	var run: DungeonRun = _screen().run
+	var player: PlayerController = run.player
+	var field: DungeonField = run.world.field
+	var block: AABB = run.world.props.block_obstacles[0]
+	var skeleton: MonsterData = load("res://data/monsters/skeleton.tres")
+	var boss_spot := Vector2(127.0, 124.0)
+	# Longe do raio de agressão do chefe (20 m) e com ele parado, para não despertá-lo.
+	var frozen: Array[Node] = _actors_to_freeze(run)
+	_set_actors_active(frozen, false)
+	player.teleport_to(field.ground_position(Vector2(124.0, 83.0), 0.1))
+	run._on_boss_summon(skeleton, 8, field.ground_position(boss_spot))
+	var summons: Array[Enemy] = run._summons.duplicate()
+	check(summons.size() == 8, "oito invocações nascem")
+	var zone := Rect2(Vector2(block.position.x, block.position.z), Vector2(block.size.x, block.size.z)).grow(skeleton.body_radius)
+	for enemy in summons:
+		var here := Vector2(enemy.global_position.x, enemy.global_position.z)
+		check(not zone.has_point(here), "invocação nasce fora do bloco do trono (%s)" % here.snapped(Vector2(0.01, 0.01)))
+	await _frames(120)
+	for enemy in summons:
+		if not is_instance_valid(enemy):
+			continue
+		var floor_y: float = run.world.ground_at(Vector2(enemy.global_position.x, enemy.global_position.z)).y
+		check(absf(enemy.global_position.y - floor_y) <= 0.5, "invocação segue no chão 2 s depois (y %.2f, piso %.2f)" % [enemy.global_position.y, floor_y])
+	run._clear_summons()
+	# Corpo que acaba fundo no bloco (aqui, preso de propósito) sai pela lateral: o fundo do bloco não oferece saída para baixo.
+	var trapped: Enemy = run.spawn_monster(skeleton, run.world.ground_at(Vector2(block.get_center().x, block.position.z + 2.45), 0.1))
+	trapped.is_summon = true
+	var lowest: float = INF
+	for _i in 90:
+		await get_tree().physics_frame
+		lowest = minf(lowest, trapped.global_position.y)
+	check(lowest > -0.5, "corpo no meio do bloco não afunda no piso (menor y %.2f)" % lowest)
+	trapped.free()
+	_set_actors_active(frozen, true)
+	await _frames(3)
+
+
+## De costas para o trono, o ponto de formação cai dentro do bloco; o renascimento do aliado não.
+func _test_ally_respawn_avoids_throne_block() -> void:
+	var run: DungeonRun = _screen().run
+	var player: PlayerController = run.player
+	var field: DungeonField = run.world.field
+	var block: AABB = run.world.props.block_obstacles[0]
+	var zone := Rect2(Vector2(block.position.x, block.position.z), Vector2(block.size.x, block.size.z))
+	player.teleport_to(run.world.ground_at(Vector2(block.get_center().x, block.position.z - 1.0), 0.1))
+	player.look_at_point(Vector3(block.get_center().x, player.camera.global_position.y, block.position.z - 10.0))
+	var inside_raw: int = 0
+	for bot in run.bots:
+		if zone.has_point(Vector2(bot.formation_point().x, bot.formation_point().z)):
+			inside_raw += 1
+		var spot: Vector3 = bot.respawn_point()
+		check(not zone.grow(0.4).has_point(Vector2(spot.x, spot.z)), "renascimento de %s fica fora do bloco do trono" % bot.name)
+	check(inside_raw > 0, "cenário válido: ao menos um ponto de formação cai dentro do bloco")
+	player.teleport_to(field.ground_position(Vector2(block.get_center().x, block.position.z - 12.0), 0.1))
+	await _frames(3)
+
+
+## O tablado do trono é uma rampa: sobe-se andando, os pés seguem a superfície visual, a navmesh cobre
+## o topo e o que cai em cima fica na superfície.
+func _test_throne_platform_is_a_ramp() -> void:
+	var run: DungeonRun = _screen().run
+	var world: DungeonWorld = run.world
+	var player: PlayerController = run.player
+	var platform: RampPlatform = world.props.platforms[0]
+	var center: Vector2 = platform.center
+	var block: AABB = world.props.block_obstacles[0]
+	var block_zone := Rect2(Vector2(block.position.x, block.position.z), Vector2(block.size.x, block.size.z)).grow(0.3)
+	var frozen: Array[Node] = _actors_to_freeze(run)
+	_set_actors_active(frozen, false)
+	var rescues_before: int = run.containment_rescues
+
+	# a. Anda da borda até o topo, de frente para o trono e pela lateral.
+	var approaches: Array[Dictionary] = [
+		{"name": "pelo sul", "direction": Vector2(0.0, -1.0)},
+		{"name": "pelo oeste", "direction": Vector2(-1.0, 0.0)},
+	]
+	for entry in approaches:
+		var direction: Vector2 = entry["direction"]
+		var start_flat: Vector2 = center + direction * (platform.base_radius + 1.0)
+		var start: Vector3 = world.ground_at(start_flat, 0.1)
+		var result: Dictionary = await _walk_toward(player, start, Vector3(center.x, 0.0, center.y), 3.0, Vector3(center.x, 0.0, center.y))
+		var end: Vector3 = result["end"]
+		var radius: float = Vector2(end.x - center.x, end.z - center.y).length()
+		check(radius <= platform.top_radius, "tablado (%s): chegou ao topo, a %.2f m do centro" % [entry["name"], radius])
+		check(absf(end.y - platform.height) <= 0.1, "tablado (%s): pé a %.2f m (esperado %.2f)" % [entry["name"], end.y, platform.height])
+	# Descer também gruda no chão, sem voar pela rampa.
+	var down: Dictionary = await _walk_toward(player, world.ground_at(center + Vector2(0.0, -2.0), 0.1), world.ground_at(center + Vector2(0.0, -20.0)), 2.0, Vector3.ZERO)
+	var landed: Vector3 = down["end"]
+	check(absf(landed.y - _platform_surface(world, platform, Vector2(landed.x, landed.z))) <= 0.1 and player.is_on_floor(), "tablado: descida termina no chão (y %.2f)" % landed.y)
+
+	# b. Em toda a rampa a colisão coincide com a superfície visual.
+	var space: PhysicsDirectSpaceState3D = player.get_world_3d().direct_space_state
+	var tested: int = 0
+	var worst: float = 0.0
+	for radius: float in [5.1, 5.6, 6.25, 6.9, 7.4]:
+		for step in 16:
+			var angle: float = TAU * (float(step) + 0.37) / 16.0
+			var spot: Vector2 = center + Vector2(cos(angle), sin(angle)) * radius
+			var near_pillar: bool = false
+			for pillar in world.props.pillar_obstacles:
+				if spot.distance_to(Vector2(pillar.x, pillar.y)) < pillar.z + 0.1:
+					near_pillar = true
+			if block_zone.has_point(spot) or near_pillar or not world.field.is_walkable(spot, 0.0):
+				continue
+			var query := PhysicsRayQueryParameters3D.create(Vector3(spot.x, 3.0, spot.y), Vector3(spot.x, -1.0, spot.y), 1)
+			var hit: Dictionary = space.intersect_ray(query)
+			if hit.is_empty():
+				check(false, "tablado: raio em r=%.2f ângulo %.2f não acerta o chão" % [radius, angle])
+				continue
+			tested += 1
+			worst = maxf(worst, absf(hit.position.y - _platform_surface(world, platform, spot)))
+	check(tested >= 40, "rampa amostrada em %d pontos" % tested)
+	check(worst <= 0.1, "colisão da rampa a até %.3f m da superfície visual" % worst)
+	for spot_info: Array in [[Vector2(0.0, -1.0), 5.6], [Vector2(0.0, -1.0), 6.9], [Vector2(-1.0, 0.0), 6.25]]:
+		var ramp_spot: Vector2 = center + (spot_info[0] as Vector2) * float(spot_info[1])
+		player.teleport_to(world.ground_at(ramp_spot, 0.6))
+		await _frames(40)
+		var expected: float = _platform_surface(world, platform, Vector2(player.global_position.x, player.global_position.z))
+		check(absf(player.global_position.y - expected) <= 0.1 and player.is_on_floor(), "pé na rampa (r=%.2f): y %.2f, superfície %.2f" % [float(spot_info[1]), player.global_position.y, expected])
+
+	# c. A navmesh sobe pela rampa até o topo.
+	var map: RID = world.navigation_map()
+	var from_point: Vector3 = world.ground_at(center + Vector2(0.0, -platform.base_radius - 1.5))
+	var to_point: Vector3 = world.ground_at(center + Vector2(0.0, -3.0))
+	var path: PackedVector3Array = NavigationServer3D.map_get_path(map, from_point, to_point, true)
+	check(path.size() >= 2, "navmesh acha caminho do chão ao topo (%d pontos)" % path.size())
+	if path.size() >= 2:
+		# A altura da navmesh é deslocada pelo raio do agente, então compara-se a subida, não o valor absoluto.
+		var rise: float = path[path.size() - 1].y - path[0].y
+		check(rise >= platform.height - 0.15, "caminho sobe %.2f m do chão ao topo (tablado: %.2f m)" % [rise, platform.height])
+		check(Vector2(path[path.size() - 1].x - to_point.x, path[path.size() - 1].z - to_point.z).length() < 1.0, "caminho chega perto do destino no topo")
+
+	# d. O que cai em cima do tablado fica na superfície, não dentro dela.
+	player.teleport_to(world.ground_at(Vector2(center.x, 90.0), 0.1))
+	await _frames(3)
+	var existing: Array[Node] = []
+	for child in run.get_children():
+		if child is LootDrop:
+			existing.append(child)
+	var drops: Array[LootRoller.Drop] = []
+	for _i in 6:
+		drops.append(LootRoller.Drop.new(GameDB.item(&"potion_hp"), 1))
+	run._scatter_loot(drops, world.ground_at(center + Vector2(0.0, -3.0)))
+	var landed_loot: int = 0
+	for child in run.get_children():
+		if child is LootDrop and not existing.has(child):
+			landed_loot += 1
+			var loot_flat := Vector2(child.global_position.x, child.global_position.z)
+			var surface: float = _platform_surface(world, platform, loot_flat)
+			check(absf(child.global_position.y - surface) <= 0.15, "loot sobre o tablado a %.2f m, superfície %.2f" % [child.global_position.y, surface])
+			child.free()
+	check(landed_loot == 6, "seis itens de loot criados")
+
+	check(run.containment_rescues == rescues_before, "o tablado não aciona resgate de contenção")
+	_set_actors_active(frozen, true)
+	player.teleport_to(world.ground_at(Vector2(center.x, 100.0), 0.1))
+	await _frames(3)
+
+
+
+## Superfície esperada, calculada sem `DungeonWorld.ground_at`: o maior entre o piso do campo e o tablado.
+func _platform_surface(world: DungeonWorld, platform: RampPlatform, point: Vector2) -> float:
+	return maxf(world.field.floor_at(point), platform.surface_height_at(point))
+
 func _test_guard_breaks_without_mana() -> void:
 	var run: DungeonRun = _screen().run
 	var unit: Combatant = run.player.combatant
@@ -702,6 +1132,7 @@ func _test_victory_and_return() -> void:
 	_kill(boss.combatant)
 	await _frames(3)
 	check(run.boss_defeated_flag, "vitória registrada")
+	await _check_boss_corpse_is_not_solid(boss)
 	check(_music().current == MusicDirector.Track.DUNGEON, "chefe morto devolve a música da masmorra")
 	check(sheet.inventory.count_of(&"boss_core") == 0, "núcleo ainda no chão, não entregue automaticamente")
 	var portal: GatePortal = null
@@ -719,9 +1150,11 @@ func _test_victory_and_return() -> void:
 	await _frames(4)
 	check(_lobby() != null, "volta ao saguão")
 	check(_screen() == null, "masmorra descarregada")
-	check(_music().current == MusicDirector.Track.NONE, "saguão fica em silêncio")
+	check(_music().current == MusicDirector.Track.LOBBY, "voltar ao saguão toca a música do saguão")
 	check(_main.get_node_or_null("MusicDirector") != null, "diretor de música sobrevive à troca de tela")
-	await _frames(6)
+	await _frames(2)
+	check(_music().current == MusicDirector.Track.LOBBY, "saída da masmorra não silencia o saguão")
+	await _frames(4)
 	for voice: AudioStreamPlayer3D in _sfx()._voices:
 		check(not voice.playing, "efeitos não vazam para o saguão")
 	check(get_tree().get_nodes_in_group(&"enemies").is_empty(), "sem monstros órfãos")
@@ -758,7 +1191,7 @@ func _test_results_cannot_trap_the_player() -> void:
 	await _press_key(&"menu_pause")
 	await _frames(3)
 	check(_lobby() != null and _screen() == null, "Esc nos resultados volta ao saguão")
-	check(_music().current == MusicDirector.Track.NONE, "Esc nos resultados silencia a música")
+	check(_music().current == MusicDirector.Track.LOBBY, "Esc nos resultados volta à música do saguão")
 	# Saída pelo X da janela
 	await _enter_gate_through_ui(_lobby())
 	check(_music().current == MusicDirector.Track.DUNGEON, "segunda reentrada volta à música da masmorra")
@@ -767,7 +1200,7 @@ func _test_results_cannot_trap_the_player() -> void:
 	screen._window.closed.emit()
 	await _frames(3)
 	check(_lobby() != null and _screen() == null, "fechar os resultados volta ao saguão")
-	check(_music().current == MusicDirector.Track.NONE, "fechar os resultados silencia a música")
+	check(_music().current == MusicDirector.Track.LOBBY, "fechar os resultados volta à música do saguão")
 
 
 func _test_rank_lock_and_tabs() -> void:
@@ -826,9 +1259,9 @@ func _test_abandon() -> void:
 	check(not get_tree().paused, "abandonar não deixa o jogo pausado")
 	check(Input.mouse_mode == Input.MOUSE_MODE_VISIBLE, "cursor visível no saguão")
 	var music: MusicDirector = _music()
-	check(music.current == MusicDirector.Track.NONE, "abandonar a luta silencia a música")
-	await _frames(roundi(music.config.fade_out_seconds * 60.0) + 5)
-	check(not music._dungeon_player.playing and not music._boss_player.playing, "nenhuma faixa toca no saguão")
+	check(music.current == MusicDirector.Track.LOBBY, "abandonar a luta volta à música do saguão")
+	await _frames(roundi(music.config.crossfade_seconds * 60.0) + 5)
+	check(not music._dungeon_player.playing and not music._boss_player.playing, "faixas da masmorra e do chefe não tocam no saguão")
 	# O AudioServer libera a faixa parada na thread de mixagem, no relógio real. Com --fixed-fps
 	# o teste sairia antes disso e o stream apareceria como vazamento, ao sabor da corrida.
 	OS.delay_msec(200)

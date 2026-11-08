@@ -58,6 +58,8 @@ const DAMAGE_KIND_NAMES: Dictionary = {
 ## Monstros: mostra a área de perigo no chão durante o cast.
 @export var telegraph: bool = false
 @export var animation: StringName = &"swing"
+## Efeitos de ataque de inimigo (OS-022). Nulo: efeito genérico de hoje.
+@export var fx: SkillFxData
 
 
 func cast_duration(stats: StatBlock) -> float:

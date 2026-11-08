@@ -33,7 +33,7 @@ Herói mede cerca de 1,90 m sem peça alta. Cabeça de 0,25 m, proporção de 7,
 | Primeira pessoa | Câmera, FOV 74 | Peça a peça | Mãos, arma | Mão, manga, arma |
 
 - **E1.** Peça com menos de 9 cm (3 px a 20 m) não conta como silhueta. Serve de detalhe.
-- **E2.** A cabeça nunca passa de 1/7 da altura do corpo. Nada de proporção infantil.
+- **E2.** A cabeça, sem coroa, chifre e cristal de cabeça (S3), nunca passa de 1/7 da altura do corpo. Vale para herói e chefe. Nada de proporção infantil.
 - **E3.** O aliado costuma ser visto de costas, porque luta virado para o monstro. A vista traseira vale tanto quanto a frontal.
 
 ## 4. Silhueta
@@ -115,7 +115,8 @@ Aliado e inimigo se separam por **forma e lugar**, porque matiz sozinho não bas
 | Forma | Redonda: aro, disco, núcleo oval, lanterna | Pontuda: olho em ponto, estilhaço, fenda |
 | Lugar | Peito, costas e cabeça da arma | Olhos, núcleo e rachaduras do corpo |
 | Cor | Cor de classe; núcleo do mago `8A7BFF` | `enemy_glow` do tema |
-| Energia | 0,9 a 1,0 | 4,0 nos olhos, até 7,0 no chefe |
+| Energia | 0,9 a 1,0 | 4,0 nos olhos, até 7,0 no chefe. Cristal do chefe: `glow` 2,4 em repouso e até 7,0 nos últimos 20% do preparo |
+| Efeito de ataque | Cor da habilidade (marca de área, seção 6.1) | Forma pontuda (estaca, rachadura, serrilha, lasca), cor `enemy_glow` do tema, sem cúpula e sem tela cheia |
 
 - **B1.** Olho de herói nunca emite. Olho é `1A1410` fosco, sem luz de personagem. Máscara de T3 também não brilha.
 - **B2.** Herói nunca emite em estilhaço. Ponta de metal fosco é permitida.
@@ -125,9 +126,15 @@ Aliado e inimigo se separam por **forma e lugar**, porque matiz sozinho não bas
 - **B6.** Peça de herói feita de monstro é pálida e fosca. Nada de gelo emissivo em armadura de herói.
 - **B7.** Luz de personagem (M4) não conta como brilho: ela só impede a massa de sumir.
 
+### 6.1. Telegrafia
+
+- **Z1.** A zona de perigo de todo inimigo, em todo tema, é vermelha: preenchimento `A01030` por mistura, faixa escura `220410` e borda acesa `FF6A4D` por soma. O vermelho vale quando o conjurador é hostil ao jogador (`Team.MONSTERS`). Nunca só aditivo: a neve mede L* 54 a 75 e some. Serrilha e rachadura são os adornos permitidos.
+- **Z2.** A marca de área de aliado (habilidade de herói, como `m_meteor` e `p_judgement`) continua na cor da habilidade e na leitura de sempre: só aditiva, sem faixa escura, sem serrilha e sem o vermelho de Z1.
+- **Z3.** O desenho da zona de perigo cobre a área lógica mais o raio do alvo (0,4 m do jogador), porque o acerto soma esse raio. A marca de aliado mantém o tamanho de hoje.
+
 ## 7. Materiais
 
-Valores para `Look.hero(cor, roughness, metallic)`, que é `Look.matte` com a luz de personagem de M4. Hex por classe nas fichas. `Look.metal` fica proibido em herói e em arma de herói: a textura dele é a sujeira que aparece nos renders.
+Valores para `Look.hero(cor, roughness, metallic)`, que é `Look.matte` com a luz de personagem de M4. Hex por classe nas fichas. `Look.metal` fica proibido em herói, em arma de herói e no chefe: a textura dele é a sujeira que aparece nos renders.
 
 | Material | Roughness | Metallic | Sombreamento | Uso |
 |---|---|---|---|---|
@@ -148,12 +155,12 @@ Valores para `Look.hero(cor, roughness, metallic)`, que é `Look.matte` com a lu
 
 ## 8. Rig sem skinning
 
-Cada peça é rígida. Junta e pano precisam esconder isso.
+Cada peça é rígida. Junta e pano precisam esconder isso. J1 a J3 e J8 valem para todo modelo bípede, herói ou monstro. A medida é `joint_gaps` do `--monster`.
 
 - **J1. Pivô.** Toda articulação visível tem uma esfera centrada no joint, com raio igual ou maior que o do membro naquele ponto. A esfera fica no joint filho.
 - **J2. Sobreposição.** Uma peça entra pelo menos 3 cm na peça vizinha. Nenhuma falha aparece em 90° de flexão.
 - **J3. Ombreira e gola no `chest`.** Elas ficam paradas e o braço se move por baixo.
-- **J4. Pano atrás fica no joint `cloth_back`.** Ele abre para trás com a velocidade, até 0,55 rad, e nunca é atravessado pelas pernas. O joint é opcional: bichos e inimigos não o criam.
+- **J4. Pano atrás fica no joint `cloth_back`.** Ele abre para trás com a velocidade, até 0,55 rad, e nunca é atravessado pelas pernas. O joint é opcional: bichos e a maioria dos inimigos não o criam. O chefe com capa o cria, e as pernas nunca a atravessam.
 - **J5. Perna coberta não existe.** Se a saia esconde a perna em toda a animação, não modele a perna. Mantenha os joints.
 - **J6. Sinal das poses.** `x` positivo leva o braço para a frente e dobra o cotovelo para a frente. `x` negativo dobra o joelho para trás. A OS-003 corrige o rig atual, que faz o contrário.
 - **J7. Arma compensa o braço.** Com o braço girado em `a` rad, em X ou em Z, a arma precisa girar `-a` no mesmo eixo para ficar em pé.
@@ -171,6 +178,8 @@ Cada peça é rígida. Junta e pano precisam esconder isso.
 | T1 | Gélido | Prata fria `C4D2E0` | Pele branca do lobo | +1 peça de silhueta |
 | T2 | Real | Ouro `D8B464` | Ouro do rei | +1 peça ou 10% de escala |
 | T3 | Rei Gélido | Platina `E6ECF5` | Coroa e aço pálido | +1 peça, sem brilho frio |
+
+O Rei Gélido veste o que dá: acabamento em ouro `D8B464` (T2 dos heróis) e massa clara em aço pálido `B4C3D6` (família da prata `C4D2E0` e da platina `E6ECF5`). O ícone de `boss_crown` é o aro de ouro com pontas de gelo, e o de `boss_plate` é a couraça pálida.
 
 - **P1.** Cada tier soma pelo menos uma peça de silhueta com 9 cm ou mais em algum eixo, e as peças se acumulam. A ferramenta lê isso em `tier_pieces` (medida no espaço do modelo, não no joint).
 - **P2.** A massa da classe é a mesma do T0 ao T3. Hoje T2 fica dourado e T3 fica azul-gelo nas três classes. Isso vale para a massa escura da zona baixa: perna, saia ou casaco escuro não vira aço, prata nem pele em tier nenhum (V1, V2). O guerreiro T1 com canela de aço deu `low_p10` de costas 20,8, contra o limite de 20.
@@ -251,6 +260,7 @@ Heróis medem-se com `--rarity=4` (lendária): os 3 encaixes acesos da arma e do
 - **C1.** Teto da cena: 900 partes de criatura visíveis.
 - **C2.** A soma de todas as peças de arte novas não pode somar mais de 1,0 ms em Médio na cena de referência.
 - **C3.** A luz da lanterna do `scepter` é a única luz permanente de herói, com um limite de uma por sacerdote. Sem sombra. Raridade nunca cria luz real: inclusive no lendário, ela só acende encaixes.
+- **C4.** Efeitos do chefe: até 160 partículas vivas, 2 luzes e 64 malhas, sem camada translúcida acima de 25% da tela. Sem sombra.
 
 ## 12. Checklist de aprovação
 
@@ -329,3 +339,5 @@ Toda revisão usa os renders da OS-001. O veredito é APROVADO, AJUSTES ou REPRO
 | 07/11/2026 | Ícones de habilidade do sacerdote sem cruz: `smite`, `heal` e `circle` trocados (OS-020). O2 passa a valer para ícone de UI e a incluir a cruz grega e a cruz em aro | A validação da OS-017 achou uma cruz latina em `smite.svg`, do commit original. O "+" de braços iguais lê como símbolo de saúde em qualquer HUD, mas a regra lista a cruz sem exceção, e no sacerdote ele seria o único traço que sobraria da cruz que a decisão de 31/10 já tirou do ícone de classe. A cruz em aro lê como cruz de sol antes de ler como área de cura. Os três ícones novos usam a chama da lanterna, a única marca da Vigília: cometa com chama vazada, coração com chama vazada e aro com chama. `bless`, `judgement` e `miracle` foram lidos no SVG e ficam: não há travessa em ângulo reto, e a estrela tem 7 pontas |
 | 07/11/2026 | S3 não proíbe a lâmina de aço mate da ombreira do guerreiro T3 | Na revisão final, as duas lâminas brancas sobre os ombros leem como chifres no saguão. A ficha as pede desde a OS-013, o aço é mate (B2) e a letra T se mantém (S5). A proibição de S3 é a do chifre e do espinho de cabeça e de corpo, em cristal, osso ou gelo, que é o que o inimigo usa. Se em jogo elas lerem como inimigo, a alavanca é a inclinação (rot z `.3` para `.15`) e a altura (`.32` para `.24`) |
 | 07/11/2026 | Revisão final do conjunto de classes (checklist da seção 12): AJUSTES, só pelos ícones | Os três modelos passam nos itens visuais em T0 e T3. Ressalvas aceitas: fiapo roxo do casaco do mago sobre a pelerine, vista só de costas a menos de 4 m; Selo dourado do sacerdote T3 sobre o creme, com pouco contraste a 20 m; lendário e comum do cetro com a mesma cor de lanterna. Detalhes na resposta da revisão |
+| 08/11/2026 | Chefe passa a seguir o guia: sem `Look.metal` (M1), E2 sem coroa e chifre (M2), `cloth_back` no chefe (M3), J1 a J3 e J8 em todo bípede (M4), ouro `D8B464` e aço pálido `B4C3D6` como o que o chefe veste (M5). Aprovado com a OS-021 | O diagnóstico do Rei Gélido achou J2 quebrada em cotovelo e joelho, ferrugem de textura em placa e capa furada pela perna. O guia só falava de herói. O corpo novo cabe na cápsula atual (excesso de -0,032 m no blockout) |
+| 08/11/2026 | Seção 6.1, telegrafia (Z1 a Z3), linha de efeito de ataque e energia do cristal do chefe na seção 6, e C4 (OS-022) | A zona de perigo somava luz sobre a neve (L* 54 a 75) e sumia, e quatro das cinco habilidades do chefe eram azul-claro sobre as runas `9FE3FF`. O vermelho é o único matiz que o gelo e o `enemy_glow` não têm, e vale só para conjurador hostil: `Telegraph.spawn_area` também serve a `m_meteor` e `p_judgement`, que seguem na cor da habilidade, só aditivas. A cúpula de 16 m cobriria o quadro inteiro e o gargalo da cena é preenchimento de tela, daí C4 |

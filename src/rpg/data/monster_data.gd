@@ -13,6 +13,8 @@ enum Tier { NORMAL, ELITE, BOSS }
 @export var scale: float = 1.0
 @export var body_radius: float = 0.45
 @export var body_height: float = 1.6
+## Jogador e aliados não atravessam este corpo (chefes grandes); monstros comuns continuam atravessáveis.
+@export var blocks_bodies: bool = false
 
 @export_group("Atributos")
 @export var max_hp: float = 100.0

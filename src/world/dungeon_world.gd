@@ -5,6 +5,11 @@ extends Node3D
 
 const LIGHT_UPDATE_INTERVAL := 0.4
 const SNOW_EXTENTS := Vector3(13.0, 4.5, 13.0)
+const NAV_AGENT_RADIUS := 0.5
+## Folga de um bloco fixo na navmesh: o raio do agente mais a imprecisão do contorno (a malha é
+## simplificada em até cerca de 0,35 m), para que nenhum canto de caminho encoste no bloco.
+const NAV_BLOCK_MARGIN := 0.9
+const SAFE_FIELD_MARGIN := 0.8
 
 var field: DungeonField
 var props: DungeonProps
@@ -87,19 +92,43 @@ func _add_pillar_collision() -> void:
 		collider.shape = shape
 		collider.position = Vector3(pillar.x, 6.0, pillar.y)
 		body.add_child(collider)
+	for block in props.block_obstacles:
+		var box := BoxShape3D.new()
+		box.size = block.size
+		var box_collider := CollisionShape3D.new()
+		box_collider.shape = box
+		box_collider.position = block.get_center()
+		body.add_child(box_collider)
+	for platform in props.platforms:
+		var ramp_collider := CollisionShape3D.new()
+		ramp_collider.shape = platform.collision_shape()
+		ramp_collider.position = Vector3(platform.center.x, 0.0, platform.center.y)
+		body.add_child(ramp_collider)
 
 
 func _bake_navigation(faces: PackedVector3Array) -> void:
 	var source := NavigationMeshSourceGeometryData3D.new()
-	source.add_faces(faces, Transform3D.IDENTITY)
+	source.add_faces(_faces_outside_platforms(faces), Transform3D.IDENTITY)
+	for platform in props.platforms:
+		source.add_faces(platform.navigation_faces(), Transform3D.IDENTITY)
 	for pillar in props.pillar_obstacles:
 		var outline := PackedVector3Array()
 		for i in 8:
 			var angle: float = TAU * float(i) / 8.0
 			outline.append(Vector3(pillar.x + cos(angle) * pillar.z, 0.0, pillar.y + sin(angle) * pillar.z))
 		source.add_projected_obstruction(outline, -1.0, 6.0, true)
+	for block in props.block_obstacles:
+		# A obstrução não recebe o recuo do agente: sem a folga o caminho raspa na quina do bloco.
+		var padded: AABB = block.grow(NAV_BLOCK_MARGIN)
+		var corners := PackedVector3Array([
+			Vector3(padded.position.x, 0.0, padded.position.z),
+			Vector3(padded.end.x, 0.0, padded.position.z),
+			Vector3(padded.end.x, 0.0, padded.end.z),
+			Vector3(padded.position.x, 0.0, padded.end.z),
+		])
+		source.add_projected_obstruction(corners, -1.0, 6.0, true)
 	var mesh := NavigationMesh.new()
-	mesh.agent_radius = 0.5
+	mesh.agent_radius = NAV_AGENT_RADIUS
 	mesh.agent_height = 1.75
 	mesh.agent_max_climb = 0.5
 	mesh.agent_max_slope = 50.0
@@ -111,6 +140,61 @@ func _bake_navigation(faces: PackedVector3Array) -> void:
 	_navigation_region.name = "Navigation"
 	_navigation_region.navigation_mesh = mesh
 	add_child(_navigation_region)
+
+
+## Chão em `point`: o maior entre o piso do campo e a superfície de um tablado. O campo não conhece os
+## tablados, e a altura de um ponto da navmesh só aproxima a superfície (a malha é discretizada em células).
+func ground_at(point: Vector2, lift: float = 0.0) -> Vector3:
+	var height: float = maxf(field.floor_at(point), props.platform_height_at(point))
+	return Vector3(point.x, height + lift, point.y)
+
+
+## Ponto de chão onde um corpo pode nascer ou reaparecer: dentro do campo, fora dos blocos fixos
+## (trono, colunas, paredes) e em cima da superfície (inclusive do tablado). Usa a navmesh, que já exclui
+## tudo isso, só para escolher x e z; a altura vem de `ground_at`. Sem mapa pronto, cai no campo.
+func safe_ground(point: Vector3, lift: float = 0.1) -> Vector3:
+	var flat := Vector2(point.x, point.z)
+	var map: RID = navigation_map()
+	if map.is_valid() and NavigationServer3D.map_get_iteration_id(map) > 0 and not NavigationServer3D.map_get_regions(map).is_empty():
+		var closest: Vector3 = NavigationServer3D.map_get_closest_point(map, ground_at(flat))
+		return ground_at(Vector2(closest.x, closest.z), lift)
+	for block in props.block_obstacles:
+		flat = _push_out_of_block(flat, block)
+	return ground_at(field.push_inside(flat, SAFE_FIELD_MARGIN), lift)
+
+
+func _push_out_of_block(point: Vector2, block: AABB) -> Vector2:
+	var padded: AABB = block.grow(NAV_BLOCK_MARGIN)
+	if point.x <= padded.position.x or point.x >= padded.end.x or point.y <= padded.position.z or point.y >= padded.end.z:
+		return point
+	# Sai pelo lado mais curto, sem passar pela parede de trás.
+	var exits: Array[Vector2] = [
+		Vector2(padded.position.x, point.y),
+		Vector2(padded.end.x, point.y),
+		Vector2(point.x, padded.position.z),
+	]
+	var best: Vector2 = exits[0]
+	for candidate in exits:
+		if candidate.distance_squared_to(point) < best.distance_squared_to(point):
+			best = candidate
+	return best
+
+
+## O piso sob um tablado não pode entrar no bake: ele ficaria como uma segunda camada caminhável
+## sob a rampa e a navmesh perderia o topo. Quem anda ali pisa na superfície do tablado.
+func _faces_outside_platforms(faces: PackedVector3Array) -> PackedVector3Array:
+	if props.platforms.is_empty():
+		return faces
+	var kept := PackedVector3Array()
+	for i in range(0, faces.size(), 3):
+		var centroid: Vector3 = (faces[i] + faces[i + 1] + faces[i + 2]) / 3.0
+		var covered: bool = false
+		for platform in props.platforms:
+			if Vector2(centroid.x, centroid.z).distance_to(platform.center) < platform.base_radius:
+				covered = true
+		if not covered:
+			kept.append_array(faces.slice(i, i + 3))
+	return kept
 
 
 func navigation_map() -> RID:

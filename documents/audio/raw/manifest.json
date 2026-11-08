@@ -190,5 +190,65 @@
 		"seed": "31385",
 		"seconds": 1,
 		"prompt": "Holy aegis activation sound effect.\n\nRadiant protective shield forming around the body,\nwarm resonant hum, soft bright metallic ring.\n\nSolid, sacred and protective.\nQuick swell into a steady glow, about 1 second.\n\nDry recording. No music, no voices."
+	},
+	"boss_strike_1": {
+		"model": "Stable Audio 3",
+		"seed": "7301",
+		"seconds": 1,
+		"prompt": "Giant ice greatsword swing sound effect.\n\nHuge heavy blade cutting through the air,\ndeep low whoosh with a cold crystalline ring.\n\nSlow, heavy and powerful.\nSingle big swing, about 0.7 seconds.\n\nDry recording. No music, no voices."
+	},
+	"boss_strike_2": {
+		"model": "Stable Audio 3",
+		"seed": "18642",
+		"seconds": 1,
+		"prompt": "Giant ice greatsword swing sound effect.\n\nHuge heavy blade cutting through the air,\ndeep low whoosh with a cold crystalline ring.\n\nSlow, heavy and powerful.\nSingle big swing, about 0.7 seconds.\n\nDry recording. No music, no voices."
+	},
+	"boss_cleave_cast": {
+		"model": "Stable Audio 3",
+		"seed": "22971",
+		"seconds": 2,
+		"prompt": "Ice blade charging sound effect.\n\nFrost crystallizing along a giant sword,\nrising cold shimmer, creaking ice,\nlow tense hum.\n\nBuilding cold and growing threat.\nSteady upward swell with no impact or ending, about 1.5 seconds.\n\nDry recording. No music, no voices."
+	},
+	"boss_cleave_fire": {
+		"model": "Stable Audio 3",
+		"seed": "5538",
+		"seconds": 2,
+		"prompt": "Massive ice blade sweep sound effect.\n\nGiant frozen sword sweeping wide and low,\ndeep heavy whoosh, ice scraping across stone,\nfrost shards spraying outward.\n\nWide, brutal and cold.\nOne long sweeping swing, about 1 second.\n\nDry recording. No music, no voices."
+	},
+	"boss_slam_cast": {
+		"model": "Stable Audio 3",
+		"seed": "31407",
+		"seconds": 2,
+		"prompt": "Frost giant gathering power sound effect.\n\nDeep rumbling energy, a large ice crystal humming louder,\nheavy armor creaking, cold wind rising.\n\nOminous, heavy and building.\nSteady upward swell with no impact or ending, about 2 seconds.\n\nDry recording. No music, no voices."
+	},
+	"boss_slam_impact": {
+		"model": "Stable Audio 3",
+		"seed": "9126",
+		"seconds": 3,
+		"prompt": "Colossal ice sword slam sound effect.\n\nGiant frozen blade smashing into a stone floor,\nmassive low boom, floor cracking outward,\nice spikes bursting up, shards scattering.\n\nCrushing, heavy and devastating.\nHuge single impact with a rumbling tail, about 2.5 seconds.\n\nNo music, no voices."
+	},
+	"boss_spikes_cast": {
+		"model": "Stable Audio 3",
+		"seed": "26815",
+		"seconds": 2,
+		"prompt": "Ice resonance charging sound effect.\n\nCrystalline ringing harmonics building,\ncold wind, glassy shimmer growing sharper.\n\nTense, cold and rising.\nSteady upward swell with no impact or ending, about 1.5 seconds.\n\nDry recording. No music, no voices."
+	},
+	"boss_spikes_impact": {
+		"model": "Stable Audio 3",
+		"seed": "14093",
+		"seconds": 2,
+		"prompt": "Ice spikes eruption sound effect.\n\nA fast wave of ice spikes bursting from a stone floor,\nsharp crystalline crunches in rapid succession moving away,\nstone cracking, glassy ringing.\n\nViolent, sharp and fast.\nRapid rolling sequence, about 1.5 seconds.\n\nDry recording. No music, no voices."
+	},
+	"boss_nova_cast": {
+		"model": "Stable Audio 3",
+		"seed": "3764",
+		"seconds": 3,
+		"prompt": "Winter storm gathering sound effect.\n\nHowling freezing wind swirling inward,\ndeep rising drone, ice crystals chiming,\npressure growing in a great stone hall.\n\nVast, ominous and building.\nSteady upward swell with no impact or ending, about 2.5 seconds.\n\nNo music, no voices."
+	},
+	"boss_nova_impact": {
+		"model": "Stable Audio 3",
+		"seed": "20259",
+		"seconds": 4,
+		"prompt": "Catastrophic frost explosion sound effect.\n\nHuge deep boom filling a great stone hall,\nice shattering outward in every direction,\ngiant ice spikes bursting from the floor,\nfrozen debris raining down.\n\nOverwhelming, cold and devastating.\nMassive single blast with a long cold rumble, about 3.5 seconds.\n\nNo music, no voices."
 	}
 }

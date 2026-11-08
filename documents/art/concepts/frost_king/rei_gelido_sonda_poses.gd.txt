@@ -1,0 +1,58 @@
+extends Node3D
+
+const SCALE := 2.5
+
+
+func _ready() -> void:
+	var rig: CreatureRig = _make()
+	_dump("repouso", rig)
+	for anim in [&"swing", &"overhead", &"thrust"]:
+		rig = _make()
+		rig.wind_up(anim, 1.0)
+		rig.animate(0.0, 0.0)
+		rig.animate(2.0, 0.0)
+		_dump("%s preparo" % anim, rig)
+		rig.strike(anim)
+		rig.animate(0.08, 0.0)
+		_dump("%s meio" % anim, rig)
+		rig.animate(0.09, 0.0)
+		_dump("%s impacto" % anim, rig)
+		rig.animate(0.2, 0.0)
+		_dump("%s volta" % anim, rig)
+	var rig2: CreatureRig = _make()
+	var points: PackedVector3Array = PackedVector3Array()
+	for instance: MeshInstance3D in rig2.find_children("*", "MeshInstance3D", true, false):
+		points.append_array((rig2.global_transform.affine_inverse() * instance.global_transform) * instance.mesh.get_faces())
+	var box := AABB(points[0], Vector3.ZERO)
+	for p in points:
+		box = box.expand(p)
+	print("caixa total (mundo): ", box.position * SCALE, " ", box.end * SCALE)
+	get_tree().quit()
+
+
+func _make() -> CreatureRig:
+	var rig: CreatureRig = CreatureFactory.build(&"frost_king", Color("7fe0ff"))
+	rig.scale = Vector3.ONE * SCALE
+	add_child(rig)
+	return rig
+
+
+func _tip(rig: CreatureRig) -> Vector3:
+	var joint: Node3D = rig.get_joint(&"weapon_tip")
+	if joint != null:
+		return joint.global_position
+	var hand: Node3D = rig.get_joint(&"hand_r")
+	for child in hand.get_children():
+		if not child is MeshInstance3D:
+			return (child as Node3D).global_transform * Vector3(0.0, 0.2 + 1.85, 0.0)
+	return Vector3.ZERO
+
+
+func _dump(label: String, rig: CreatureRig) -> void:
+	var chest: Node3D = rig.get_joint(&"chest")
+	var hand: Node3D = rig.get_joint(&"hand_r")
+	var tip: Vector3 = _tip(rig)
+	var h: Vector3 = hand.global_position
+	var dir: Vector3 = (tip - h).normalized()
+	var pitch: float = rad_to_deg(asin(dir.y))
+	print("%-18s mao(x%+.2f y%.2f frente%.2f) ponta(x%+.2f y%.2f frente%.2f) alcance_h %.2f  pitch_lamina %+.0f  peito_frente %.2f" % [label, h.x, h.y, -h.z, tip.x, tip.y, -tip.z, Vector2(tip.x, tip.z).length(), pitch, -chest.global_position.z])

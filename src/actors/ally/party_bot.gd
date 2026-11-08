@@ -12,6 +12,8 @@ const REVIVE_SECONDS := 8.0
 var sheet: CharacterSheet
 var leader: Node3D
 var slot_offset := Vector3.ZERO
+## Ajusta um ponto de nascimento para chão seguro (fora de blocos fixos); a masmorra injeta.
+var ground_resolver := Callable()
 var nav: NavFollower
 var machine := StateMachine.new()
 var rig: CreatureRig
@@ -95,6 +97,15 @@ func face_unit(unit: Combatant, delta: float) -> void:
 
 func formation_point() -> Vector3:
 	return leader.global_position + (leader.global_basis * slot_offset)
+
+
+## Ponto de formação onde o aliado pode reaparecer sem ficar dentro do trono, de colunas ou de paredes.
+func respawn_point() -> Vector3:
+	return safe_point(formation_point())
+
+
+func safe_point(point: Vector3) -> Vector3:
+	return ground_resolver.call(point) if ground_resolver.is_valid() else point
 
 
 ## Telegrafias de chefe: sai da área antes do impacto.

@@ -62,7 +62,7 @@
 - Delegate implementation to `gameplay-developer` or `rpg-systems` (Sonnet high) without asking first.
   This standing instruction counts as the user asking for those agents.
 - Edit directly only when the change is a few lines in a file already in context.
-- Use `game-architect` and `qa-tester` (Opus xhigh) and `art-director` (Sonnet xhigh) only for real decisions and validation.
+- Use `game-architect` (Opus xhigh), `qa-tester` (Sonnet high) and `art-director` (Sonnet xhigh) only for real decisions and validation.
   Never send them routine edits or exploration.
 - Do not pass a `model` override to these agents: their frontmatter sets it.
 - Give each agent one narrow task: the files involved, what stays out of scope and the acceptance criteria.

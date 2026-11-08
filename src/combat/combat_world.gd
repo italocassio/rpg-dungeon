@@ -3,6 +3,8 @@ extends RefCounted
 ## Consultas espaciais de combate.
 
 const WORLD_MASK := 1
+## Camada extra de corpos que jogador e aliados não atravessam (ver MonsterData.blocks_bodies).
+const SOLID_BODY_LAYER := 32
 const MELEE_HEIGHT_TOLERANCE := 5.0
 
 
@@ -104,11 +106,14 @@ static func has_line_of_sight(actor: Node3D, from: Vector3, to: Vector3) -> bool
 	return actor.get_world_3d().direct_space_state.intersect_ray(query).is_empty()
 
 
-## Último ponto livre no caminho de `from` até `to`, respeitando paredes.
+## Último ponto livre no caminho de `from` até `to`, respeitando paredes e corpos sólidos (chefes).
 static func clear_destination(actor: Node3D, from: Vector3, to: Vector3, margin: float = 0.8) -> Vector3:
 	var lifted_from: Vector3 = from + Vector3.UP * 0.9
 	var lifted_to: Vector3 = to + Vector3.UP * 0.9
-	var query := PhysicsRayQueryParameters3D.create(lifted_from, lifted_to, WORLD_MASK)
+	var query := PhysicsRayQueryParameters3D.create(lifted_from, lifted_to, WORLD_MASK | SOLID_BODY_LAYER)
+	var collider := actor as CollisionObject3D
+	if collider != null:
+		query.exclude = [collider.get_rid()]
 	var hit: Dictionary = actor.get_world_3d().direct_space_state.intersect_ray(query)
 	if hit.is_empty():
 		return to

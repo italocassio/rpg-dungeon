@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="SkillData" format=3]
 
 [ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_kert1"]
+[ext_resource type="Resource" path="res://data/skill_fx/boss_spikes.tres" id="fx_spikes"]
 
 [resource]
 script = ExtResource("1_kert1")
@@ -16,3 +17,4 @@ cast_time = 1.15
 cooldown = 9.0
 telegraph = true
 animation = &"thrust"
+fx = ExtResource("fx_spikes")

@@ -217,43 +217,8 @@ static func _golem(glow: Color) -> CreatureRig:
 	return rig
 
 
+## O modelo mora em `enemies/frost_king_model.gd`.
 static func _frost_king(glow: Color) -> CreatureRig:
 	var rig := CreatureRig.new()
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 31
-	var plate: Material = Look.metal(Color("3f4d62"), 0.42)
-	var dark: Material = Look.metal(Color("1a2029"), 0.55)
-	var gold: Material = Look.metal(Color("9fb8d0"), 0.3)
-	var ice: Material = DungeonMaterials.crystal(Color(0.14, 0.42, 0.72), Color(0.65, 0.92, 1.0), 2.0)
-	var eye: Material = Look.glow(glow, 7.0)
-	CreatureRig.biped_skeleton(rig, 1.0, 1.08, 1.2)
-	rig.stride = 0.55
-	rig.step_rate = 1.5
-	EnemyParts.armored_body(rig, plate, gold, dark, 1.3)
-	var chest: Node3D = rig.get_joint(&"chest")
-	rig.part(chest, MeshKit.shard(0.1, 0.42, rng, 6, 0.0), ice, Vector3(0.0, 0.1, -0.25), Vector3(0.0, 0.0, 0.0))
-	var head: Node3D = rig.get_joint(&"head")
-	var helm := MeshKit.lathe(PackedVector2Array([Vector2(0.18, -0.04), Vector2(0.19, 0.1), Vector2(0.17, 0.22), Vector2(0.1, 0.31), Vector2(0.0, 0.34)]), 10, false)
-	rig.part(head, helm, plate)
-	rig.part(head, MeshKit.box(Vector3(0.28, 0.035, 0.05)), Look.matte(Color("06070b"), 0.4), Vector3(0.0, 0.14, -0.17))
-	for side: float in [-1.0, 1.0]:
-		rig.part(head, MeshKit.sphere(0.024, 6), eye, Vector3(side * 0.07, 0.145, -0.2))
-		rig.part(head, MeshKit.shard(0.05, 0.42, rng, 5, 0.1), gold, Vector3(side * 0.16, 0.16, 0.0), Vector3(0.0, 0.0, side * -1.0))
-	for i in 7:
-		var angle: float = TAU * float(i) / 7.0
-		rig.part(head, MeshKit.shard(0.04, 0.2 + (0.14 if i % 2 == 0 else 0.0), rng, 4, 0.03), ice, Vector3(cos(angle) * 0.15, 0.27, sin(angle) * 0.15), Vector3(sin(angle) * 0.25, 0.0, -cos(angle) * 0.25))
-	for side: StringName in [&"r", &"l"]:
-		var sign_x: float = 1.0 if side == &"r" else -1.0
-		var shoulder: Node3D = rig.get_joint(StringName("shoulder_%s" % side))
-		rig.part(shoulder, MeshKit.sphere(0.23, 10), plate, Vector3(sign_x * 0.04, 0.03, 0.0), Vector3.ZERO, Vector3(1.2, 0.8, 1.1))
-		for i in 3:
-			rig.part(shoulder, MeshKit.shard(0.055, 0.32 + i * 0.08, rng, 4, 0.05), ice, Vector3(sign_x * (0.06 + i * 0.07), 0.15, -0.08 + i * 0.08), Vector3(0.0, 0.0, sign_x * -0.4))
-	EnemyParts.cape(rig, Look.matte(Color("223a5c"), 0.9), 0.92, 1.45)
-	var sword := Node3D.new()
-	var blade_material: Material = DungeonMaterials.crystal(Color(0.18, 0.46, 0.76), Color(0.72, 0.94, 1.0), 1.5)
-	rig.part(sword, MeshKit.cylinder(0.03, 0.035, 0.34, 8), Look.matte(Color("20262e"), 0.8))
-	rig.part(sword, MeshKit.box(Vector3(0.54, 0.06, 0.09)), gold, Vector3(0.0, 0.18, 0.0))
-	rig.part(sword, MeshKit.blade(1.85, 0.2, 0.06, 0.16), blade_material, Vector3(0.0, 0.2, 0.0))
-	rig.get_joint(&"hand_r").add_child(sword)
-	sword.rotation.x = -PI * 0.5
+	FrostKingModel.assemble(rig, glow)
 	return rig

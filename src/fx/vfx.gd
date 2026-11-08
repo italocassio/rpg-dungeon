@@ -245,3 +245,299 @@ static func floating_text(tree: SceneTree, position: Vector3, text: String, colo
 	tween.tween_property(label, "modulate:a", 0.0, 0.5).set_delay(0.45)
 	tween.tween_property(label, "outline_modulate:a", 0.0, 0.5).set_delay(0.45)
 	tween.chain().tween_callback(label.queue_free)
+
+
+# --- Efeitos de ataque do chefe (OS-022). Primitivas; as composições ficam em BossImpact e AttackFx. ---
+
+const _STAKE_SEED := 7
+
+static var _stake_mesh: ArrayMesh
+static var _emitter_cache: Dictionary[String, ParticleProcessMaterial] = {}
+static var _quad_cache: Dictionary[String, QuadMesh] = {}
+static var _crack_cache: Dictionary[String, ArrayMesh] = {}
+## Materiais planos reaproveitados por "vaga": criar um material novo e atribuí-lo a uma malha custa uns 5 ms
+## no quadro do golpe, e reaproveitar a instância custa menos de 0,1 ms.
+static var _slot_materials: Dictionary[String, StandardMaterial3D] = {}
+static var _slot_fades: Dictionary[String, Tween] = {}
+static var _glint_material: StandardMaterial3D
+static var _shape_cache: Dictionary[String, ArrayMesh] = {}
+
+
+## Luz de clarão sem sombra que apaga em `life` segundos.
+static func flash_light(tree: SceneTree, position: Vector3, color: Color, energy: float, reach: float, life: float) -> void:
+	if enabled() and energy > 0.0:
+		_flash(tree, position, color, energy, reach, life)
+
+
+## Monta um emissor a partir de `EmitterSpec` sob `parent`. Devolve null sem janela.
+## O material de processo e o quadro de cada configuração ficam em cache: criar texturas e materiais a cada
+## impacto custava mais de 10 ms no quadro do golpe.
+static func emitter(parent: Node, spec: EmitterSpec) -> GPUParticles3D:
+	if not enabled() or parent == null:
+		return null
+	var particles := GPUParticles3D.new()
+	particles.process_material = emitter_material(spec)
+	particles.amount = spec.amount
+	particles.lifetime = spec.lifetime
+	particles.one_shot = spec.one_shot
+	particles.explosiveness = spec.explosiveness
+	particles.local_coords = not spec.world_space
+	particles.draw_pass_1 = emitter_quad(spec)
+	particles.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	particles.visibility_aabb = AABB(Vector3(-40.0, -4.0, -40.0), Vector3(80.0, 24.0, 80.0))
+	parent.add_child(particles)
+	particles.emitting = true
+	return particles
+
+
+static func emitter_material(spec: EmitterSpec) -> ParticleProcessMaterial:
+	var key: String = "pm_%d_%.3f_%s_%.1f_%.3f_%.3f_%s_%.3f_%.3f_%.3f_%s_%.2f_%.2f_%.2f" % [spec.shape, spec.shape_radius, spec.direction, spec.spread, spec.speed_min, spec.speed_max, spec.gravity, spec.radial_accel_min, spec.radial_accel_max, spec.damping, spec.color.to_html(), spec.scale_start, spec.scale_end, spec.fade_start]
+	if _emitter_cache.has(key):
+		return _emitter_cache[key]
+	var process := ParticleProcessMaterial.new()
+	if spec.shape == EmitterSpec.Shape.RING:
+		process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_RING
+		process.emission_ring_axis = Vector3.UP
+		process.emission_ring_radius = spec.shape_radius
+		process.emission_ring_inner_radius = spec.shape_radius * 0.92
+		process.emission_ring_height = 0.2
+	else:
+		process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_SPHERE
+		process.emission_sphere_radius = maxf(spec.shape_radius, 0.01)
+	process.direction = spec.direction
+	process.spread = spec.spread
+	process.initial_velocity_min = spec.speed_min
+	process.initial_velocity_max = spec.speed_max
+	process.gravity = spec.gravity
+	process.radial_accel_min = spec.radial_accel_min
+	process.radial_accel_max = spec.radial_accel_max
+	process.damping_min = spec.damping
+	process.damping_max = spec.damping
+	process.scale_curve = ParticleKit.fade_scale(spec.scale_start, spec.scale_end)
+	process.color_ramp = ParticleKit.gradient([spec.color, spec.color, Color(spec.color, 0.0)], [0.0, spec.fade_start, 1.0])
+	_emitter_cache[key] = process
+	return process
+
+
+static func emitter_quad(spec: EmitterSpec) -> QuadMesh:
+	var key: String = "quad_%s_%s_%.3f" % [spec.sprite, spec.additive, spec.size]
+	if _quad_cache.has(key):
+		return _quad_cache[key]
+	var quad: QuadMesh = ParticleKit.quad(spec.size, ParticleKit.sprite_material(spec.sprite, spec.additive))
+	_quad_cache[key] = quad
+	return quad
+
+
+## Brilho billboard aditivo (a ponta da lâmina no preparo). O material é um só, reaproveitado.
+static func glint(parent: Node, color: Color, size: float) -> MeshInstance3D:
+	if not enabled() or parent == null:
+		return null
+	var instance := MeshInstance3D.new()
+	instance.mesh = ParticleKit.quad(size, glint_material(color))
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(instance)
+	return instance
+
+
+static func glint_material(color: Color) -> StandardMaterial3D:
+	if _glint_material == null:
+		_glint_material = StandardMaterial3D.new()
+		_glint_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_glint_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		_glint_material.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		_glint_material.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		_glint_material.albedo_texture = load(ParticleKit.SPARK)
+		_glint_material.disable_receive_shadows = true
+	_glint_material.albedo_color = color
+	return _glint_material
+
+
+static func stake_mesh() -> ArrayMesh:
+	if _stake_mesh == null:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = _STAKE_SEED
+		_stake_mesh = MeshKit.shard(1.0, 1.0, rng, 5, 0.0)
+	return _stake_mesh
+
+
+## Estaca de cristal: sobe, segura e afunda. `height` e `base_radius` em metros; inclinada `lean` rad para `lean_direction`.
+static func stake(parent: Node3D, position: Vector3, height: float, base_radius: float, lean_direction: Vector3, lean: float, material: Material, delay: float, rise: float, hold: float, sink: float) -> MeshInstance3D:
+	if not enabled() or parent == null:
+		return null
+	var instance := MeshInstance3D.new()
+	instance.mesh = stake_mesh()
+	instance.material_override = material
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(instance)
+	instance.global_position = position
+	var tilt_axis: Vector3 = Vector3.UP.cross(lean_direction)
+	if tilt_axis.length_squared() > 0.0001 and lean != 0.0:
+		instance.global_basis = Basis(tilt_axis.normalized(), lean)
+	instance.scale = Vector3(base_radius, 0.001, base_radius)
+	var tween := instance.create_tween()
+	tween.tween_interval(maxf(delay, 0.0))
+	tween.tween_property(instance, "scale:y", height, rise).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tween.tween_interval(hold)
+	tween.tween_property(instance, "scale:y", 0.001, sink).set_ease(Tween.EASE_IN)
+	tween.tween_callback(instance.queue_free)
+	return instance
+
+
+## Malha da rachadura: duas superfícies (a escura e o fio aceso por cima). Em cache por forma.
+static func crack_mesh(points: PackedVector2Array, width_start: float, width_end: float, thread_width: float) -> ArrayMesh:
+	var key: String = "crack_%d_%.3f_%.3f_%.3f" % [hash(points), width_start, width_end, thread_width]
+	if _crack_cache.has(key):
+		return _crack_cache[key]
+	var mesh := ArrayMesh.new()
+	_add_ribbon(mesh, points, width_start, width_end, 0.0)
+	_add_ribbon(mesh, points, thread_width, thread_width, 0.012)
+	_crack_cache[key] = mesh
+	return mesh
+
+
+## Faixa plana no chão ao longo de `points` (x, z), com a largura afinando de `width_start` a `width_end`.
+## `dark_material` na superfície escura e `thread_material` no fio aceso, por instância (a malha é compartilhada).
+static func crack(parent: Node3D, position: Vector3, points: PackedVector2Array, width_start: float, width_end: float, thread_width: float, dark_material: Material, thread_material: Material) -> MeshInstance3D:
+	if not enabled() or parent == null or points.size() < 2:
+		return null
+	var instance := MeshInstance3D.new()
+	instance.mesh = crack_mesh(points, width_start, width_end, thread_width)
+	instance.set_surface_override_material(0, dark_material)
+	instance.set_surface_override_material(1, thread_material)
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(instance)
+	instance.global_position = position
+	return instance
+
+
+static func _add_ribbon(mesh: ArrayMesh, points: PackedVector2Array, width_start: float, width_end: float, lift: float) -> void:
+	var vertices := PackedVector3Array()
+	var indices := PackedInt32Array()
+	var normals := PackedVector3Array()
+	var last: int = points.size() - 1
+	for i in points.size():
+		var previous: Vector2 = points[maxi(i - 1, 0)]
+		var following: Vector2 = points[mini(i + 1, last)]
+		var direction: Vector2 = (following - previous).normalized()
+		var side := Vector2(-direction.y, direction.x)
+		var half: float = lerpf(width_start, width_end, float(i) / float(last)) * 0.5
+		var left: Vector2 = points[i] + side * half
+		var right: Vector2 = points[i] - side * half
+		vertices.append(Vector3(left.x, lift, left.y))
+		vertices.append(Vector3(right.x, lift, right.y))
+		normals.append(Vector3.UP)
+		normals.append(Vector3.UP)
+	for i in last:
+		var base: int = i * 2
+		indices.append_array(PackedInt32Array([base, base + 1, base + 2, base + 1, base + 3, base + 2]))
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_NORMAL] = normals
+	arrays[Mesh.ARRAY_INDEX] = indices
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+
+
+## Anel em zigue-zague no chão (raio 1 na malha; a escala dá o raio). `thickness` e `zigzag` já relativos ao raio final.
+static func jagged_ring_mesh(teeth: int, thickness: float, zigzag: float) -> ArrayMesh:
+	var key: String = "ring_%d_%.4f_%.4f" % [teeth, thickness, zigzag]
+	if _shape_cache.has(key):
+		return _shape_cache[key]
+	var vertices := PackedVector3Array()
+	var normals := PackedVector3Array()
+	var indices := PackedInt32Array()
+	var count: int = teeth * 2
+	for i in count + 1:
+		var angle: float = TAU * float(i % count) / float(count)
+		var base: float = 1.0 + (zigzag if i % 2 == 0 else -zigzag) * 0.5
+		var direction := Vector3(cos(angle), 0.0, sin(angle))
+		vertices.append(direction * (base + thickness * 0.5))
+		vertices.append(direction * (base - thickness * 0.5))
+		normals.append(Vector3.UP)
+		normals.append(Vector3.UP)
+	for i in count:
+		var first: int = i * 2
+		indices.append_array(PackedInt32Array([first, first + 1, first + 2, first + 1, first + 3, first + 2]))
+	var mesh := _mesh_from(vertices, normals, indices)
+	_shape_cache[key] = mesh
+	return mesh
+
+
+## Meia-lua plana no chão, de raio externo 1, centrada na frente (-Z). Largura `width` (relativa ao raio) no meio e zero nas pontas.
+static func crescent_mesh(half_angle: float, width: float) -> ArrayMesh:
+	var key: String = "crescent_%.3f_%.4f" % [half_angle, width]
+	if _shape_cache.has(key):
+		return _shape_cache[key]
+	var vertices := PackedVector3Array()
+	var normals := PackedVector3Array()
+	var indices := PackedInt32Array()
+	var steps: int = 24
+	for i in steps + 1:
+		var t: float = float(i) / float(steps)
+		var angle: float = lerpf(-half_angle, half_angle, t)
+		var taper: float = pow(maxf(1.0 - pow(absf(t * 2.0 - 1.0), 2.0), 0.0), 0.7)
+		var direction := Vector3(sin(angle), 0.0, -cos(angle))
+		vertices.append(direction)
+		vertices.append(direction * (1.0 - width * taper))
+		normals.append(Vector3.UP)
+		normals.append(Vector3.UP)
+	for i in steps:
+		var first: int = i * 2
+		indices.append_array(PackedInt32Array([first, first + 1, first + 2, first + 1, first + 3, first + 2]))
+	var mesh := _mesh_from(vertices, normals, indices)
+	_shape_cache[key] = mesh
+	return mesh
+
+
+static func _mesh_from(vertices: PackedVector3Array, normals: PackedVector3Array, indices: PackedInt32Array) -> ArrayMesh:
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_NORMAL] = normals
+	arrays[Mesh.ARRAY_INDEX] = indices
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
+
+
+## Material plano sem luz para as camadas do chão e do ar: aditivo ou por mistura.
+static func flat_material(color: Color, additive: bool) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.blend_mode = BaseMaterial3D.BLEND_MODE_ADD if additive else BaseMaterial3D.BLEND_MODE_MIX
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	material.albedo_color = color
+	material.disable_receive_shadows = true
+	return material
+
+
+## Material plano persistente da vaga `slot`, na cor pedida. Uma vaga só serve a um efeito por vez: o desvanecer
+## anterior (`fade_slot`) é cancelado quando a vaga volta a ser pedida.
+static func slot_material(slot: String, color: Color, additive: bool) -> StandardMaterial3D:
+	var material: StandardMaterial3D = _slot_materials.get(slot)
+	if material == null:
+		material = flat_material(color, additive)
+		_slot_materials[slot] = material
+	if _slot_fades.has(slot) and is_instance_valid(_slot_fades[slot]):
+		_slot_fades[slot].kill()
+	_slot_fades.erase(slot)
+	material.albedo_color = color
+	return material
+
+
+## Faz o alfa da vaga ir a zero em `seconds` depois de `delay`.
+static func fade_slot(slot: String, owner_node: Node, seconds: float, delay: float = 0.0) -> void:
+	var material: StandardMaterial3D = _slot_materials.get(slot)
+	if material == null or not is_instance_valid(owner_node):
+		return
+	var tween: Tween = owner_node.create_tween()
+	tween.tween_property(material, "albedo_color:a", 0.0, seconds).set_delay(delay)
+	_slot_fades[slot] = tween
+
+
+## Atribui o material a uma malha solta, só para o Godot montar o shader agora e não no quadro do golpe.
+static func warm_material(material: Material) -> void:
+	var probe := MeshInstance3D.new()
+	probe.material_override = material
+	probe.free()

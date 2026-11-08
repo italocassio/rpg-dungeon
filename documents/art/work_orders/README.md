@@ -24,8 +24,12 @@ Execute na ordem. Uma ordem só começa quando as anteriores da coluna "Depende 
 | 018 | Realce dos cristais | `gameplay-developer` | 002 |
 | 019 | Ferramenta de tiers | `gameplay-developer` | 012 |
 | 020 | Ícones de habilidade do sacerdote e teste dos ícones | `gameplay-developer` | 016 |
+| 021 | Rei Gélido, modelo novo | `gameplay-developer` | Nenhuma |
+| 022 | Efeitos de ataque do Rei Gélido | `rpg-systems` (dados) e `gameplay-developer` (código) | 021 |
 
 As OS-006 e 007 não correm em paralelo: a 007 lê `look_tier` da OS-005 e mexe nos mesmos corpos de `creature_factory.gd` que a 006. O contrato final está na OS-004, e o parecer em `OS-004-parecer.md`.
+
+As OS-021 e 022 refazem o chefe pelo novo design. A 021 define o modelo e as âncoras (`weapon_tip`, `core`, `crown`) que a 022 usa para os efeitos. Cada uma traz uma seção "Mudança no guia" com propostas que o usuário precisa aprovar antes de `style_guide.md` mudar.
 
 A OS-020 nasceu da validação da OS-017: o ícone `smite.svg` desenhava uma cruz (O2), e nenhum teste carregava os ícones de `assets/icons/`. A OS-017 só fecha depois dela.
 

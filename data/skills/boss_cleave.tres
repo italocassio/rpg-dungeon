@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="SkillData" format=3]
 
 [ext_resource type="Script" path="res://src/rpg/data/skill_data.gd" id="1_datl0"]
+[ext_resource type="Resource" path="res://data/skill_fx/boss_cleave.tres" id="fx_cleave"]
 
 [resource]
 script = ExtResource("1_datl0")
@@ -13,3 +14,4 @@ power = 1.9
 cast_time = 1.25
 cooldown = 6.0
 telegraph = true
+fx = ExtResource("fx_cleave")

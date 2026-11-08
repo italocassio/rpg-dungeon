@@ -491,6 +491,83 @@ func test_heal_gives_chi_only_when_it_heals() -> void:
 	equal(priest.chi, 10.0, "curar morto não dá Chi")
 
 
+## Pontos de `Events.skill_impacted` de uma conjuração. `settle` espera o que a entrega faz depois (a investida).
+func _impacts_of(skill: SkillData, caster: Combatant, aim: SkillAim, settle: float = 0.0) -> Array[Vector3]:
+	var points: Array[Vector3] = []
+	var listener := func(emitted: SkillData, _source: Combatant, point: Vector3) -> void:
+		if emitted == skill:
+			points.append(point)
+	Events.skill_impacted.connect(listener)
+	SkillExecutor.execute(skill, caster, aim)
+	if settle > 0.0:
+		await get_tree().create_timer(settle).timeout
+	Events.skill_impacted.disconnect(listener)
+	return points
+
+
+func _area_skill(delivery: SkillData.Delivery) -> SkillData:
+	var skill := SkillData.new()
+	skill.id = &"t_area"
+	skill.delivery = delivery
+	skill.damage_kind = SkillData.DamageKind.PHYSICAL
+	skill.power = 1.0
+	skill.skill_range = 4.0
+	skill.cone_degrees = 90.0
+	skill.line_width = 2.0
+	skill.radius = 3.0
+	return skill
+
+
+## Cone, linha, área no chão e área no conjurador emitem o impacto uma vez por conjuração, com ou sem alvo.
+func test_area_deliveries_emit_one_impact_with_or_without_targets() -> void:
+	var expected: Dictionary = {
+		SkillData.Delivery.MELEE_CONE: Vector3(0.0, 0.0, -2.0),
+		SkillData.Delivery.LINE: Vector3(0.0, 0.0, -2.0),
+		SkillData.Delivery.SELF_AOE: Vector3.ZERO,
+		SkillData.Delivery.GROUND_AOE: Vector3(0.0, 0.0, -3.0),
+	}
+	var row: float = 0.0
+	for delivery: SkillData.Delivery in expected:
+		# Uma faixa de mundo por entrega: sobras de outros testes nunca entram no alcance.
+		row += 1000.0
+		var origin := Vector3(row, 0.0, 0.0)
+		var skill: SkillData = _area_skill(delivery)
+		var caster: Combatant = _combatant(Combatant.Team.PARTY)
+		caster.actor().global_position = origin
+		var aim := SkillAim.new()
+		aim.direction = Vector3.FORWARD
+		aim.ground_point = origin + expected[SkillData.Delivery.GROUND_AOE]
+		var label: String = SkillData.Delivery.keys()[delivery]
+		var empty: Array[Vector3] = await _impacts_of(skill, caster, aim)
+		equal(empty.size(), 1, "%s sem alvo emite um impacto" % label)
+		if not empty.is_empty():
+			equal(empty[0], origin + expected[delivery], "%s: ponto do impacto" % label)
+		var target: Combatant = _combatant(Combatant.Team.MONSTERS)
+		target.actor().global_position = origin + Vector3(0.0, 0.0, -2.0)
+		var before: float = target.hp
+		var hit: Array[Vector3] = await _impacts_of(skill, caster, aim)
+		equal(hit.size(), 1, "%s com alvo emite um impacto" % label)
+		check(target.hp < before, "%s acertou o alvo" % label)
+
+
+## A investida segue emitindo só quando acerta.
+func test_dash_emits_impact_only_when_it_hits() -> void:
+	var skill: SkillData = _area_skill(SkillData.Delivery.DASH)
+	skill.skill_range = 3.0
+	skill.radius = 2.0
+	var origin := Vector3(9000.0, 0.0, 0.0)
+	var caster: Combatant = _combatant(Combatant.Team.PARTY)
+	caster.actor().global_position = origin
+	var aim := SkillAim.new()
+	aim.direction = Vector3.FORWARD
+	var miss: Array[Vector3] = await _impacts_of(skill, caster, aim, 0.4)
+	equal(miss.size(), 0, "investida sem alvo não emite")
+	var target: Combatant = _combatant(Combatant.Team.MONSTERS)
+	target.actor().global_position = caster.actor().global_position + Vector3(0.0, 0.0, -3.0)
+	var hit: Array[Vector3] = await _impacts_of(skill, caster, aim, 0.4)
+	equal(hit.size(), 1, "investida que acerta emite um impacto")
+
+
 func test_boss_cannot_be_stunned() -> void:
 	var boss := _combatant(Combatant.Team.MONSTERS)
 	boss.stun_immune = true
@@ -1074,6 +1151,9 @@ func _music_director() -> MusicDirector:
 	var config: MusicConfig = (load(MusicDirector.CONFIG_PATH) as MusicConfig).duplicate()
 	config.crossfade_seconds = MUSIC_TEST_FADE
 	config.fade_out_seconds = MUSIC_TEST_FADE
+	# Os testes do diretor não dependem do arquivo do saguão: sem ele, empresta outra faixa.
+	if config.lobby_track == null:
+		config.lobby_track = config.dungeon_track
 	var director := MusicDirector.new()
 	director.config = config
 	add_child(director)
@@ -1087,9 +1167,11 @@ func _music_fade_done() -> void:
 func test_music_config_has_looping_tracks() -> void:
 	var config: MusicConfig = load(MusicDirector.CONFIG_PATH) as MusicConfig
 	check(config != null, "music.tres carrega como MusicConfig")
-	for track: AudioStream in [config.dungeon_track, config.boss_track]:
+	for track: AudioStream in [config.dungeon_track, config.boss_track, config.lobby_track]:
 		var wav := track as AudioStreamWAV
 		check(wav != null, "faixa é AudioStreamWAV")
+		if wav == null:
+			continue
 		equal(wav.loop_mode, AudioStreamWAV.LOOP_FORWARD, "faixa em loop")
 		check(wav.loop_end > wav.loop_begin, "trecho de loop válido")
 
@@ -1187,6 +1269,59 @@ func test_music_dungeon_exited_fades_everything_out() -> void:
 	await _music_fade_done()
 	check(not director._dungeon_player.playing, "faixa da masmorra parou")
 	check(not director._boss_player.playing, "faixa do chefe parou")
+	director.free()
+
+
+func test_music_starts_on_lobby_entered() -> void:
+	var director := _music_director()
+	Events.lobby_entered.emit()
+	equal(director.current, MusicDirector.Track.LOBBY, "entrar no saguão toca a música do saguão")
+	check(director._lobby_player.playing, "faixa do saguão tocando")
+	equal(director._lobby_player.bus, &"Music", "faixa do saguão no bus Music")
+	check(not director._dungeon_player.playing and not director._boss_player.playing, "masmorra e chefe seguem parados")
+	await _music_fade_done()
+	var target: float = db_to_linear(director.config.lobby_volume_db)
+	check(absf(director._lobby_player.volume_linear - target) < 0.001, "fade chega ao volume do saguão")
+	director.free()
+
+
+func test_music_lobby_crossfades_to_dungeon() -> void:
+	var director := _music_director()
+	Events.lobby_entered.emit()
+	await _music_fade_done()
+	Events.dungeon_entered.emit()
+	equal(director.current, MusicDirector.Track.DUNGEON, "entrar na masmorra troca a faixa")
+	check(director._dungeon_player.playing, "faixa da masmorra tocando")
+	await _music_fade_done()
+	check(not director._lobby_player.playing, "saguão para depois do fade")
+	check(director._dungeon_player.playing, "faixa da masmorra continua")
+	director.free()
+
+
+func test_music_dungeon_exited_after_lobby_keeps_lobby() -> void:
+	var director := _music_director()
+	Events.dungeon_entered.emit()
+	# Ordem real: o saguão avisa primeiro, a tela da masmorra avisa a saída ao sair da árvore.
+	Events.lobby_entered.emit()
+	Events.dungeon_exited.emit()
+	equal(director.current, MusicDirector.Track.LOBBY, "saída tardia da masmorra não silencia o saguão")
+	await _music_fade_done()
+	check(director._lobby_player.playing, "faixa do saguão segue tocando")
+	check(not director._dungeon_player.playing, "faixa da masmorra parou")
+	director.free()
+
+
+func test_music_lobby_without_track_is_silent_and_quiet() -> void:
+	var director := _music_director()
+	director._lobby_player.stream = null
+	Events.lobby_entered.emit()
+	equal(director.current, MusicDirector.Track.LOBBY, "saguão sem faixa ainda é a faixa atual")
+	check(not director._lobby_player.playing, "nada toca sem arquivo")
+	await _music_fade_done()
+	check(not director._lobby_player.playing, "segue sem tocar depois do fade")
+	Events.dungeon_entered.emit()
+	equal(director.current, MusicDirector.Track.DUNGEON, "masmorra toca normalmente depois")
+	check(director._dungeon_player.playing, "faixa da masmorra tocando")
 	director.free()
 
 
@@ -2753,3 +2888,888 @@ func _weapon_meshes(rig: CreatureRig) -> Array[MeshInstance3D]:
 		if hand.is_ancestor_of(instance) and instance.get_parent() != hand:
 			result.append(instance)
 	return result
+
+
+# ---------- Rei Gélido (OS-021) ----------
+
+const MonsterMetrics := preload("res://tests/visual/monster_metrics.gd")
+const FROST_KING_SCALE := 2.5
+const FROST_KING_SOURCE := "res://src/visuals/enemies/frost_king_model.gd"
+const FROST_KING_FORBIDDEN: Array[String] = ["Look.metal", "Look.hero", "HeroBase", "WeaponKit", "iron"]
+const FROST_KING_WALK_FRAMES := 400
+const FROST_KING_WALK_SPEED := 3.5
+const FROST_KING_WALK_DELTA := 1.0 / 60.0
+const FROST_KING_MIN_TIP_HEIGHT := 0.2
+const FROST_KING_MIN_CAPE_CLEARANCE := 0.05
+const FROST_KING_MAX_SUNKEN := -0.02
+const FROST_KING_HEIGHT_BAND := 0.1
+
+
+func _frost_king(glow: Color = Color("7FE0FF")) -> CreatureRig:
+	var rig: CreatureRig = CreatureFactory.build(&"frost_king", glow)
+	rig.scale = Vector3.ONE * FROST_KING_SCALE
+	add_child(rig)
+	return rig
+
+
+func _frost_king_materials(rig: CreatureRig) -> Array[Material]:
+	var result: Array[Material] = []
+	for instance in _instances(rig):
+		if instance.material_override != null and not result.has(instance.material_override):
+			result.append(instance.material_override)
+	return result
+
+
+func test_frost_king_joints_have_pivot_spheres() -> void:
+	var rig: CreatureRig = _frost_king()
+	var cases: Array[Dictionary] = [
+		{"joint": "shoulder", "name": "junta_ombro", "radius": 0.12, "limb": 0.095},
+		{"joint": "elbow", "name": "junta_cotovelo", "radius": 0.105, "limb": 0.09},
+		{"joint": "knee", "name": "junta_joelho", "radius": 0.115, "limb": 0.10},
+	]
+	for case in cases:
+		for side in ["r", "l"]:
+			var joint: Node3D = rig.get_joint(StringName("%s_%s" % [case["joint"], side]))
+			var sphere: MeshInstance3D = joint.get_node_or_null(case["name"]) as MeshInstance3D
+			check(sphere != null, "%s_%s tem %s" % [case["joint"], side, case["name"]])
+			if sphere == null:
+				continue
+			equal(sphere.position, Vector3.ZERO, "%s_%s: esfera centrada no joint" % [case["joint"], side])
+			var radius: float = (sphere.mesh as SphereMesh).radius * sphere.scale.x
+			_near(radius, case["radius"], "%s_%s: raio da esfera" % [case["joint"], side], 0.001)
+			check(radius >= case["limb"], "%s_%s: esfera não menor que o membro" % [case["joint"], side])
+	rig.queue_free()
+
+
+func test_frost_king_finish_is_clean_and_glow_is_only_where_ordered() -> void:
+	var glow := Color("7FE0FF")
+	var rig: CreatureRig = _frost_king(glow)
+	var shaders: Array[Material] = []
+	var eyes: int = 0
+	for material in _frost_king_materials(rig):
+		var standard := material as StandardMaterial3D
+		if standard != null:
+			check(standard.albedo_texture == null and standard.normal_texture == null, "material do chefe sem textura")
+			if standard.emission_enabled:
+				eyes += 1
+				equal(standard.emission_energy_multiplier, 7.0, "olho em 7,0")
+				equal(standard.emission, glow, "olho na cor do tema")
+		elif material is ShaderMaterial:
+			shaders.append(material)
+	equal(eyes, 1, "só o material do olho emite entre os StandardMaterial3D")
+	equal(shaders.size(), 4, "os cristais são 4 ShaderMaterial")
+	var source: String = FileAccess.get_file_as_string(FROST_KING_SOURCE)
+	check(not source.is_empty(), "fonte do modelo lida")
+	for word in FROST_KING_FORBIDDEN:
+		check(not source.contains(word), "frost_king_model.gd não usa %s" % word)
+	var cached: Dictionary = {
+		&"crown_material": DungeonMaterials.crystal(Color(0.14, 0.42, 0.72), Color(0.65, 0.92, 1.0), 2.0),
+		&"core_material": DungeonMaterials.crystal(Color(0.2, 0.55, 0.9), Color(0.7, 0.95, 1.0), 2.4),
+		&"blade_material": DungeonMaterials.crystal(Color(0.18, 0.46, 0.76), Color(0.72, 0.94, 1.0), 1.5),
+	}
+	var users: Dictionary = {&"crown_material": 5, &"core_material": 1, &"blade_material": 1}
+	for meta: StringName in cached:
+		var private: Material = rig.get_meta(meta, null) as Material
+		check(private != null, "meta %s existe" % meta)
+		if private == null:
+			continue
+		check(private != cached[meta], "%s é instância privada, não a do cache" % meta)
+		var count: int = 0
+		for instance in _instances(rig):
+			if instance.material_override == private:
+				count += 1
+		equal(count, users[meta], "%s: peças que usam" % meta)
+	rig.queue_free()
+
+
+func test_frost_king_anchors_and_hand_stay_put() -> void:
+	var rig: CreatureRig = _frost_king()
+	for anchor: StringName in [&"weapon_tip", &"core", &"crown", &"cloth_back"]:
+		check(rig.has_joint(anchor), "âncora %s existe" % anchor)
+	var tip: Node3D = rig.get_joint(&"weapon_tip")
+	equal(tip.get_parent().name, &"Sword", "weapon_tip na raiz da espada")
+	check(tip.position.distance_to(Vector3(0.0, 1.53, 0.0)) <= 0.02, "weapon_tip em (0, 1,53, 0): %s" % tip.position)
+	equal(tip.get_parent().get_parent(), rig.get_joint(&"hand_r"), "espada na mão direita")
+	for meta: StringName in [&"blade_material", &"core_material", &"crown_material"]:
+		check(rig.has_meta(meta), "meta %s" % meta)
+	for action: StringName in [&"swing", &"overhead", &"thrust", &"cast", &"shout"]:
+		rig.wind_up(action, 0.1)
+		for _frame in 12:
+			rig.animate(0.016, 0.0)
+		equal(rig.get_joint(&"hand_r").rotation, Vector3.ZERO, "hand_r sem rotação em %s" % action)
+		rig.strike(action)
+		rig.animate(0.1, 3.5)
+		equal(rig.get_joint(&"hand_r").rotation, Vector3.ZERO, "hand_r sem rotação no golpe %s" % action)
+	rig.queue_free()
+
+
+func test_frost_king_flash_hit_covers_every_part() -> void:
+	var rig: CreatureRig = _frost_king()
+	rig.flash_hit()
+	var parts: Array[MeshInstance3D] = _instances(rig)
+	check(parts.size() >= 60, "chefe com %d peças" % parts.size())
+	for instance in parts:
+		check(instance.material_overlay != null, "flash_hit pega %s" % instance.name)
+	for instance in parts:
+		if instance.name == &"capa" or instance.name == &"lamina":
+			check(instance.material_overlay != null, "flash_hit pega %s" % instance.name)
+	rig.queue_free()
+
+
+func test_strike_and_recover_times_are_per_creature() -> void:
+	var glow := Color("7FE0FF")
+	var boss: CreatureRig = CreatureFactory.build(&"frost_king", glow)
+	equal(boss.strike_time, 0.18, "chefe: golpe de 0,18 s")
+	equal(boss.recover_time, 0.50, "chefe: volta de 0,50 s")
+	boss.free()
+	for visual: StringName in [&"goblin", &"wolf", &"skeleton", &"shaman", &"golem"]:
+		var other: CreatureRig = CreatureFactory.build(visual, glow)
+		equal(other.strike_time, 0.16, "%s: golpe padrão" % visual)
+		equal(other.recover_time, 0.32, "%s: volta padrão" % visual)
+		other.free()
+	for class_id: StringName in [&"warrior", &"mage", &"priest"]:
+		var hero: CreatureRig = CreatureFactory.build_hero(_look_of_class(class_id))
+		equal(hero.strike_time, 0.16, "%s: golpe padrão" % class_id)
+		equal(hero.recover_time, 0.32, "%s: volta padrão" % class_id)
+		hero.free()
+
+
+func _look_of_class(class_id: StringName) -> HeroLook:
+	var class_data: ClassData = GameDB.class_by_id(class_id)
+	return HeroLook.from_items(class_id, class_data.starter_armors[0], class_data.starter_weapons[0])
+
+
+func test_frost_king_walk_never_pierces_floor_or_cape_and_sword_stays_up() -> void:
+	var rig: CreatureRig = _frost_king()
+	var leg_meshes: Array[MeshInstance3D] = []
+	for hip: StringName in [&"hip_r", &"hip_l"]:
+		for instance: MeshInstance3D in rig.get_joint(hip).find_children("*", "MeshInstance3D", true, false):
+			leg_meshes.append(instance)
+	var cape: MeshInstance3D = rig.get_joint(&"cloth_back").get_child(0) as MeshInstance3D
+	var cape_faces: PackedVector3Array = cape.mesh.get_faces()
+	var leg_faces: Array[PackedVector3Array] = []
+	for instance in leg_meshes:
+		leg_faces.append(instance.mesh.get_faces())
+	var lowest_tip: float = INF
+	var lowest_body: float = INF
+	var tightest: float = INF
+	for _frame in FROST_KING_WALK_FRAMES:
+		rig.animate(FROST_KING_WALK_DELTA, FROST_KING_WALK_SPEED)
+		lowest_tip = minf(lowest_tip, rig.get_joint(&"weapon_tip").global_position.y)
+		for point in MonsterMetrics.body_points(rig):
+			lowest_body = minf(lowest_body, point.y * FROST_KING_SCALE)
+		# Folga em z, por faixa de altura: a capa fica atrás (+Z) e a perna nunca passa dela.
+		var to_rig: Transform3D = rig.global_transform.affine_inverse()
+		var cape_back: Dictionary = {}
+		for point in (to_rig * cape.global_transform) * cape_faces:
+			var band: int = roundi(point.y / FROST_KING_HEIGHT_BAND)
+			cape_back[band] = minf(cape_back.get(band, INF), point.z)
+		var leg_back: Dictionary = {}
+		for index in leg_meshes.size():
+			for point in (to_rig * leg_meshes[index].global_transform) * leg_faces[index]:
+				var band: int = roundi(point.y / FROST_KING_HEIGHT_BAND)
+				leg_back[band] = maxf(leg_back.get(band, -INF), point.z)
+		for band: int in leg_back:
+			if cape_back.has(band):
+				tightest = minf(tightest, cape_back[band] - leg_back[band])
+	check(lowest_tip >= FROST_KING_MIN_TIP_HEIGHT, "ponta da espada a %.2f m do chão no passo" % lowest_tip)
+	check(tightest * FROST_KING_SCALE >= FROST_KING_MIN_CAPE_CLEARANCE, "folga da capa nas pernas %.3f m (mundo)" % (tightest * FROST_KING_SCALE))
+	check(lowest_body >= FROST_KING_MAX_SUNKEN, "corpo a %.3f m do chão no passo (limite %.2f)" % [lowest_body, FROST_KING_MAX_SUNKEN])
+	print("  chefe no passo: ponta mín. %.2f m, corpo mín. %.3f m (ordem: %.2f), folga da capa %.3f m (mundo)" % [lowest_tip, lowest_body, FROST_KING_MAX_SUNKEN, tightest * FROST_KING_SCALE])
+	rig.queue_free()
+
+
+func test_frost_king_comes_from_the_factory_and_the_factory_only_delegates() -> void:
+	var rig: CreatureRig = CreatureFactory.build(&"frost_king", Color("7FE0FF"))
+	check(rig.has_joint(&"weapon_tip") and rig.has_meta(&"core_material"), "a fábrica devolve o modelo novo")
+	rig.free()
+	var source: String = FileAccess.get_file_as_string("res://src/visuals/creature_factory.gd")
+	var body: String = source.substr(source.find("static func _frost_king"))
+	check(body.contains("FrostKingModel.assemble"), "_frost_king delega ao modelo")
+	check(not body.contains("rig.part("), "_frost_king não monta peças")
+	check(body.count("\n") <= 8, "_frost_king curto")
+
+
+# --- OS-022, parte A: dados dos efeitos do chefe ---
+
+const BOSS_FX_IDS: Array[StringName] = [&"strike", &"cleave", &"slam", &"spikes", &"nova"]
+
+## Colunas: estilo da zona, preparo, âncora, pico, partículas, tremor do preparo, impacto, escala, duração,
+## atraso, força e raio do tremor, energia do clarão. Os valores vêm da tabela da OS-022.
+const BOSS_FX_TABLE: Dictionary = {
+	&"strike": [SkillFxData.TelegraphStyle.NONE, SkillFxData.PrepStyle.BLADE, &"weapon_tip", 4.0, 0, 0.0, SkillFxData.ImpactStyle.ARC, 1.0, 0.25, 0.09, 0.20, 12.0, 1.0],
+	&"cleave": [SkillFxData.TelegraphStyle.CONE_TEETH, SkillFxData.PrepStyle.BLADE, &"weapon_tip", 5.0, 24, 0.0, SkillFxData.ImpactStyle.SCYTHE, 1.0, 0.55, 0.09, 0.35, 16.0, 1.6],
+	&"slam": [SkillFxData.TelegraphStyle.CRACKS, SkillFxData.PrepStyle.CORE, &"core", 6.0, 36, 0.0, SkillFxData.ImpactStyle.FRACTURE, 1.0, 1.4, 0.09, 0.65, 22.0, 3.0],
+	&"spikes": [SkillFxData.TelegraphStyle.CHEVRONS, SkillFxData.PrepStyle.TIP_CRYSTALS, &"weapon_tip", 5.0, 30, 0.0, SkillFxData.ImpactStyle.STAKES, 1.0, 1.2, 0.09, 0.40, 26.0, 1.8],
+	&"nova": [SkillFxData.TelegraphStyle.CROWN, SkillFxData.PrepStyle.WINTER, &"core", 7.0, 27, 0.08, SkillFxData.ImpactStyle.CROWN, 1.3, 2.2, 0.09, 0.90, 34.0, 4.0],
+}
+
+## Tabela de tremor da seção 5, por distância em metros: strike, cleave, slam, spikes, nova.
+const BOSS_SHAKE_TABLE: Dictionary = {
+	5.0: [0.18, 0.35, 0.65, 0.40, 0.90],
+	10.0: [0.05, 0.20, 0.55, 0.38, 0.90],
+	20.0: [0.0, 0.0, 0.09, 0.14, 0.57],
+	30.0: [0.0, 0.0, 0.0, 0.0, 0.16],
+}
+
+
+func _boss_skill(id: StringName) -> SkillData:
+	return load("res://data/skills/boss_%s.tres" % id) as SkillData
+
+
+func _boss_fx(id: StringName) -> SkillFxData:
+	return load("res://data/skill_fx/boss_%s.tres" % id) as SkillFxData
+
+
+func test_boss_fx_resources_load_and_are_linked() -> void:
+	for id in BOSS_FX_IDS:
+		var skill: SkillData = _boss_skill(id)
+		check(skill != null, "boss_%s carrega" % id)
+		check(_boss_fx(id) != null, "fx de boss_%s carrega como SkillFxData" % id)
+		if skill != null:
+			check(skill.fx != null, "boss_%s referencia o fx" % id)
+			equal(skill.fx.resource_path if skill.fx != null else "", "res://data/skill_fx/boss_%s.tres" % id, "boss_%s aponta para o seu .tres" % id)
+
+
+func test_boss_fx_fields_are_within_limits() -> void:
+	for id in BOSS_FX_IDS:
+		var fx: SkillFxData = _boss_fx(id)
+		if fx == null:
+			continue
+		check(fx.telegraph_style in SkillFxData.TelegraphStyle.values(), "%s: estilo da zona válido" % id)
+		check(fx.prep_style in SkillFxData.PrepStyle.values(), "%s: estilo do preparo válido" % id)
+		check(fx.impact_style in SkillFxData.ImpactStyle.values(), "%s: estilo do impacto válido" % id)
+		check(fx.prep_peak >= 0.0 and fx.prep_peak <= 7.0, "%s: prep_peak em 0..7" % id)
+		check(fx.prep_motes >= 0 and fx.prep_motes <= 80, "%s: prep_motes em 0..80" % id)
+		check(fx.prep_shake >= 0.0 and fx.prep_shake <= 1.0, "%s: prep_shake em 0..1" % id)
+		check(fx.shake_strength >= 0.0 and fx.shake_strength <= 1.0, "%s: shake_strength em 0..1" % id)
+		check(fx.shake_radius >= 0.0, "%s: shake_radius não negativo" % id)
+		check(fx.flash_energy >= 0.0, "%s: flash_energy não negativo" % id)
+		check(fx.impact_scale > 0.0, "%s: impact_scale positivo" % id)
+		check(fx.impact_duration > 0.0, "%s: impact_duration positivo" % id)
+		check(fx.impact_delay >= 0.0 and fx.impact_delay < fx.impact_duration, "%s: impact_delay dentro da vida do efeito" % id)
+		check(fx.impact_color.a == 0.0, "%s: impact_color usa o tema (alfa 0)" % id)
+		check(fx.impact_style != SkillFxData.ImpactStyle.NONE, "%s: tem forma de impacto" % id)
+		check(fx.shake_radius > 0.0 and fx.shake_strength > 0.0, "%s: tem tremor" % id)
+
+
+func test_skill_fx_defaults() -> void:
+	var fx := SkillFxData.new()
+	equal(fx.telegraph_style, SkillFxData.TelegraphStyle.PLAIN, "zona padrão é PLAIN")
+	equal(fx.prep_style, SkillFxData.PrepStyle.NONE, "preparo padrão é NONE")
+	equal(fx.prep_anchor, &"weapon_tip", "âncora padrão")
+	equal(fx.prep_peak, 3.0, "pico padrão")
+	equal(fx.impact_style, SkillFxData.ImpactStyle.NONE, "impacto padrão é NONE")
+	equal(fx.impact_color.a, 0.0, "cor padrão usa o tema")
+	equal(fx.impact_scale, 1.0, "escala padrão")
+	equal(fx.impact_duration, 0.5, "duração padrão")
+	equal(fx.shake_strength, 0.0, "sem tremor por padrão")
+	equal(fx.flash_energy, 0.0, "sem luz por padrão")
+	equal(SkillData.new().fx, null, "SkillData.fx é nulo por padrão")
+
+
+func test_boss_strike_has_no_telegraph_and_others_do() -> void:
+	var strike: SkillData = _boss_skill(&"strike")
+	check(not strike.telegraph, "boss_strike continua sem telegrafia")
+	equal(strike.fx.telegraph_style, SkillFxData.TelegraphStyle.NONE, "boss_strike: zona NONE")
+	for id in [&"cleave", &"slam", &"spikes", &"nova"]:
+		check(_boss_skill(id).telegraph, "boss_%s mantém a telegrafia" % id)
+		check(_boss_skill(id).fx.telegraph_style != SkillFxData.TelegraphStyle.NONE, "boss_%s desenha a zona" % id)
+
+
+func test_only_boss_skills_have_fx() -> void:
+	var seen: int = 0
+	var boss_ids: Array[String] = []
+	for id in BOSS_FX_IDS:
+		boss_ids.append("boss_%s.tres" % id)
+	for file in DirAccess.get_files_at("res://data/skills"):
+		if not file.ends_with(".tres"):
+			continue
+		var skill: SkillData = load("res://data/skills/%s" % file) as SkillData
+		if skill == null:
+			continue
+		seen += 1
+		if file in boss_ids:
+			check(skill.fx != null, "%s tem fx" % file)
+		else:
+			check(skill.fx == null, "%s fora do chefe tem fx nulo" % file)
+	check(seen >= 30, "a varredura viu as habilidades (%d)" % seen)
+	for skill in _player_skills():
+		check(skill.fx == null, "habilidade de classe %s tem fx nulo" % skill.id)
+
+
+func test_boss_fx_values_match_the_order_table() -> void:
+	for id in BOSS_FX_IDS:
+		var fx: SkillFxData = _boss_fx(id)
+		var row: Array = BOSS_FX_TABLE[id]
+		equal(fx.telegraph_style, row[0], "%s: telegraph_style" % id)
+		equal(fx.prep_style, row[1], "%s: prep_style" % id)
+		equal(fx.prep_anchor, row[2], "%s: prep_anchor" % id)
+		equal(fx.prep_peak, row[3], "%s: prep_peak" % id)
+		equal(fx.prep_motes, row[4], "%s: prep_motes" % id)
+		equal(fx.prep_shake, row[5], "%s: prep_shake" % id)
+		equal(fx.impact_style, row[6], "%s: impact_style" % id)
+		equal(fx.impact_scale, row[7], "%s: impact_scale" % id)
+		equal(fx.impact_duration, row[8], "%s: impact_duration" % id)
+		equal(fx.impact_delay, row[9], "%s: impact_delay" % id)
+		equal(fx.shake_strength, row[10], "%s: shake_strength" % id)
+		equal(fx.shake_radius, row[11], "%s: shake_radius" % id)
+		equal(fx.flash_energy, row[12], "%s: flash_energy" % id)
+
+
+func test_boss_shake_trauma_follows_the_order_table() -> void:
+	for distance: float in BOSS_SHAKE_TABLE:
+		var expected: Array = BOSS_SHAKE_TABLE[distance]
+		for i in BOSS_FX_IDS.size():
+			var fx: SkillFxData = _boss_fx(BOSS_FX_IDS[i])
+			var trauma: float = SkillFxData.shake_trauma(fx.shake_strength, fx.shake_radius, distance)
+			check(absf(trauma - float(expected[i])) <= 0.01, "%s a %s m: tremor %.3f, esperado %.2f" % [BOSS_FX_IDS[i], distance, trauma, expected[i]])
+
+
+func test_shake_trauma_edges() -> void:
+	equal(SkillFxData.shake_trauma(0.9, 0.0, 0.0), 0.0, "raio 0 não treme")
+	equal(SkillFxData.shake_trauma(0.9, -5.0, 1.0), 0.0, "raio negativo não treme")
+	equal(SkillFxData.shake_trauma(0.9, 34.0, 0.0), 0.9, "distância 0 dá a força cheia")
+	equal(SkillFxData.shake_trauma(0.9, 34.0, 34.0), 0.0, "no raio chega a zero")
+	equal(SkillFxData.shake_trauma(0.9, 34.0, 100.0), 0.0, "além do raio é zero")
+	equal(SkillFxData.shake_trauma(0.9, 34.0, -10.0), 0.9, "distância negativa não passa da força")
+	for id in BOSS_FX_IDS:
+		var fx: SkillFxData = _boss_fx(id)
+		var previous: float = INF
+		for step in 81:
+			var trauma: float = SkillFxData.shake_trauma(fx.shake_strength, fx.shake_radius, step * 0.5)
+			check(trauma >= 0.0 and trauma <= fx.shake_strength, "%s: tremor a %.1f m dentro de 0..strength" % [id, step * 0.5])
+			check(trauma <= previous + 0.000001, "%s: tremor não cresce com a distância (%.1f m)" % [id, step * 0.5])
+			previous = trauma
+
+
+# --- OS-022, parte B: telegrafia, preparo, impacto e tremor do chefe ---
+
+const TELEGRAPH_SHADER := "res://assets/shaders/telegraph.gdshader"
+const HERO_TARGET_RADIUS := 0.4
+## Orçamento da seção 6: partículas de impacto, malhas de impacto, malhas de preparo e luzes (preparo + clarão).
+const BOSS_BUDGET_TABLE: Dictionary = {
+	&"strike": [8, 1, 1, 1],
+	&"cleave": [36, 7, 1, 1],
+	&"slam": [56, 22, 0, 2],
+	&"spikes": [48, 22, 3, 1],
+	&"nova": [100, 56, 27, 2],
+}
+const BOSS_MAX_LIVE_PARTICLES := 160
+const BOSS_MAX_LIGHTS := 2
+const BOSS_MAX_MESHES := 64
+
+
+func _boss_enemy(glow: Color = Color("7FE0FF"), monster_id: StringName = &"frost_king") -> Enemy:
+	var enemy: Enemy = load("res://src/actors/enemy/enemy.tscn").instantiate()
+	var focus := Node3D.new()
+	add_child(focus)
+	enemy.setup(GameDB.monster(monster_id), load("res://data/dungeons/rank_e.tres"), Vector3.ZERO, focus, glow)
+	add_child(enemy)
+	return enemy
+
+
+func _boss_cast_to_progress(enemy: Enemy, skill: SkillData, progress: float) -> void:
+	var aim := SkillAim.new()
+	aim.direction = Vector3(0.0, 0.0, 1.0)
+	aim.ground_point = Vector3(0.0, 0.0, 6.0)
+	enemy.caster.reset_all()
+	enemy.caster.try_cast(skill, aim)
+	enemy.caster._process(skill.cast_time * progress)
+
+
+func test_telegraph_shader_is_two_layer_and_ally_mark_is_unchanged() -> void:
+	var source: String = FileAccess.get_file_as_string(TELEGRAPH_SHADER)
+	check(source.contains("blend_premul_alpha"), "shader usa blend_premul_alpha")
+	check(not source.contains("blend_add"), "shader sem blend_add")
+	for line in ["float strength = mask * (0.07 + fill * 0.16 + edge * (0.5 + wave * 0.3));", "ALBEDO = tint * 1.1 * clamp(strength, 0.0, 1.0);", "ALPHA = 0.0;", "float wave = 0.5 + 0.5 * sin(TIME * 12.0);"]:
+		check(source.contains(line), "marca de aliado: o shader mantém `%s`" % line)
+
+
+## Fórmula do shader de antes da OS-022, em GDScript: `blend_add` com `ALBEDO = tint * 1.1` e `ALPHA = alfa`.
+func _legacy_mark_alpha(shape_kind: int, uv: Vector2, progress: float, time: float, half_angle: float) -> float:
+	var p: Vector2 = uv * 2.0 - Vector2.ONE
+	var mask: float = 0.0
+	var fill: float = 0.0
+	var edge: float = 0.0
+	if shape_kind == 2:
+		var x: float = absf(p.x)
+		mask = 1.0 if x <= 1.0 else 0.0
+		edge = smoothstep(0.9, 1.0, x) + smoothstep(0.03, 0.0, uv.y) + smoothstep(0.97, 1.0, uv.y)
+		fill = 1.0 if 1.0 - uv.y <= progress else 0.0
+	else:
+		var r: float = p.length()
+		mask = 1.0 if r <= 1.0 else 0.0
+		edge = smoothstep(0.93, 0.985, r)
+		fill = 1.0 if r <= progress else 0.0
+		if shape_kind == 1:
+			var angle: float = absf(atan2(p.x, -p.y))
+			mask *= 1.0 if angle <= half_angle else 0.0
+			edge = maxf(edge, smoothstep(half_angle - 0.05, half_angle, angle))
+	var wave: float = 0.5 + 0.5 * sin(time * 12.0)
+	return clampf(mask * (0.07 + fill * 0.16 + edge * (0.5 + wave * 0.3)), 0.0, 1.0)
+
+
+func test_ally_mark_blends_the_same_with_premultiplied_alpha() -> void:
+	var tint := Color(1.0, 0.3529, 0.1804)
+	var dst := Color(0.55, 0.6, 0.7)
+	var points: Array = [
+		[0, Vector2(0.5, 0.5), 0.0], [0, Vector2(0.5, 0.05), 0.4], [0, Vector2(0.9, 0.5), 0.9], [1, Vector2(0.5, 0.2), 0.5],
+		[1, Vector2(0.1, 0.9), 0.7], [2, Vector2(0.5, 0.6), 0.3], [2, Vector2(0.97, 0.5), 1.0], [2, Vector2(0.5, 0.01), 0.0],
+	]
+	for row: Array in points:
+		var alpha: float = _legacy_mark_alpha(row[0], row[1], row[2], 1.7, 0.8)
+		var old_result: Color = dst + Color(tint.r * 1.1, tint.g * 1.1, tint.b * 1.1, 0.0) * alpha
+		var premultiplied := Color(tint.r * 1.1 * alpha, tint.g * 1.1 * alpha, tint.b * 1.1 * alpha, 0.0)
+		var new_result: Color = Color(premultiplied.r + dst.r * (1.0 - premultiplied.a), premultiplied.g + dst.g * (1.0 - premultiplied.a), premultiplied.b + dst.b * (1.0 - premultiplied.a))
+		check(absf(old_result.r - new_result.r) < 0.0001 and absf(old_result.g - new_result.g) < 0.0001 and absf(old_result.b - new_result.b) < 0.0001, "ponto %s %s: soma igual ao blend_add" % [row[0], row[1]])
+
+
+func test_telegraph_layout_covers_the_hit_area_plus_target_radius() -> void:
+	var cases: Array = [
+		[&"cleave", Telegraph.Shape.CONE, 9.0, 0.0, 0.0],
+		[&"slam", Telegraph.Shape.CIRCLE, 8.0, 0.0, 0.0],
+		[&"nova", Telegraph.Shape.CIRCLE, 16.0, 0.0, 0.0],
+		[&"spikes", Telegraph.Shape.RECTANGLE, 0.0, 22.0, 3.6],
+	]
+	for row: Array in cases:
+		var fx: SkillFxData = _boss_fx(row[0])
+		var layout: Dictionary = Telegraph.layout(row[1], row[2], row[3], row[4], fx.telegraph_style, true)
+		var tooth: float = layout.tooth_length
+		check(tooth > 0.0 and layout.tooth_count > 0, "%s: tem serrilha" % row[0])
+		if row[1] == Telegraph.Shape.RECTANGLE:
+			var half_width: float = layout.size.x * 0.5
+			check(half_width >= row[4] * 0.5 + HERO_TARGET_RADIUS - 0.0001, "%s: meia-largura cobre o alvo de borda" % row[0])
+			check(layout.size.y >= row[3] + HERO_TARGET_RADIUS * 2.0 + tooth - 0.0001, "%s: comprimento cobre alvo e dentes" % row[0])
+			check(layout.center_z - layout.size.y * 0.5 <= -(row[3] + HERO_TARGET_RADIUS + tooth) + 0.0001, "%s: o quadro chega ao fim da linha mais dentes" % row[0])
+		else:
+			var half: float = layout.size.x * 0.5
+			check(half >= row[2] + HERO_TARGET_RADIUS + tooth - 0.0001, "%s: semitamanho %.2f cobre raio + 0,4 + dente" % [row[0], half])
+			check(layout.draw_radius >= row[2] + HERO_TARGET_RADIUS, "%s: o desenho cobre o alvo no limite do acerto" % row[0])
+	var plain: Dictionary = Telegraph.layout(Telegraph.Shape.CIRCLE, 3.0, 0.0, 0.0, SkillFxData.TelegraphStyle.PLAIN, true)
+	equal(plain.tooth_count, 0, "PLAIN hostil não tem serrilha")
+	check(plain.size.x * 0.5 >= 3.0 + HERO_TARGET_RADIUS - 0.0001, "PLAIN hostil também soma 0,4 m")
+
+
+func test_ally_mark_keeps_size_color_and_has_no_hostile_decoration() -> void:
+	var cases: Array = [[&"m_meteor", Telegraph.Shape.CIRCLE], [&"p_judgement", Telegraph.Shape.CIRCLE]]
+	for row: Array in cases:
+		var skill: SkillData = load("res://data/skills/%s.tres" % row[0]) as SkillData
+		check(skill != null and skill.fx == null, "%s: habilidade de herói sem fx" % row[0])
+		var party := _combatant(Combatant.Team.PARTY)
+		check(not Telegraph.hostile_caster(party), "%s: conjurador do grupo não é hostil" % row[0])
+		var layout: Dictionary = Telegraph.layout(row[1], skill.radius, 0.0, 0.0, SkillFxData.TelegraphStyle.PLAIN, false)
+		equal(layout.size, Vector2.ONE * skill.radius * 2.0, "%s: tamanho lógico, sem os 0,4 m" % row[0])
+		equal(layout.tooth_count, 0, "%s: sem serrilha" % row[0])
+		var parameters: Dictionary = Telegraph.shader_parameters(skill.color, false, row[1], 0.8, skill.radius, 0.0, 0.0, SkillFxData.TelegraphStyle.PLAIN)
+		equal(parameters.tint, skill.color, "%s: tint é a cor da habilidade" % row[0])
+		equal(parameters.hostile, false, "%s: hostile falso" % row[0])
+		check(not parameters.has("band_color") and not parameters.has("tooth_count") and not parameters.has("cracks"), "%s: sem faixa escura, serrilha nem rachaduras" % row[0])
+		var area := Telegraph.spawn_area(get_tree(), Vector3.ZERO, skill.radius, skill.impact_delay, skill.color)
+		equal(area.hostile, false, "%s: spawn_area padrão é a marca de aliado" % row[0])
+		equal(area.radius, skill.radius, "%s: raio da marca é o da habilidade" % row[0])
+		area.free()
+	var monster := _combatant(Combatant.Team.MONSTERS)
+	check(Telegraph.hostile_caster(monster), "conjurador de monstro é hostil")
+	var smash: SkillData = load("res://data/skills/mon_smash.tres") as SkillData
+	var smash_telegraph := Telegraph.spawn(monster, smash, SkillAim.new(), 1.0)
+	check(smash_telegraph.hostile and smash_telegraph.style == SkillFxData.TelegraphStyle.PLAIN, "mon_smash: zona hostil PLAIN")
+	smash_telegraph.free()
+	var hostile_parameters: Dictionary = Telegraph.shader_parameters(smash.color, true, Telegraph.Shape.CIRCLE, 0.8, smash.radius, 0.0, 0.0, SkillFxData.TelegraphStyle.PLAIN)
+	equal(hostile_parameters.fill_color, Telegraph.HOSTILE_FILL, "zona hostil: preenchimento vermelho fixo")
+	equal(hostile_parameters.edge_color, Telegraph.HOSTILE_EDGE, "zona hostil: borda FF6A4D")
+	check(hostile_parameters.tint == smash.color, "a cor da habilidade segue só como tint, sem mandar na zona")
+
+
+func test_boss_fx_attack_fx_exists_only_for_monsters_with_fx() -> void:
+	for monster in [GameDB.monster(&"frost_king"), GameDB.monster(&"goblin"), GameDB.monster(&"skeleton"), GameDB.monster(&"shaman")]:
+		var expected: bool = monster.id == &"frost_king"
+		equal(AttackFx.wants_fx(AttackFx.collect_skills(monster)), expected, "%s: AttackFx %s" % [monster.id, "sim" if expected else "não"])
+	var boss: Enemy = _boss_enemy()
+	check(boss.get_node_or_null("AttackFx") is AttackFx, "o chefe nasce com AttackFx")
+	var goblin: Enemy = _boss_enemy(Color("7FE0FF"), &"goblin")
+	check(goblin.get_node_or_null("AttackFx") == null, "monstro comum não nasce com AttackFx")
+	boss.queue_free()
+	goblin.queue_free()
+
+
+func test_attack_fx_never_mentions_the_player() -> void:
+	for path in ["res://src/actors/enemy/attack_fx.gd", "res://src/actors/enemy/impact_plan.gd", "res://src/fx/boss_impact.gd"]:
+		var source: String = FileAccess.get_file_as_string(path).to_lower()
+		check(not source.contains("player"), "%s não referencia o jogador" % path)
+
+
+func test_prep_glow_curve_per_skill() -> void:
+	var rig: CreatureRig = CreatureFactory.build(&"frost_king", Color("7FE0FF"))
+	add_child(rig)
+	var bases: Dictionary[StringName, float] = {}
+	for meta: StringName in [&"blade_material", &"core_material", &"crown_material"]:
+		bases[meta] = (rig.get_meta(meta) as ShaderMaterial).get_shader_parameter("glow")
+	equal(bases[&"blade_material"], 1.5, "base da lâmina")
+	equal(bases[&"core_material"], 2.4, "base do núcleo")
+	equal(bases[&"crown_material"], 2.0, "base da coroa")
+	var peaks: Dictionary = {
+		&"strike": {&"blade_material": 4.0},
+		&"cleave": {&"blade_material": 5.0},
+		&"slam": {&"core_material": 6.0, &"blade_material": 4.0},
+		&"spikes": {&"blade_material": 5.0},
+		&"nova": {&"core_material": 7.0, &"crown_material": 5.0, &"blade_material": 4.0},
+	}
+	for id in BOSS_FX_IDS:
+		var fx: SkillFxData = _boss_fx(id)
+		var expected: Dictionary = peaks[id]
+		equal(AttackFx.glow_peaks(fx).size(), expected.size(), "%s: metas que acendem" % id)
+		for meta: StringName in expected:
+			equal(AttackFx.glow_for(fx, meta, bases[meta], 0.0), bases[meta], "%s %s: p=0 é o repouso" % [id, meta])
+			equal(AttackFx.glow_for(fx, meta, bases[meta], 1.0), expected[meta], "%s %s: p=1 é o pico" % [id, meta])
+			var half: float = bases[meta] + (expected[meta] - bases[meta]) * 0.25
+			check(absf(AttackFx.glow_for(fx, meta, bases[meta], 0.5) - half) < 0.0001, "%s %s: p=0,5 pela curva p^2" % [id, meta])
+			check(AttackFx.glow_for(fx, meta, bases[meta], 1.0) <= 7.0, "%s %s: nunca passa de 7,0" % [id, meta])
+	var other: Dictionary = {&"strike": &"core_material"}
+	equal(AttackFx.glow_for(_boss_fx(&"strike"), other[&"strike"], 2.4, 1.0), 2.4, "meta que o estilo não acende fica no repouso")
+	check(AttackFx.glint_scale(0.0) < AttackFx.glint_scale(1.0) and absf(AttackFx.glint_scale(0.0) - 0.6) < 0.0001 and absf(AttackFx.glint_scale(1.0) - 1.4) < 0.0001, "brilho da ponta de 0,6 a 1,4")
+	check(AttackFx.shard_scale(0.2) == 0.0 and AttackFx.shard_scale(0.9) == 1.0 and AttackFx.shard_scale(0.55) > 0.0, "lascas crescem de p 0,2 a 0,9")
+	check(AttackFx.prep_light(_boss_fx(&"strike")).is_empty() and AttackFx.prep_light(_boss_fx(&"spikes")).is_empty(), "strike e spikes sem luz de preparo")
+	equal(AttackFx.prep_light_energy(_boss_fx(&"slam"), 1.0), 1.2, "luz do slam chega a 1,2")
+	equal(AttackFx.prep_light_energy(_boss_fx(&"nova"), 1.0), 2.5, "luz da nova chega a 2,5")
+	equal(AttackFx.prep_light_energy(_boss_fx(&"nova"), 0.0), 0.0, "luz do preparo começa apagada")
+	rig.queue_free()
+
+
+func test_attack_fx_lights_the_real_blade_while_casting_and_restores_it() -> void:
+	var boss: Enemy = _boss_enemy()
+	var attack_fx: AttackFx = boss.get_node("AttackFx")
+	var blade: ShaderMaterial = boss.rig.get_meta(&"blade_material")
+	var core: ShaderMaterial = boss.rig.get_meta(&"core_material")
+	var slam: SkillData = _boss_skill(&"slam")
+	_boss_cast_to_progress(boss, slam, 0.5)
+	attack_fx._process(0.01)
+	var expected_core: float = AttackFx.glow_at(2.4, 6.0, boss.caster.cast_progress())
+	check(absf(float(core.get_shader_parameter("glow")) - expected_core) < 0.01, "núcleo a p=0,5: %.3f (esperado %.3f)" % [core.get_shader_parameter("glow"), expected_core])
+	check(float(blade.get_shader_parameter("glow")) > 1.5, "a lâmina também acende no slam")
+	boss.caster.interrupt()
+	attack_fx._process(AttackFx.FADE_INTERRUPTED + 0.05)
+	equal(float(core.get_shader_parameter("glow")), 2.4, "interrompido: o núcleo volta ao repouso")
+	equal(float(blade.get_shader_parameter("glow")), 1.5, "interrompido: a lâmina volta ao repouso")
+	boss.queue_free()
+
+
+func test_attack_fx_emits_shake_after_the_impact_delay_and_during_the_nova_prep() -> void:
+	var boss: Enemy = _boss_enemy()
+	boss.global_position = Vector3(3.0, 0.0, -2.0)
+	var attack_fx: AttackFx = boss.get_node("AttackFx")
+	var events: Array = []
+	var listener := func(origin: Vector3, strength: float, radius: float) -> void: events.append([origin, strength, radius])
+	Events.camera_shake_requested.connect(listener)
+	var nova: SkillData = _boss_skill(&"nova")
+	_boss_cast_to_progress(boss, nova, 0.1)
+	attack_fx._process(0.5)
+	equal(events.size(), 1, "preparo da nova: um tremor a cada 0,5 s")
+	if events.size() == 1:
+		equal(events[0][1], 0.08, "tremor do preparo: força 0,08")
+		equal(events[0][2], 34.0, "tremor do preparo: raio 34")
+		equal(events[0][0], boss.global_position, "tremor do preparo: origem no chefe")
+	attack_fx._process(0.5)
+	equal(events.size(), 2, "o segundo tremor do preparo vem 0,5 s depois")
+	events.clear()
+	boss.caster.interrupt()
+	var slam: SkillData = _boss_skill(&"slam")
+	_boss_cast_to_progress(boss, slam, 0.99)
+	attack_fx._process(0.5)
+	equal(events.size(), 0, "slam não treme no preparo (prep_shake 0)")
+	boss.caster._process(slam.cast_time)
+	equal(events.size(), 0, "o impacto espera o impact_delay")
+	await get_tree().create_timer(slam.fx.impact_delay + 0.15).timeout
+	equal(events.size(), 1, "um tremor de impacto depois de impact_delay")
+	if events.size() == 1:
+		equal(events[0][1], slam.fx.shake_strength, "tremor do impacto: força do slam")
+		equal(events[0][2], slam.fx.shake_radius, "tremor do impacto: raio do slam")
+		check(Vector2(events[0][0].x, events[0][0].z).is_equal_approx(Vector2(boss.global_position.x, boss.global_position.z)), "tremor do impacto: origem no chefe")
+	Events.camera_shake_requested.disconnect(listener)
+	boss.queue_free()
+
+
+func test_combat_feedback_shakes_the_player_by_distance_and_clamps() -> void:
+	for distance: float in BOSS_SHAKE_TABLE:
+		var expected: Array = BOSS_SHAKE_TABLE[distance]
+		for i in BOSS_FX_IDS.size():
+			var fx: SkillFxData = _boss_fx(BOSS_FX_IDS[i])
+			var trauma: float = CombatFeedback.shake_for(Vector3(distance, 1.6, 0.0), Vector3.ZERO, fx.shake_strength, fx.shake_radius)
+			check(absf(trauma - float(expected[i])) <= 0.01, "%s a %s m: %.3f (esperado %.2f)" % [BOSS_FX_IDS[i], distance, trauma, expected[i]])
+	var player: PlayerController = load("res://src/actors/player/player.tscn").instantiate()
+	add_child(player)
+	player.global_position = Vector3(10.0, 0.0, 0.0)
+	var feedback := CombatFeedback.new()
+	feedback._player = player
+	Events.camera_shake_requested.connect(feedback._on_camera_shake_requested)
+	var slam: SkillFxData = _boss_fx(&"slam")
+	Events.camera_shake_requested.emit(Vector3.ZERO, slam.shake_strength, slam.shake_radius)
+	check(absf(player._trauma - 0.55) <= 0.01, "slam a 10 m: o jogador recebe %.3f" % player._trauma)
+	player._trauma = 0.5
+	var nova: SkillFxData = _boss_fx(&"nova")
+	Events.camera_shake_requested.emit(Vector3.ZERO, nova.shake_strength, nova.shake_radius)
+	equal(player._trauma, 1.0, "soma com o tremor de dano e trava em 1,0")
+	player._trauma = 0.0
+	Events.camera_shake_requested.emit(Vector3(200.0, 0.0, 0.0), nova.shake_strength, nova.shake_radius)
+	equal(player._trauma, 0.0, "longe do raio não treme")
+	Events.camera_shake_requested.disconnect(feedback._on_camera_shake_requested)
+	feedback.free()
+	player.queue_free()
+
+
+func test_boss_impact_budget_matches_the_order() -> void:
+	for id in BOSS_FX_IDS:
+		var fx: SkillFxData = _boss_fx(id)
+		var budget: Dictionary = AttackFx.budget(fx)
+		var row: Array = BOSS_BUDGET_TABLE[id]
+		equal(budget.impact_particles, row[0], "%s: partículas de impacto" % id)
+		equal(budget.impact_meshes, row[1], "%s: malhas de impacto" % id)
+		equal(budget.prep_meshes, row[2], "%s: malhas de preparo" % id)
+		equal(budget.lights, row[3], "%s: luzes" % id)
+		equal(budget.prep_particles, 0 if fx.prep_style == SkillFxData.PrepStyle.WINTER else fx.prep_motes, "%s: partículas de preparo (a nova só tem lascas)" % id)
+		var fade_overlap: float = 1.0 - fx.impact_delay / AttackFx.EMITTER_FADE
+		var live: float = budget.impact_particles + budget.prep_particles * maxf(fade_overlap, 0.0)
+		check(live <= BOSS_MAX_LIVE_PARTICLES, "%s: %.0f partículas vivas no pico (teto %d)" % [id, live, BOSS_MAX_LIVE_PARTICLES])
+		check(budget.lights <= BOSS_MAX_LIGHTS, "%s: luzes dentro do teto" % id)
+		check(maxi(budget.impact_meshes, budget.prep_meshes) <= BOSS_MAX_MESHES, "%s: malhas dentro do teto (o preparo sai no disparo, então não somam com o impacto)" % id)
+
+
+func test_boss_impact_plans_follow_the_order_shapes() -> void:
+	var origin := Vector3(4.0, 0.0, 5.0)
+	var forward := Vector3(0.0, 0.0, 1.0)
+	var arc: ImpactPlan = ImpactPlan.build(_boss_fx(&"strike"), origin, forward)
+	equal(arc.crescents.size(), 1, "strike: um arco")
+	check(absf(rad_to_deg(arc.crescents[0].half_angle) - 50.0) < 0.01 and arc.crescents[0].height == 2.0, "strike: 100 graus a 2,0 m")
+	var scythe: ImpactPlan = ImpactPlan.build(_boss_fx(&"cleave"), origin, forward)
+	equal(scythe.stakes.size(), 5, "cleave: 5 estacas")
+	for stake in scythe.stakes:
+		check(absf((stake.position - origin).length() - 8.6) < 0.01, "cleave: estaca a 8,6 m")
+		check(stake.height >= 1.4 - 0.0001 and stake.height <= 2.0 + 0.0001, "cleave: altura de 1,4 a 2,0 m")
+	var slam: ImpactPlan = ImpactPlan.build(_boss_fx(&"slam"), origin, forward)
+	equal(slam.cracks.size(), 7, "slam: 7 rachaduras")
+	equal(slam.stakes.size(), 14, "slam: 14 estacas")
+	for stake in slam.stakes:
+		var distance: float = Vector2(stake.position.x - origin.x, stake.position.z - origin.z).length()
+		check(distance >= 1.8 and distance <= 7.4 + 0.0001, "slam: estaca a %.2f m, fora da cápsula" % distance)
+	var angles: Array[float] = []
+	for crack in slam.cracks:
+		var tip: Vector2 = crack.points[crack.points.size() - 1]
+		angles.append(atan2(tip.y, tip.x))
+		equal(crack.points.size(), 7, "slam: rachadura de 6 segmentos")
+	for i in angles.size():
+		for j in range(i + 1, angles.size()):
+			var between: float = absf(wrapf(angles[i] - angles[j], -PI, PI))
+			check(absf(between - PI * 0.5) > 0.05 and absf(between - PI) > 0.05, "slam: nenhum par de rachaduras a 90 ou 180 graus")
+	var spikes: ImpactPlan = ImpactPlan.build(_boss_fx(&"spikes"), origin, forward)
+	equal(spikes.stakes.size(), 22, "spikes: 22 estacas")
+	equal(spikes.bursts.size(), 6, "spikes: 6 explosões")
+	var farthest: float = 0.0
+	for stake in spikes.stakes:
+		farthest = maxf(farthest, (stake.position - origin).dot(forward))
+		check(absf(stake.position.x - origin.x) > 0.8, "spikes: fileira a 0,9 m do eixo")
+	check(farthest <= 22.0, "spikes: nenhuma estaca além do alcance (%.2f)" % farthest)
+	var crown: ImpactPlan = ImpactPlan.build(_boss_fx(&"nova"), origin, forward)
+	equal(crown.cracks.size(), 11, "nova: 11 rachaduras")
+	equal(crown.stakes.size(), 44, "nova: 20 internas e 24 da coroa")
+	var ring_count: int = 0
+	for stake in crown.stakes:
+		var distance: float = Vector2(stake.position.x - origin.x, stake.position.z - origin.z).length()
+		if absf(distance - 15.0) < 0.01:
+			ring_count += 1
+			check(absf(stake.height - 3.9) < 0.01 or absf(stake.height - 5.98) < 0.01, "nova: coroa de 3,9 e 6,0 m (%.2f)" % stake.height)
+	equal(ring_count, 24, "nova: 24 estacas na coroa a 15 m")
+	for id in BOSS_FX_IDS:
+		var plan: ImpactPlan = ImpactPlan.build(_boss_fx(id), origin, forward)
+		for stake in plan.stakes:
+			check(stake.lifetime() <= _boss_fx(id).impact_duration + 0.05, "%s: estaca vive %.2f s dentro da duração %.2f" % [id, stake.lifetime(), _boss_fx(id).impact_duration])
+
+
+func test_boss_effects_follow_the_theme_glow_but_the_zone_stays_red() -> void:
+	var fire := Color("FF7A2E")
+	var nova: SkillFxData = _boss_fx(&"nova")
+	equal(AttackFx.effect_color(nova, fire), fire, "impact_color com alfa 0 usa o enemy_glow do tema")
+	var tinted: SkillFxData = SkillFxData.new()
+	tinted.impact_color = Color(0.2, 1.0, 0.2, 1.0)
+	equal(AttackFx.effect_color(tinted, fire), Color(0.2, 1.0, 0.2, 1.0), "impact_color com alfa manda no tema")
+	var plan: ImpactPlan = ImpactPlan.build(nova, Vector3.ZERO, Vector3.FORWARD)
+	var seen: Dictionary = {}
+	for burst in plan.bursts:
+		var spec: EmitterSpec = BossImpact.burst_spec(burst, fire)
+		if burst.kind != ImpactPlan.Kind.SMOKE:
+			seen[burst.kind] = true
+			check(absf(spec.color.h - fire.h) < 0.03, "partícula %s sai laranja (matiz %.3f)" % [burst.kind, spec.color.h])
+	check(seen.has(ImpactPlan.Kind.SPARK), "a nova tem faíscas")
+	var colors: Array[Color] = BossImpact.crystal_colors(fire)
+	check(absf(colors[0].h - fire.h) < 0.03 and absf(colors[1].h - fire.h) < 0.03, "estacas de cristal na cor do tema")
+	var motes: EmitterSpec = AttackFx.motes_spec(_boss_fx(&"cleave"), fire)
+	check(absf(motes.color.h - fire.h) < 0.03, "partículas do preparo na cor do tema")
+	var shard_colors: Array[Color] = ConvergenceShards.crystal_colors(fire)
+	check(absf(shard_colors[0].h - fire.h) < 0.03 and absf(shard_colors[1].h - fire.h) < 0.03, "lascas da convergência na cor do tema")
+	for id: StringName in [&"cleave", &"slam", &"nova"]:
+		var fx: SkillFxData = _boss_fx(id)
+		var parameters: Dictionary = Telegraph.shader_parameters(fire, true, Telegraph.Shape.CIRCLE, 0.8, 8.0, 0.0, 0.0, fx.telegraph_style)
+		equal(parameters.fill_color, Telegraph.HOSTILE_FILL, "%s: a zona continua vermelha com tema de fogo" % id)
+		equal(parameters.edge_color, Telegraph.HOSTILE_EDGE, "%s: borda continua FF6A4D" % id)
+
+
+func test_attack_fx_stops_the_prep_when_the_caster_is_reset() -> void:
+	var boss: Enemy = _boss_enemy()
+	var attack_fx: AttackFx = boss.get_node("AttackFx")
+	var events: Array = []
+	var listener := func(_origin: Vector3, _strength: float, _radius: float) -> void: events.append(1)
+	Events.camera_shake_requested.connect(listener)
+	_boss_cast_to_progress(boss, _boss_skill(&"nova"), 0.3)
+	attack_fx._process(0.5)
+	equal(events.size(), 1, "preparo da nova treme enquanto conjura")
+	boss.caster.reset_all()
+	attack_fx._process(0.1)
+	for i in 6:
+		attack_fx._process(0.5)
+	equal(events.size(), 1, "depois do reset_all o preparo não treme mais")
+	equal(float((boss.rig.get_meta(&"core_material") as ShaderMaterial).get_shader_parameter("glow")), 2.4, "e o núcleo volta ao repouso")
+	Events.camera_shake_requested.disconnect(listener)
+	boss.queue_free()
+
+
+func test_boss_effect_resources_are_reused_not_rebuilt_per_impact() -> void:
+	var spec := EmitterSpec.new()
+	spec.color = Color("7FE0FF")
+	spec.speed_max = 3.0
+	var same := EmitterSpec.new()
+	same.color = Color("7FE0FF")
+	same.speed_max = 3.0
+	var other := EmitterSpec.new()
+	other.color = Color("FF7A2E")
+	other.speed_max = 3.0
+	check(Vfx.emitter_material(spec) == Vfx.emitter_material(same), "emissores iguais compartilham o material de processo")
+	check(Vfx.emitter_material(spec) != Vfx.emitter_material(other), "cor diferente, material diferente")
+	check(Vfx.emitter_quad(spec) == Vfx.emitter_quad(same), "emissores iguais compartilham o quadro")
+	var points := PackedVector2Array([Vector2.ZERO, Vector2(1.0, 0.2), Vector2(2.0, -0.1)])
+	check(Vfx.crack_mesh(points, 0.3, 0.1, 0.1) == Vfx.crack_mesh(points.duplicate(), 0.3, 0.1, 0.1), "a mesma rachadura reaproveita a malha")
+	equal(Vfx.crack_mesh(points, 0.3, 0.1, 0.1).get_surface_count(), 2, "rachadura: superfície escura e fio aceso")
+	check(Vfx.stake_mesh() == Vfx.stake_mesh(), "uma malha de estaca só")
+	check(Vfx.jagged_ring_mesh(28, 0.06, 0.06) == Vfx.jagged_ring_mesh(28, 0.06, 0.06), "o anel reaproveita a malha")
+	var first: StandardMaterial3D = Vfx.slot_material("teste_vaga", Color(1.0, 0.0, 0.0, 0.5), true)
+	var second: StandardMaterial3D = Vfx.slot_material("teste_vaga", Color(0.0, 1.0, 0.0, 0.8), true)
+	check(first == second, "a vaga devolve a mesma instância")
+	equal(second.albedo_color, Color(0.0, 1.0, 0.0, 0.8), "e atualiza a cor a cada pedido")
+	var plan: ImpactPlan = ImpactPlan.build(_boss_fx(&"slam"), Vector3.ZERO, Vector3.FORWARD)
+	var again: ImpactPlan = ImpactPlan.build(_boss_fx(&"slam"), Vector3.ZERO, Vector3.FORWARD)
+	for i in plan.cracks.size():
+		equal(hash(plan.cracks[i].points), hash(again.cracks[i].points), "rachadura %d é a mesma a cada impacto (semente fixa)" % i)
+
+
+func test_boss_dust_is_a_low_veil_and_the_convergence_reads_at_distance() -> void:
+	var glow := Color("7FE0FF")
+	var nova_plan: ImpactPlan = ImpactPlan.build(_boss_fx(&"nova"), Vector3.ZERO, Vector3.FORWARD)
+	var smoke_total: int = 0
+	var specs: Array[EmitterSpec] = []
+	for id in [&"slam", &"cleave", &"nova"]:
+		var plan: ImpactPlan = ImpactPlan.build(_boss_fx(id), Vector3.ZERO, Vector3.FORWARD)
+		var smoke: int = 0
+		for burst in plan.bursts:
+			if burst.kind == ImpactPlan.Kind.SMOKE:
+				smoke += burst.amount
+				specs.append(BossImpact.burst_spec(burst, glow))
+		equal(smoke, {&"slam": 36, &"cleave": 12, &"nova": 60}[id], "%s: contagem da poeira" % id)
+		smoke_total += smoke
+	specs.append(AttackFx.fog_spec(_boss_fx(&"slam")))
+	check(not specs.is_empty() and smoke_total == 108, "a poeira do impacto soma 108 partículas")
+	for spec in specs:
+		equal(spec.sprite, ParticleKit.SMOKE, "é fumaça")
+		equal(spec.size, 0.9, "sprite de 0,9 m")
+		equal(spec.scale_start, 0.8, "escala inicial 0,8")
+		equal(spec.scale_end, 1.4, "escala final 1,4")
+		check(spec.size * maxf(spec.scale_start, spec.scale_end) <= 1.3, "nenhuma passa de 1,3 m (%.2f)" % (spec.size * spec.scale_end))
+		check(absf(spec.color.a - 0.30) < 0.0001, "alfa de pico 0,30")
+		equal(spec.color.to_html(false), "e8f4ff", "cor E8F4FF")
+		check(not spec.additive, "poeira por mistura")
+	equal(AttackFx.fog_spec(_boss_fx(&"slam")).amount, 36, "névoa do slam: 36")
+
+
+func test_nova_convergence_shards_follow_the_cadence_rule() -> void:
+	var nova: SkillData = _boss_skill(&"nova")
+	var cast: float = nova.cast_time
+	var rays: Array[PackedFloat32Array] = ConvergenceShards.spawn_times(cast)
+	equal(rays.size(), 7, "7 raios")
+	var counts: Array[int] = []
+	for times in rays:
+		counts.append(times.size())
+	equal(counts, [4, 4, 4, 4, 4, 4, 3] as Array[int], "4 lascas nos raios 0 a 5 e 3 no raio 6 (a quarta do último nasceria depois do disparo)")
+	equal(ConvergenceShards.total(cast), nova.fx.prep_motes, "o total da cadência é o prep_motes do boss_nova (27)")
+	equal(nova.fx.prep_motes, 27, "prep_motes da nova é 27")
+	for ray in rays.size():
+		check(absf(rays[ray][0] - (cast * 0.25 + ray * 0.07)) < 0.0001, "raio %d: primeiro nascimento em 25%% do preparo mais %d·0,07 s" % [ray, ray])
+		for k in range(1, rays[ray].size()):
+			check(absf(rays[ray][k] - rays[ray][k - 1] - 0.475) < 0.0001, "raio %d: uma lasca a cada 0,475 s" % ray)
+		check(rays[ray][rays[ray].size() - 1] <= cast, "raio %d: nada nasce depois do disparo" % ray)
+	for i in 7:
+		for j in range(i + 1, 7):
+			var between: float = absf(wrapf(ConvergenceShards.ray_direction(i).signed_angle_to(ConvergenceShards.ray_direction(j), Vector3.UP), -PI, PI))
+			check(absf(between - PI * 0.5) > 0.05 and absf(between - PI) > 0.05, "raios %d e %d: nenhum par a 90 ou 180 graus" % [i, j])
+	check(absf(ConvergenceShards.radius_at(0.0) - 15.5) < 0.0001, "nasce a 15,5 m")
+	check(absf(ConvergenceShards.radius_at(1.9) - (15.5 - (4.0 * 1.9 + 1.5 * 1.9 * 1.9))) < 0.0001, "r(t) = 15,5 - (4,0·t + 1,5·t²)")
+	check(ConvergenceShards.radius_at(1.9) > 2.0 and ConvergenceShards.radius_at(1.9) < 3.0, "chega a uns 2,5 m (%.2f)" % ConvergenceShards.radius_at(1.9))
+	equal(ConvergenceShards.scale_at(0.0), 0.0, "escala 0 ao nascer")
+	check(absf(ConvergenceShards.scale_at(0.15) - 1.0) < 0.0001, "escala 1 aos 0,15 s")
+	check(absf(ConvergenceShards.scale_at(1.9 - 0.125) - 0.5) < 0.0001, "escala 0,5 a meio da saída")
+	equal(ConvergenceShards.scale_at(1.9), 0.0, "escala 0 no fim da vida")
+	var basis: Basis = ConvergenceShards.lying_basis(2, 1.0)
+	var flat_tip := Vector3(basis.y.x, 0.0, basis.y.z).normalized()
+	check(absf((flat_tip - (-ConvergenceShards.ray_direction(2))).length()) < 0.0001, "a ponta aponta para o chefe")
+	check(absf(basis.y.y - sin(ConvergenceShards.TILT)) < 0.0001 and is_equal_approx(ConvergenceShards.TILT, 0.45), "a lasca sobe a ponta 0,45 rad (OS-022, fechamento da Revisão 2)")
+	var budget: Dictionary = AttackFx.budget(nova.fx)
+	equal(budget.prep_particles, 0, "a nova não tem partícula de preparo")
+	equal(budget.prep_meshes, 27, "a nova tem 27 malhas de preparo")
+	check(maxi(budget.prep_meshes, budget.impact_meshes) <= BOSS_MAX_MESHES, "27 do preparo e 56 do impacto não coexistem: o preparo sai no disparo, e o teto é 64")
+
+
+func test_nova_prep_peaks_at_27_shards_and_clears_on_fire() -> void:
+	var boss: Enemy = _boss_enemy()
+	var attack_fx: AttackFx = boss.get_node("AttackFx")
+	var shards: ConvergenceShards = attack_fx._convergence
+	check(shards != null, "o chefe tem a convergência")
+	var nova: SkillData = _boss_skill(&"nova")
+	_boss_cast_to_progress(boss, nova, 0.1)
+	attack_fx._process(0.01)
+	equal(shards.alive_count(), 0, "no começo do preparo (antes dos 25%) não há lasca")
+	_boss_cast_to_progress(boss, nova, 0.2599)
+	attack_fx._process(0.01)
+	equal(shards.alive_count(), 1, "a primeira lasca nasce aos 25%")
+	var seen: int = 0
+	for step in [0.5, 0.75, 0.9]:
+		_boss_cast_to_progress(boss, nova, step)
+		attack_fx._process(0.01)
+		check(shards.alive_count() >= seen, "o número de lascas só cresce até o pico (%d em %.0f%%)" % [shards.alive_count(), step * 100.0])
+		seen = shards.alive_count()
+	_boss_cast_to_progress(boss, nova, 0.9999)
+	attack_fx._process(0.01)
+	equal(shards.alive_count(), nova.fx.prep_motes, "pico: as lascas vivas igualam o prep_motes (27)")
+	equal(shards.alive_count(), 27, "27 lascas no pico")
+	var particles: int = 0
+	for child in attack_fx.get_children():
+		if child is GPUParticles3D:
+			particles += 1
+	equal(particles, 0, "nenhuma partícula de convergência")
+	boss.caster._process(nova.cast_time)
+	equal(shards.alive_count(), 0, "no skill_fired, 0 lascas")
+	attack_fx._process(0.2)
+	equal(shards.alive_count(), 0, "e continuam 0")
+	boss.queue_free()
+
+
+func test_nova_prep_shards_clear_when_the_cast_is_interrupted_or_reset() -> void:
+	var boss: Enemy = _boss_enemy()
+	var attack_fx: AttackFx = boss.get_node("AttackFx")
+	var nova: SkillData = _boss_skill(&"nova")
+	_boss_cast_to_progress(boss, nova, 0.7)
+	attack_fx._process(0.01)
+	check(attack_fx._convergence.alive_count() > 0, "há lascas no meio do preparo")
+	boss.caster.interrupt()
+	equal(attack_fx._convergence.alive_count(), 0, "interrompido: 0 lascas")
+	_boss_cast_to_progress(boss, nova, 0.7)
+	attack_fx._process(0.01)
+	boss.caster.reset_all()
+	attack_fx._process(0.01)
+	equal(attack_fx._convergence.alive_count(), 0, "reset_all: 0 lascas")
+	boss.queue_free()

@@ -17,6 +17,10 @@ const ZONE_CHECK_INTERVAL := 0.3
 const CONTAINMENT_INTERVAL := 0.25
 const OUTSIDE_TOLERANCE := -0.05
 const CONTAINMENT_MARGIN := 0.8
+## Quem fica abaixo do piso além disto caiu pela malha (por exemplo, empurrado por um corpo sólido).
+const FALL_TOLERANCE := 2.0
+## Folga ao redor da cápsula de um corpo sólido onde um resgate pode deixar alguém.
+const SOLID_BODY_RESCUE_CLEARANCE := 0.8
 
 var dungeon: DungeonData
 var rank: GateRankData
@@ -108,6 +112,7 @@ func _spawn_party(members: Array[PartyMember]) -> void:
 		var bot: PartyBot = BOT_SCENE.instantiate()
 		var bot_sheet: CharacterSheet = _build_bot_sheet(member)
 		bot.setup(bot_sheet, member.display_name, player, FORMATION[index % FORMATION.size()])
+		bot.ground_resolver = world.safe_ground
 		add_child(bot)
 		bot.global_position = player.global_position + FORMATION[index % FORMATION.size()]
 		bots.append(bot)
@@ -170,7 +175,7 @@ func _on_boss_summon(monster: MonsterData, count: int, center: Vector3) -> void:
 	for i in count:
 		var angle: float = TAU * float(i) / float(count)
 		var point: Vector2 = Vector2(center.x, center.z) + Vector2(cos(angle), sin(angle)) * 6.0
-		var enemy: Enemy = spawn_monster(monster, world.field.ground_position(world.field.push_inside(point, 2.0), 0.1))
+		var enemy: Enemy = spawn_monster(monster, world.safe_ground(world.field.ground_position(world.field.push_inside(point, 2.0))))
 		enemy.is_summon = true
 		_summons.append(enemy)
 		enemy.engage(player.combatant)
@@ -220,7 +225,7 @@ func _scatter_loot(drops: Array[LootRoller.Drop], point: Vector3) -> void:
 		loot.pickup_radius = GameDB.balance.loot_pickup_radius
 		add_child(loot)
 		var offset := Vector3(_rng.randf_range(-1.5, 1.5), 0.0, _rng.randf_range(-1.5, 1.5))
-		var ground: Vector3 = world.field.ground_position(world.field.push_inside(Vector2(point.x + offset.x, point.z + offset.z), 0.8), 0.1)
+		var ground: Vector3 = world.safe_ground(world.field.ground_position(world.field.push_inside(Vector2(point.x + offset.x, point.z + offset.z), 0.8)))
 		loot.global_position = ground
 		loot.collected.connect(_on_loot_collected)
 
@@ -338,12 +343,39 @@ func _physics_process(delta: float) -> void:
 
 
 func _contain(body: CharacterBody3D) -> void:
-	var point := Vector2(body.global_position.x, body.global_position.z)
-	if world.field.distance_at(point) <= OUTSIDE_TOLERANCE:
+	var position_3d: Vector3 = body.global_position
+	var point := Vector2(position_3d.x, position_3d.z)
+	if world.field.distance_at(point) > OUTSIDE_TOLERANCE:
+		body.global_position = world.field.ground_position(world.field.push_inside(point, CONTAINMENT_MARGIN), 0.1)
+	elif position_3d.y < world.field.floor_at(point) - FALL_TOLERANCE and _is_alive(body):
+		# Resgate no ponto seguro mais próximo de onde caiu: não exige guardar estado por corpo e, ao
+		# contrário do mesmo x/z, não devolve a pessoa ao eixo do corpo sólido que a empurrou.
+		body.global_position = world.safe_ground(world.field.ground_position(_clear_of_solid_bodies(point)))
+	else:
 		return
-	body.global_position = world.field.ground_position(world.field.push_inside(point, CONTAINMENT_MARGIN), 0.1)
 	body.velocity = Vector3.ZERO
 	containment_rescues += 1
+
+
+## Cadáveres e aliados caídos perdem a colisão e afundam sem problema: só quem está vivo precisa de resgate.
+func _is_alive(body: CharacterBody3D) -> bool:
+	var unit := body.get("combatant") as Combatant
+	return unit == null or unit.is_alive()
+
+
+## Tira o ponto da cápsula (mais folga) de qualquer corpo sólido vivo.
+func _clear_of_solid_bodies(point: Vector2) -> Vector2:
+	for node in get_tree().get_nodes_in_group(&"enemies"):
+		var enemy := node as Enemy
+		if enemy == null or enemy.collision_layer & CombatWorld.SOLID_BODY_LAYER == 0:
+			continue
+		var center := Vector2(enemy.global_position.x, enemy.global_position.z)
+		var radius: float = enemy.data.body_radius + SOLID_BODY_RESCUE_CLEARANCE
+		var offset: Vector2 = point - center
+		if offset.length() < radius:
+			var away: Vector2 = offset.normalized() if offset.length() > 0.01 else Vector2.DOWN
+			point = center + away * radius
+	return point
 
 
 func _process(delta: float) -> void:

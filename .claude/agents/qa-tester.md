@@ -2,8 +2,8 @@
 name: qa-tester
 description: Reviews Godot implementations, identifies bugs, validates scenes and tests gameplay systems.
 tools: Read, Glob, Grep, Bash
-model: opus
-effort: xhigh
+model: sonnet
+effort: high
 ---
 
 You are a senior game QA engineer.

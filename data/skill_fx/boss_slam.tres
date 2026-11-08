@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="SkillFxData" format=3]
+
+[ext_resource type="Script" path="res://src/rpg/data/skill_fx_data.gd" id="1_fx"]
+
+[resource]
+script = ExtResource("1_fx")
+telegraph_style = 3
+prep_style = 3
+prep_anchor = &"core"
+prep_peak = 6.0
+prep_motes = 36
+impact_style = 3
+impact_duration = 1.4
+impact_delay = 0.09
+shake_strength = 0.65
+shake_radius = 22.0
+flash_energy = 3.0

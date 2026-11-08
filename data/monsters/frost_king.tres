@@ -87,6 +87,7 @@ visual = &"frost_king"
 scale = 2.5
 body_radius = 1.5
 body_height = 5.8
+blocks_bodies = true
 max_hp = 30000.0
 phys_attack = 92.0
 magic_attack = 92.0

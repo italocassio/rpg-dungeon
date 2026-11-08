@@ -5,6 +5,10 @@ extends RefCounted
 const DASH_SPEED := 26.0
 
 
+## `Events.skill_impacted` sai uma vez por conjuração em toda entrega de área, acerte ou não, e em projétil.
+## Só a investida emite apenas quando acerta alguém. O ponto de impacto de cada entrega:
+## cone e linha: no eixo da mira, a metade do alcance (centro da área varrida);
+## área no chão: o ponto mirado; área no conjurador: a posição dele; projétil: onde acertou.
 static func execute(skill: SkillData, caster: Combatant, aim: SkillAim) -> void:
 	if skill.self_effect != null:
 		caster.apply_effect(skill.self_effect, caster)
@@ -65,6 +69,7 @@ static func _melee_cone(skill: SkillData, caster: Combatant, aim: SkillAim) -> v
 		if CombatWorld.in_cone(origin, aim.direction, hostile, skill.skill_range, skill.cone_degrees):
 			targets.append(hostile)
 	_strike_all(skill, caster, targets)
+	Events.skill_impacted.emit(skill, caster, _sweep_center(skill, origin, aim))
 
 
 static func _line(skill: SkillData, caster: Combatant, aim: SkillAim) -> void:
@@ -74,13 +79,29 @@ static func _line(skill: SkillData, caster: Combatant, aim: SkillAim) -> void:
 		if CombatWorld.in_line(origin, aim.direction, hostile, skill.skill_range, skill.line_width):
 			targets.append(hostile)
 	_strike_all(skill, caster, targets)
-	Vfx.line_wave(caster.get_tree(), origin, aim.direction, skill.skill_range, skill.line_width, skill.color)
+	Events.skill_impacted.emit(skill, caster, _sweep_center(skill, origin, aim))
+	if not has_custom_impact(skill):
+		Vfx.line_wave(caster.get_tree(), origin, aim.direction, skill.skill_range, skill.line_width, skill.color)
 
 
 static func _self_area(skill: SkillData, caster: Combatant) -> void:
 	var center: Vector3 = caster.world_position()
 	_strike_all(skill, caster, CombatWorld.hostiles_near(caster, center, skill.radius))
-	Vfx.shockwave(caster.get_tree(), center, skill.radius, skill.color)
+	Events.skill_impacted.emit(skill, caster, center)
+	if not has_custom_impact(skill):
+		Vfx.shockwave(caster.get_tree(), center, skill.radius, skill.color)
+
+
+## O efeito de área genérico (onda, linha de explosões) dá lugar ao do `AttackFx` quando a habilidade traz `fx`
+## com forma de impacto. O `hit_burst` em quem foi atingido e o `skill_impacted` continuam.
+static func has_custom_impact(skill: SkillData) -> bool:
+	return skill.fx != null and skill.fx.impact_style != SkillFxData.ImpactStyle.NONE
+
+
+## Meio do alcance, no chão, sobre o eixo da mira.
+static func _sweep_center(skill: SkillData, origin: Vector3, aim: SkillAim) -> Vector3:
+	var flat := Vector3(aim.direction.x, 0.0, aim.direction.z).normalized()
+	return origin + flat * skill.skill_range * 0.5
 
 
 static func _ground_area(skill: SkillData, caster: Combatant, aim: SkillAim) -> void:
@@ -90,7 +111,7 @@ static func _ground_area(skill: SkillData, caster: Combatant, aim: SkillAim) -> 
 		area_impact(skill, caster, point)
 		return
 	Vfx.falling_star(tree, point, skill.impact_delay, skill.color)
-	Telegraph.spawn_area(tree, point, skill.radius, skill.impact_delay, skill.color)
+	Telegraph.spawn_area(tree, point, skill.radius, skill.impact_delay, skill.color, Telegraph.hostile_caster(caster))
 	await tree.create_timer(skill.impact_delay, false).timeout
 	if is_instance_valid(caster):
 		area_impact(skill, caster, point)
@@ -98,7 +119,8 @@ static func _ground_area(skill: SkillData, caster: Combatant, aim: SkillAim) -> 
 
 static func area_impact(skill: SkillData, caster: Combatant, point: Vector3) -> void:
 	_strike_all(skill, caster, CombatWorld.hostiles_near(caster, point, skill.radius))
-	Vfx.shockwave(caster.get_tree(), point, skill.radius, skill.color)
+	if not has_custom_impact(skill):
+		Vfx.shockwave(caster.get_tree(), point, skill.radius, skill.color)
 	Events.skill_impacted.emit(skill, caster, point)
 
 

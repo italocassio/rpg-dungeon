@@ -6,12 +6,13 @@ extends Node3D
 enum Gait { BIPED, QUADRUPED, HOVER }
 enum ActionPhase { NONE, WINDUP, STRIKE, RECOVER }
 
-const STRIKE_TIME := 0.16
-const RECOVER_TIME := 0.32
 const FLASH_INTERVAL := 0.3
 const KNEE_LEAD := 0.4
 const KNEE_BASE := 0.15
 
+## Duração do golpe e da volta, por criatura. O chefe muda os dois para ganhar peso.
+var strike_time: float = 0.16
+var recover_time: float = 0.32
 var gait: Gait = Gait.BIPED
 var stride: float = 0.75
 var step_rate: float = 2.3
@@ -219,11 +220,11 @@ func _tick_action(delta: float) -> void:
 			if _action_time >= _windup_time:
 				_action_time = _windup_time
 		ActionPhase.STRIKE:
-			if _action_time >= STRIKE_TIME:
+			if _action_time >= strike_time:
 				_action_time = 0.0
 				_action_phase = ActionPhase.RECOVER
 		ActionPhase.RECOVER:
-			if _action_time >= RECOVER_TIME:
+			if _action_time >= recover_time:
 				_action_phase = ActionPhase.NONE
 
 
@@ -234,9 +235,9 @@ func _action_value() -> float:
 			var t: float = clampf(_action_time / _windup_time, 0.0, 1.0)
 			return -sqrt(t)
 		ActionPhase.STRIKE:
-			return lerpf(-1.0, 1.0, clampf(_action_time / STRIKE_TIME, 0.0, 1.0))
+			return lerpf(-1.0, 1.0, clampf(_action_time / strike_time, 0.0, 1.0))
 		ActionPhase.RECOVER:
-			return lerpf(1.0, 0.0, clampf(_action_time / RECOVER_TIME, 0.0, 1.0))
+			return lerpf(1.0, 0.0, clampf(_action_time / recover_time, 0.0, 1.0))
 	return 0.0
 
 

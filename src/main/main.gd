@@ -45,6 +45,7 @@ func show_lobby() -> void:
 	lobby.stage = _stage
 	lobby.gate_entered.connect(_on_gate_entered)
 	_lobby_layer.add_child(lobby)
+	Events.lobby_entered.emit()
 
 
 func _on_gate_entered() -> void:

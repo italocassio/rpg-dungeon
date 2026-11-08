@@ -7,11 +7,25 @@ const ARCH_SPACING := 10.0
 const PILLAR_INSET := 0.9
 ## Distância mínima entre uma coluna e a abertura de um corredor.
 const OPENING_CLEARANCE := 3.4
+## Folga atrás da parede: o bloco do trono fica embutido nela, como as colunas.
+const THRONE_WALL_OVERLAP := 1.0
+const THRONE_FOOTPRINT_HALF_WIDTH := 2.45  # braços do trono (±2,1) mais a metade da espessura (0,35)
+const THRONE_SEAT_HALF_DEPTH := 1.5
+## Fundo bem abaixo do piso: empurrar para baixo nunca é a saída mais curta do bloco.
+const THRONE_BLOCK_BOTTOM := -4.0
+const THRONE_BLOCK_TOP := 8.0
+const THRONE_PLATFORM_BASE_RADIUS := 7.5
+const THRONE_PLATFORM_TOP_RADIUS := 5.0
+const THRONE_PLATFORM_HEIGHT := 0.75
 const WARM := Color("ffb46a")
 const WARM_DEEP := Color("ff8a3c")
 const COLD := Color("bcd6ff")
 
 var pillar_obstacles: Array[Vector3] = []  # (x, z, raio)
+## Blocos fixos (sem rotação) que o mundo transforma em colisão e em obstrução da navmesh.
+var block_obstacles: Array[AABB] = []
+## Tablados em rampa: o mundo cria colisão e navmesh, e o chão acima de y = 0 vem deles.
+var platforms: Array[RampPlatform] = []
 var lights: Array[OmniLight3D] = []
 var forge_stations: Array[ForgeBrazier] = []
 var chests: Array[TreasureChest] = []
@@ -268,16 +282,19 @@ func _build_forge_hall(room: RoomData) -> void:
 func _build_throne(room: RoomData) -> void:
 	var center: Vector2 = room.center
 	var back: Vector2 = center + Vector2(0.0, room.radius - 6.0)
-	# Degraus
+	# Tablado em rampa: sobe-se andando, e os pés acompanham a superfície visual.
+	var platform := RampPlatform.new(back, THRONE_PLATFORM_BASE_RADIUS, THRONE_PLATFORM_TOP_RADIUS, THRONE_PLATFORM_HEIGHT)
+	platforms.append(platform)
 	var steps := MeshInstance3D.new()
-	steps.mesh = MeshKit.lathe(PackedVector2Array([Vector2(7.5, 0.0), Vector2(7.5, 0.25), Vector2(6.2, 0.25), Vector2(6.2, 0.5), Vector2(5.0, 0.5), Vector2(5.0, 0.75), Vector2(0.0, 0.75)]), 24, false, false)
+	steps.mesh = MeshKit.lathe(platform.profile(), RampPlatform.SIDES, false, false)
 	steps.position = Vector3(back.x, 0.0, back.y)
 	steps.material_override = _stone
 	_root.add_child(steps)
 	# Trono
 	var throne := Node3D.new()
-	throne.position = Vector3(back.x, 0.75, back.y + 1.0)
+	throne.position = Vector3(back.x, platform.height, back.y + 1.0)
 	_root.add_child(throne)
+	_add_throne_block(room, throne.position)
 	for part: Array in [
 		[Vector3(4.0, 1.2, 3.0), Vector3(0.0, 0.6, 0.0)],
 		[Vector3(4.2, 6.6, 0.9), Vector3(0.0, 3.3, 1.4)],
@@ -322,6 +339,23 @@ func _build_throne(room: RoomData) -> void:
 		_add_floor_fire(center + Vector2(side * 17.0, -10.0), 1.25)
 	_add_banners(room, 8, 5.2)
 	_add_rune_floor(room, room.radius * 0.62, Color("9fe3ff"))
+
+
+## Altura da superfície dos tablados em `point` (0 onde não há).
+func platform_height_at(point: Vector2) -> float:
+	var result: float = 0.0
+	for platform in platforms:
+		result = maxf(result, platform.surface_height_at(point))
+	return result
+
+
+## Um bloco único do assento até além da parede: fecha também o nicho e a fresta atrás do encosto.
+func _add_throne_block(room: RoomData, throne_position: Vector3) -> void:
+	var front: float = throne_position.z - THRONE_SEAT_HALF_DEPTH
+	var rear: float = room.center.y + room.radius + THRONE_WALL_OVERLAP
+	var origin := Vector3(throne_position.x - THRONE_FOOTPRINT_HALF_WIDTH, THRONE_BLOCK_BOTTOM, front)
+	var size := Vector3(THRONE_FOOTPRINT_HALF_WIDTH * 2.0, THRONE_BLOCK_TOP - THRONE_BLOCK_BOTTOM, rear - front)
+	block_obstacles.append(AABB(origin, size))
 
 
 func _add_rune_floor(room: RoomData, radius: float, color: Color) -> void:

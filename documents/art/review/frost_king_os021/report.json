@@ -1,0 +1,234 @@
+{
+	"elapsed_s": 1.2,
+	"models": {
+		"frost_king": {
+			"body": {
+				"box_max_m": [
+					1.425,
+					5.658,
+					0.703
+				],
+				"box_min_m": [
+					-1.425,
+					0.0,
+					-0.94
+				],
+				"box_size_m": [
+					2.85,
+					5.658,
+					1.642
+				],
+				"capsule_height_m": 5.8,
+				"capsule_radius_m": 1.5,
+				"fits": true,
+				"fits_height": true,
+				"fits_radius": true,
+				"height_ratio": 0.976,
+				"overflow_m": -0.032,
+				"radial_max_m": 1.425,
+				"radius_ratio": 0.95,
+				"vertices_outside": 0
+			},
+			"height_m": 2.263,
+			"joint_gaps": {
+				"elbow_hand": {
+					"l": {
+						"gap_m": -0.135,
+						"j2_ok": true,
+						"world_gap_m": -0.3375
+					},
+					"r": {
+						"gap_m": -0.135,
+						"j2_ok": true,
+						"world_gap_m": -0.3375
+					}
+				},
+				"hip_knee": {
+					"l": {
+						"gap_m": -0.155,
+						"j2_ok": true,
+						"world_gap_m": -0.3875
+					},
+					"r": {
+						"gap_m": -0.155,
+						"j2_ok": true,
+						"world_gap_m": -0.3875
+					}
+				},
+				"knee_foot": {
+					"l": {
+						"gap_m": -0.1,
+						"j2_ok": true,
+						"world_gap_m": -0.25
+					},
+					"r": {
+						"gap_m": -0.1,
+						"j2_ok": true,
+						"world_gap_m": -0.25
+					}
+				},
+				"shoulder_elbow": {
+					"l": {
+						"gap_m": -0.143,
+						"j2_ok": true,
+						"world_gap_m": -0.3575
+					},
+					"r": {
+						"gap_m": -0.143,
+						"j2_ok": true,
+						"world_gap_m": -0.3575
+					}
+				}
+			},
+			"materials": 11,
+			"parts": 63,
+			"scale": 2.5,
+			"tris": 2481,
+			"weapon_poses": {
+				"overhead": {
+					"strike": {
+						"hand_l": {
+							"front_m": 0.796,
+							"x_m": -0.715,
+							"y_m": 2.053
+						},
+						"hand_r": {
+							"front_m": 0.96,
+							"x_m": 0.715,
+							"y_m": 2.092
+						},
+						"pitch_deg": -10.8,
+						"weapon_tip": {
+							"front_m": 4.718,
+							"x_m": 0.715,
+							"y_m": 1.377
+						}
+					},
+					"windup": {
+						"hand_l": {
+							"front_m": -0.421,
+							"x_m": -0.715,
+							"y_m": 5.424
+						},
+						"hand_r": {
+							"front_m": 1.14,
+							"x_m": 0.715,
+							"y_m": 3.158
+						},
+						"pitch_deg": 43.1,
+						"weapon_tip": {
+							"front_m": 3.931,
+							"x_m": 0.715,
+							"y_m": 5.773
+						}
+					}
+				},
+				"rest": {
+					"hand_l": {
+						"front_m": 0.204,
+						"x_m": -0.715,
+						"y_m": 2.146
+					},
+					"hand_r": {
+						"front_m": 0.204,
+						"x_m": 0.715,
+						"y_m": 2.146
+					},
+					"pitch_deg": -20.1,
+					"weapon_tip": {
+						"front_m": 3.797,
+						"x_m": 0.715,
+						"y_m": 0.834
+					}
+				},
+				"swing": {
+					"strike": {
+						"hand_l": {
+							"front_m": -0.212,
+							"x_m": -0.709,
+							"y_m": 2.146
+						},
+						"hand_r": {
+							"front_m": 0.815,
+							"x_m": -0.343,
+							"y_m": 2.497
+						},
+						"pitch_deg": 4.9,
+						"weapon_tip": {
+							"front_m": 3.729,
+							"x_m": -2.799,
+							"y_m": 2.825
+						}
+					},
+					"windup": {
+						"hand_l": {
+							"front_m": 0.54,
+							"x_m": -0.508,
+							"y_m": 2.146
+						},
+						"hand_r": {
+							"front_m": 0.269,
+							"x_m": 2.039,
+							"y_m": 4.456
+						},
+						"pitch_deg": 78.2,
+						"weapon_tip": {
+							"front_m": -0.11,
+							"x_m": 2.72,
+							"y_m": 8.201
+						}
+					}
+				},
+				"thrust": {
+					"strike": {
+						"hand_l": {
+							"front_m": -0.03,
+							"x_m": -0.739,
+							"y_m": 2.146
+						},
+						"hand_r": {
+							"front_m": 1.812,
+							"x_m": 0.188,
+							"y_m": 3.762
+						},
+						"pitch_deg": 60.9,
+						"weapon_tip": {
+							"front_m": 3.59,
+							"x_m": -0.362,
+							"y_m": 7.104
+						}
+					},
+					"windup": {
+						"hand_l": {
+							"front_m": 0.389,
+							"x_m": -0.628,
+							"y_m": 2.145
+						},
+						"hand_r": {
+							"front_m": 1.162,
+							"x_m": 1.108,
+							"y_m": 2.964
+						},
+						"pitch_deg": 32.4,
+						"weapon_tip": {
+							"front_m": 4.246,
+							"x_m": 2.062,
+							"y_m": 5.016
+						}
+					}
+				}
+			},
+			"world_height_m": 5.658
+		}
+	},
+	"settings": {
+		"glow": "#7fe0ff",
+		"monster": "frost_king",
+		"resolution": [
+			1920,
+			1080
+		],
+		"scale": 2.5,
+		"visual": "frost_king"
+	}
+}

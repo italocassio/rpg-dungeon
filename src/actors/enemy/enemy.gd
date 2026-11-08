@@ -56,6 +56,8 @@ func _ready() -> void:
 	combatant.body_radius = data.body_radius
 	combatant.body_height = data.body_height
 	combatant.stun_immune = data.tier == MonsterData.Tier.BOSS
+	if data.blocks_bodies:
+		collision_layer |= CombatWorld.SOLID_BODY_LAYER
 	caster.combatant = combatant
 
 	var capsule := collider.shape.duplicate() as CapsuleShape3D
@@ -87,6 +89,7 @@ func _ready() -> void:
 	caster.cast_started.connect(func(skill: SkillData, duration: float) -> void: rig.wind_up(skill.animation, duration))
 	caster.skill_fired.connect(func(skill: SkillData, _aim: SkillAim) -> void: rig.strike(skill.animation))
 	caster.cast_interrupted.connect(func(_skill: SkillData) -> void: rig.cancel_action())
+	AttackFx.attach(self)
 
 
 func _physics_process(delta: float) -> void:

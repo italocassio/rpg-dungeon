@@ -1,0 +1,172 @@
+class_name FrostKingModel
+extends RefCounted
+## Blockout de referência do Rei Gélido (OS-021). Unidades em metros do rig, antes da escala 2,5.
+## Atualizado nas Revisões 1 e 2 da OS-021 (sabatão e espinho do cotovelo de 0,12 em z .07). `cloth_back` volta a z .20.
+## Não é o código de entrega: a ordem manda a mesma forma com os nomes e as âncoras abaixo.
+
+const PLATE_LIGHT := Color("B4C3D6")
+const PLATE_DARK := Color("2B3548")
+const GOLD := Color("D8B464")
+const BONE := Color("D9E6F2")
+const CAPE := Color("4468A8")
+const VISOR := Color("06070B")
+const ICE_CORE := Color(0.14, 0.42, 0.72)
+const ICE_RIM := Color(0.65, 0.92, 1.0)
+
+const HEIGHT := 1.0
+const ARM_SCALE := 1.1
+const WIDTH := 1.1
+const STRIDE := 0.5
+const STEP_RATE := 1.5
+const ARM_SWING_R := 0.2
+const ARM_SWING_L := 0.5
+const STRIKE_TIME := 0.18
+const RECOVER_TIME := 0.5
+
+const CUIRASS: Array[Vector4] = [
+	Vector4(0.0, -0.12, 0.20, 0.15), Vector4(0.0, 0.08, 0.22, 0.17), Vector4(0.0, 0.30, 0.29, 0.20),
+	Vector4(0.0, 0.46, 0.31, 0.19), Vector4(0.0, 0.56, 0.15, 0.12),
+]
+const GORGET := [Vector2(0.17, 0.50), Vector2(0.19, 0.55), Vector2(0.16, 0.62), Vector2(0.15, 0.66)]
+const FAULDS := [Vector2(0.30, -0.26), Vector2(0.27, -0.14), Vector2(0.23, 0.0), Vector2(0.21, 0.06)]
+const BELT := [Vector2(0.225, -0.01), Vector2(0.235, 0.05), Vector2(0.22, 0.09)]
+const CORE := [Vector2(0.0, -0.16), Vector2(0.08, -0.02), Vector2(0.0, 0.17)]
+const HELM: Array[Vector4] = [
+	Vector4(0.0, -0.02, 0.15, 0.17), Vector4(0.0, 0.07, 0.19, 0.21), Vector4(0.0, 0.17, 0.20, 0.22),
+	Vector4(0.0, 0.25, 0.15, 0.17), Vector4(0.0, 0.30, 0.06, 0.07),
+]
+const CROWN_BAND: Array[Vector4] = [
+	Vector4(0.0, 0.18, 0.215, 0.235), Vector4(0.0, 0.20, 0.205, 0.225), Vector4(0.0, 0.26, 0.17, 0.19), Vector4(0.0, 0.285, 0.16, 0.18),
+]
+const PAULDRON := [Vector2(0.0, -0.06), Vector2(0.23, -0.05), Vector2(0.27, 0.03), Vector2(0.19, 0.12), Vector2(0.09, 0.19), Vector2(0.0, 0.21)]
+const PAULDRON_LOW := [Vector2(0.0, -0.2), Vector2(0.21, -0.19), Vector2(0.26, -0.11), Vector2(0.24, -0.05)]
+const PAULDRON_RIM := [Vector2(0.25, -0.2), Vector2(0.27, -0.16), Vector2(0.26, -0.12)]
+const CUISSE: Array[Vector4] = [Vector4(0.0, -0.50, 0.10, 0.11), Vector4(0.0, -0.25, 0.115, 0.13), Vector4(0.0, 0.0, 0.125, 0.15)]
+const GREAVE: Array[Vector4] = [Vector4(0.0, -0.44, 0.075, 0.10), Vector4(0.0, -0.30, 0.095, 0.12), Vector4(0.0, -0.10, 0.105, 0.125), Vector4(0.0, 0.02, 0.10, 0.12)]
+const SABATON := [Vector2(-0.14, -0.47), Vector2(0.10, -0.47), Vector2(0.34, -0.395), Vector2(0.26, -0.355), Vector2(0.08, -0.34), Vector2(-0.12, -0.34), Vector2(-0.16, -0.41)]
+const GUARD := [Vector2(-0.36, 0.17), Vector2(-0.30, 0.255), Vector2(-0.08, 0.285), Vector2(0.08, 0.285), Vector2(0.30, 0.255), Vector2(0.36, 0.17), Vector2(0.12, 0.225), Vector2(-0.12, 0.225)]
+const BLADE_LENGTH := 1.26
+const BLADE_BASE := 0.27
+const SWORD_PITCH := 0.6
+
+
+static func assemble(rig: CreatureRig, glow: Color) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 31
+	CreatureRig.biped_skeleton(rig, HEIGHT, ARM_SCALE, WIDTH)
+	rig.stride = STRIDE
+	rig.step_rate = STEP_RATE
+	rig.arm_swing_r = ARM_SWING_R
+	rig.arm_swing_l = ARM_SWING_L
+	var light: Material = Look.matte(PLATE_LIGHT, 0.42, 0.35)
+	var dark: Material = Look.matte(PLATE_DARK, 0.5, 0.3)
+	var gold: Material = Look.matte(GOLD, 0.4, 0.45)
+	var bone: Material = Look.matte(BONE, 0.6, 0.0)
+	var ice: Material = DungeonMaterials.crystal(ICE_CORE, ICE_RIM, 2.0)
+	_torso(rig, light, dark, gold, ice, glow, rng)
+	_head(rig, light, gold, bone, glow, rng)
+	_arms(rig, light, dark, ice, rng)
+	_legs(rig, light, dark, rng)
+	_cape(rig)
+	_sword(rig, dark, gold)
+
+
+static func _torso(rig: CreatureRig, light: Material, dark: Material, gold: Material, ice: Material, glow: Color, rng: RandomNumberGenerator) -> void:
+	var chest: Node3D = rig.get_joint(&"chest")
+	var pelvis: Node3D = rig.get_joint(&"pelvis")
+	rig.part(chest, MeshKit.loft(CUIRASS, 10, false), light)
+	rig.part(chest, MeshKit.lathe(PackedVector2Array(GORGET), 10, false, false), gold, Vector3.ZERO, Vector3.ZERO, Vector3(1.0, 1.0, 0.9))
+	rig.part(pelvis, MeshKit.lathe(PackedVector2Array(FAULDS), 10, false, false), dark, Vector3.ZERO, Vector3.ZERO, Vector3(1.0, 1.0, 0.78))
+	rig.part(pelvis, MeshKit.lathe(PackedVector2Array(BELT), 12, false), gold, Vector3.ZERO, Vector3.ZERO, Vector3(1.0, 1.0, 0.78))
+	rig.part(pelvis, MeshKit.shard(0.05, 0.16, rng, 4, 0.0), gold, Vector3(0.0, 0.0, -0.19), Vector3(PI, 0.0, 0.0))
+	var core_material: Material = DungeonMaterials.crystal(Color(0.2, 0.55, 0.9), Color(0.7, 0.95, 1.0), 2.4).duplicate()
+	rig.part(chest, MeshKit.lathe(PackedVector2Array(CORE), 6, false), core_material, Vector3(0.0, 0.28, -0.205), Vector3.ZERO, Vector3(1.0, 1.0, 0.7))
+	rig.set_meta(&"core_material", core_material)
+	var core_anchor: Node3D = rig.joint(&"core", chest, Vector3(0.0, 0.28, -0.23))
+	core_anchor.name = "core"
+	for side: float in [-1.0, 1.0]:
+		var origin := Vector3(side * 0.30, 0.46, 0.0)
+		rig.part(chest, MeshKit.lathe(PackedVector2Array(PAULDRON), 6, false), light, origin, Vector3.ZERO, Vector3(1.0, 1.0, 1.1))
+		rig.part(chest, MeshKit.lathe(PackedVector2Array(PAULDRON_LOW), 6, false), dark, origin, Vector3.ZERO, Vector3(1.0, 1.0, 1.1))
+		rig.part(chest, MeshKit.lathe(PackedVector2Array(PAULDRON_RIM), 6, false, false), gold, origin, Vector3.ZERO, Vector3(1.0, 1.0, 1.1))
+		rig.part(chest, MeshKit.shard(0.065, 0.40, rng, 5, 0.0), ice, origin + Vector3(side * 0.03, 0.17, 0.0), Vector3(0.0, 0.0, side * -0.35))
+		rig.part(chest, MeshKit.shard(0.05, 0.28, rng, 5, 0.0), ice, origin + Vector3(side * 0.11, 0.12, 0.0), Vector3(0.0, 0.0, side * -0.5))
+	for i in 3:
+		var x: float = (i - 1) * 0.12
+		rig.part(chest, MeshKit.shard(0.055, 0.40 - absf(x) * 1.0, rng, 4, 0.0), ice, Vector3(x, 0.40, 0.2), Vector3(0.18, 0.0, -x * 1.2))
+
+
+static func _head(rig: CreatureRig, light: Material, gold: Material, bone: Material, glow: Color, rng: RandomNumberGenerator) -> void:
+	var head: Node3D = rig.get_joint(&"head")
+	rig.part(head, MeshKit.loft(HELM, 10, false), light)
+	rig.part(head, MeshKit.loft(CROWN_BAND, 10, false), gold)
+	rig.part(head, MeshKit.box(Vector3(0.30, 0.03, 0.05)), Look.matte(VISOR, 0.4), Vector3(0.0, 0.13, -0.205))
+	var eye_material: Material = Look.glow(glow, 7.0)
+	for side: float in [-1.0, 1.0]:
+		var eye_outline := PackedVector2Array([Vector2(-0.065 * side, -0.012), Vector2(0.0, 0.012), Vector2(0.07 * side, 0.02), Vector2(0.0, -0.004)])
+		if side < 0.0:
+			eye_outline.reverse()
+		rig.part(head, MeshKit.plate(eye_outline, 0.012), eye_material, Vector3(side * 0.085, 0.13, -0.236), Vector3.ZERO)
+	var crown_material: Material = DungeonMaterials.crystal(ICE_CORE, ICE_RIM, 2.0).duplicate()
+	rig.set_meta(&"crown_material", crown_material)
+	rig.joint(&"crown", head, Vector3(0.0, 0.30, 0.0)).name = "crown"
+	var heights: Array[float] = [0.34, 0.27, 0.20, 0.20, 0.27]
+	for i in 5:
+		var angle: float = TAU * float(i) / 5.0
+		var outward := Vector2(sin(angle), -cos(angle))
+		rig.part(head, MeshKit.shard(0.05, heights[i], rng, 5, 0.0), crown_material, Vector3(outward.x * 0.14, 0.275, outward.y * 0.14), Vector3(outward.y * 0.1, 0.0, -outward.x * 0.1))
+	for side: float in [-1.0, 1.0]:
+		rig.part(head, MeshKit.shard(0.06, 0.2, rng, 5, 0.0), bone, Vector3(side * 0.17, 0.15, 0.0), Vector3(0.0, 0.0, side * -1.0))
+		rig.part(head, MeshKit.shard(0.045, 0.27, rng, 5, 0.0), bone, Vector3(side * 0.31, 0.24, 0.0), Vector3(0.0, 0.0, side * -0.3))
+
+
+static func _arms(rig: CreatureRig, light: Material, dark: Material, ice: Material, rng: RandomNumberGenerator) -> void:
+	for side: StringName in [&"r", &"l"]:
+		var shoulder: Node3D = rig.get_joint(StringName("shoulder_%s" % side))
+		var elbow: Node3D = rig.get_joint(StringName("elbow_%s" % side))
+		var hand: Node3D = rig.get_joint(StringName("hand_%s" % side))
+		rig.part(shoulder, MeshKit.sphere(0.12, 8), dark)
+		CreatureRig.limb(rig, StringName("shoulder_%s" % side), 0.39, 0.095, 0.085, dark)
+		rig.part(elbow, MeshKit.sphere(0.105, 8), dark)
+		rig.part(elbow, MeshKit.shard(0.05, 0.12, rng, 4, 0.0), light, Vector3(0.0, 0.0, 0.07), Vector3(PI * 0.5, 0.0, 0.0))
+		CreatureRig.limb(rig, StringName("elbow_%s" % side), 0.37, 0.09, 0.075, light)
+		rig.part(hand, MeshKit.sphere(0.095, 8), dark)
+		if side == &"l":
+			for i in 3:
+				rig.part(hand, MeshKit.shard(0.03, 0.2, rng, 4, 0.0), ice, Vector3((i - 1) * 0.06, -0.07, -0.08), Vector3(-1.9, 0.0, (i - 1) * 0.25))
+
+
+static func _legs(rig: CreatureRig, light: Material, dark: Material, rng: RandomNumberGenerator) -> void:
+	for side: StringName in [&"r", &"l"]:
+		var hip: Node3D = rig.get_joint(StringName("hip_%s" % side))
+		var knee: Node3D = rig.get_joint(StringName("knee_%s" % side))
+		rig.part(hip, MeshKit.loft(CUISSE, 8, false), dark)
+		rig.part(knee, MeshKit.sphere(0.115, 8), dark)
+		rig.part(knee, MeshKit.shard(0.06, 0.2, rng, 4, 0.0), light, Vector3(0.0, -0.03, -0.08), Vector3(-PI * 0.5 + 0.2, 0.0, 0.0))
+		rig.part(knee, MeshKit.loft(GREAVE, 8, false), dark)
+		rig.part(knee, MeshKit.plate(PackedVector2Array(SABATON), 0.17), dark, Vector3.ZERO, Vector3(0.0, PI * 0.5, 0.0))
+
+
+static func _cape(rig: CreatureRig) -> void:
+	var chest: Node3D = rig.get_joint(&"chest")
+	var anchor: Node3D = rig.joint(&"cloth_back", chest, Vector3(0.0, 0.54, 0.2))
+	var material: StandardMaterial3D = Look.matte(CAPE, 0.9).duplicate()
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var cape: MeshInstance3D = rig.part(anchor, MeshKit.cloth(0.6, 0.98, 1.38, 0.24), material)
+	cape.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+static func _sword(rig: CreatureRig, dark: Material, gold: Material) -> void:
+	var hand: Node3D = rig.get_joint(&"hand_r")
+	var root := Node3D.new()
+	root.name = "Sword"
+	hand.add_child(root)
+	root.rotation.x = -PI * 0.5 - SWORD_PITCH
+	rig.part(root, MeshKit.cylinder(0.03, 0.034, 0.42, 8), dark, Vector3(0.0, 0.01, 0.0))
+	rig.part(root, MeshKit.sphere(0.065, 6), gold, Vector3(0.0, -0.21, 0.0))
+	rig.part(root, MeshKit.plate(PackedVector2Array(GUARD), 0.09), gold, Vector3(0.0, 0.0, 0.0))
+	var blade_material: Material = DungeonMaterials.crystal(Color(0.18, 0.46, 0.76), Color(0.72, 0.94, 1.0), 1.5).duplicate()
+	rig.part(root, MeshKit.blade(BLADE_LENGTH, 0.26, 0.07, 0.16), blade_material, Vector3(0.0, BLADE_BASE, 0.0))
+	rig.set_meta(&"blade_material", blade_material)
+	var tip: Node3D = rig.joint(&"weapon_tip", root, Vector3(0.0, BLADE_BASE + BLADE_LENGTH, 0.0))
+	tip.name = "weapon_tip"
