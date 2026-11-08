@@ -7,10 +7,10 @@ O objetivo deste MVP é testar a **mecânica** e os **gráficos**. O grupo é si
 ## Como jogar
 
 ```bash
-~/aplicativos/Godot_v4.7.2-stable_linux.x86_64 --path .
+godot --path .
 ```
 
-Ou abra o `project.godot` no editor e aperte F5.
+Ou abra o `project.godot` no editor e aperte F5. Os comandos deste README assumem o Godot 4.7.2 no PATH como `godot`.
 
 **O ciclo:** escolha a classe → escolha os itens iniciais → procure um grupo → entre no Portão → mate monstros e colete materiais → derrote o chefe → volte ao saguão e forje → entre em um Portão mais forte.
 
@@ -70,7 +70,7 @@ Requer os templates de exportação do Godot 4.7.2.
 
 ```bash
 mkdir -p build/windows
-~/aplicativos/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --export-release "Windows Desktop" build/windows/CacadoresDePortais.exe
+godot --headless --path . --export-release "Windows Desktop" build/windows/CacadoresDePortais.exe
 ```
 
 Distribua o `.exe` e o `.pck` na mesma pasta.
@@ -78,26 +78,24 @@ Distribua o `.exe` e o `.pck` na mesma pasta.
 ## Testes
 
 ```bash
-G=~/aplicativos/Godot_v4.7.2-stable_linux.x86_64
-
 # Compila todos os scripts e carrega todos os recursos
-$G --headless --path . res://tests/check_scripts.tscn
+godot --headless --path . res://tests/check_scripts.tscn
 
 # Regras do jogo
-$G --headless --path . res://tests/unit_tests.tscn
+godot --headless --path . res://tests/unit_tests.tscn
 
 # Sons de habilidade: planilha completa, vozes e cortes
-$G --headless --path . res://tests/sfx_tests.tscn
+godot --headless --path . res://tests/sfx_tests.tscn
 
 # Fluxo completo pela interface: saguão, janelas, forja, vitória, retorno e save
-$G --headless --fixed-fps 60 --path . res://tests/flow_test.tscn
+godot --headless --fixed-fps 60 --path . res://tests/flow_test.tscn
 
 # Partida completa jogada por um piloto automático com as ações de entrada reais.
 # Opções: --class=warrior|mage|priest --rank=0|1 --level=N --forged --no-dodge --trace
-$G --headless --fixed-fps 60 --path . res://tests/playthrough.tscn -- --class=mage
+godot --headless --fixed-fps 60 --path . res://tests/playthrough.tscn -- --class=mage
 
 # Capturas de tela e FPS (precisa de janela e GPU)
-$G --path . --disable-vsync --fixed-fps 30 --resolution 1600x900 \
+godot --path . --disable-vsync --fixed-fps 30 --resolution 1600x900 \
    res://tests/visual/tour.tscn -- --out=/tmp/capturas --class=warrior
 ```
 

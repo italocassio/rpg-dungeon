@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_h3j8c")
 id = &"p_start_habit"
-display_name = "Hábito do Noviço"
+display_name = "Veste do Noviço"
 description = "Vestes abençoadas."
 kind = 4
 icon = &"robe"
@@ -15,4 +15,3 @@ stat_bonuses = Dictionary[StringName, float]({
 &"max_mp": 40.0,
 &"phys_defense": 6.0
 })
-armor_tint = Color(0.9098039, 0.8862745, 0.8117647, 1)

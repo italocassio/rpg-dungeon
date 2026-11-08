@@ -42,7 +42,6 @@ var _zone_timer: float = 0.0
 var _containment_timer: float = 0.0
 var _current_room: RoomData
 var _level_up_connected: Callable
-var _shown_weapon: ItemData
 var _summons: Array[Enemy] = []
 
 
@@ -93,7 +92,6 @@ func _spawn_player() -> void:
 	player.global_position = world.field.ground_position(entrance.center + Vector2(0.0, -3.0), 0.2)
 	player.setup_character(sheet, Session.player_name)
 	player.look_at_point(world.field.ground_position(entrance.center + Vector2(0.0, entrance.radius), 1.6))
-	_shown_weapon = sheet.equipment.get(ItemData.Kind.WEAPON)
 	combat = player.get_node("PlayerCombat")
 	combat.setup(sheet)
 	combat.party.append(player.combatant)
@@ -160,7 +158,7 @@ func _spawn_monsters() -> void:
 
 func spawn_monster(monster: MonsterData, point: Vector3) -> Enemy:
 	var enemy: Enemy = ENEMY_SCENE.instantiate()
-	enemy.setup(monster, rank, point, player)
+	enemy.setup(monster, rank, point, player, dungeon.enemy_glow)
 	add_child(enemy)
 	enemy.global_position = point
 	enemy.defeated.connect(_on_enemy_defeated)
@@ -322,10 +320,7 @@ func skill_info(skill: SkillData) -> SkillInfo:
 func refresh_player_stats() -> void:
 	player.combatant.base_stats = sheet.derived_stats()
 	player.combatant.refresh_stats()
-	var weapon: ItemData = sheet.equipment.get(ItemData.Kind.WEAPON)
-	if weapon != _shown_weapon:
-		_shown_weapon = weapon
-		player.viewmodel.setup(sheet.class_data, weapon)
+	player.viewmodel.setup(sheet.class_data, HeroLook.from_sheet(sheet))
 
 
 func _physics_process(delta: float) -> void:

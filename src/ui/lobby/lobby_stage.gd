@@ -5,6 +5,7 @@ extends Node3D
 const CAMERA_POSITION := Vector3(0.9, 1.45, 3.4)
 const CAMERA_TARGET := Vector3(2.2, 1.35, -4.0)
 const HERO_POSITION := Vector3(-0.5, 0.0, -0.6)
+const TURNTABLE_START_YAW := PI + 0.35
 
 var _hero: CreatureRig
 var _turntable: Node3D
@@ -33,7 +34,7 @@ func build(gate_color: Color) -> void:
 	world.focus = camera
 	_turntable = Node3D.new()
 	_turntable.position = HERO_POSITION
-	_turntable.rotation.y = PI + 0.35
+	_turntable.rotation.y = TURNTABLE_START_YAW
 	add_child(_turntable)
 	var key := OmniLight3D.new()
 	key.position = Vector3(1.2, 2.6, 1.6)
@@ -43,10 +44,10 @@ func build(gate_color: Color) -> void:
 	add_child(key)
 
 
-func show_hero(class_id: StringName, armor: ItemData, weapon: ItemData) -> void:
+func show_hero(look: HeroLook) -> void:
 	if _hero != null:
 		_hero.queue_free()
-	_hero = CreatureFactory.build_hero(class_id, armor.armor_tint, weapon.weapon_model, weapon.rarity)
+	_hero = CreatureFactory.build_hero(look)
 	_turntable.add_child(_hero)
 
 

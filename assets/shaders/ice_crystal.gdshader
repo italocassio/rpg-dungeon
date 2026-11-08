@@ -18,8 +18,8 @@ void fragment() {
 	float height = clamp(local_position.y * 0.7, 0.0, 1.0);
 	float pulse = 0.85 + 0.15 * sin(TIME * pulse_speed + NODE_POSITION_WORLD.x * 0.7);
 	ALBEDO = mix(core_color * 0.7, rim_color * 0.8, fresnel * 0.55);
-	METALLIC = 0.35;
-	ROUGHNESS = 0.08;
-	SPECULAR = 0.9;
+	METALLIC = 0.0;
+	ROUGHNESS = 0.3;
+	SPECULAR = 0.1;
 	EMISSION = (core_color * height * 0.5 + rim_color * fresnel) * glow * pulse;
 }

@@ -36,9 +36,34 @@
 - Test gameplay interactions.
 - Never assume a feature works without validation.
 
+## Running Godot
+- `godot` is on the PATH. Never hardcode the binary path.
+- Validate from the project root, in this order:
+  ```bash
+  godot --headless --path . res://tests/check_scripts.tscn
+  godot --headless --path . res://tests/unit_tests.tscn
+  godot --headless --path . res://tests/sfx_tests.tscn
+  godot --headless --fixed-fps 60 --path . res://tests/flow_test.tscn
+  godot --headless --fixed-fps 60 --path . res://tests/playthrough.tscn -- --class=warrior
+  ```
+- Run only the steps the change can affect, and always `check_scripts` after editing scripts.
+- Renders need a window: add `--display-driver x11 --disable-vsync`, because with a locked screen Godot hangs on vsync.
+- `--headless` uses the Dummy audio driver, so it cannot measure sound.
+
 ## Workflow
 - Analyze before implementing.
 - Present an implementation plan for complex features.
 - Make small, incremental changes.
 - Preserve existing functionality.
 - Explain architectural decisions.
+
+## Agents
+- The main session (Opus xhigh) decides, plans and reviews. It does not implement.
+- Delegate implementation to `gameplay-developer` or `rpg-systems` (Sonnet high) without asking first.
+  This standing instruction counts as the user asking for those agents.
+- Edit directly only when the change is a few lines in a file already in context.
+- Use `game-architect` and `qa-tester` (Opus xhigh) and `art-director` (Sonnet xhigh) only for real decisions and validation.
+  Never send them routine edits or exploration.
+- Do not pass a `model` override to these agents: their frontmatter sets it.
+- Give each agent one narrow task: the files involved, what stays out of scope and the acceptance criteria.
+  Pass decisions already made, so it does not re-derive them.

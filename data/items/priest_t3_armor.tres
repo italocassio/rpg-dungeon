@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_ra2x3")
 id = &"priest_t3_armor"
-display_name = "Vestes do Monarca Gélido"
+display_name = "Vestes do Rei Gélido"
 description = "Armadura lendária do Portão Gélido."
 kind = 4
 rarity = 4
@@ -17,4 +17,4 @@ stat_bonuses = Dictionary[StringName, float]({
 &"max_hp": 340.0,
 &"phys_defense": 52.0
 })
-armor_tint = Color(0.49803922, 0.83137256, 1, 1)
+look_tier = 3

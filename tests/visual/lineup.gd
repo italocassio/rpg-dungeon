@@ -26,16 +26,22 @@ func _ready() -> void:
 	add_child(camera)
 	world.focus = camera
 
+	var glow: Color = GameDB.dungeon(&"frost_gate").enemy_glow
+	var warrior := HeroLook.from_items(&"warrior", GameDB.item(&"w_start_mail"), GameDB.item(&"w_start_sword"))
+	var mage := HeroLook.from_items(&"mage", GameDB.item(&"m_start_robe"), GameDB.item(&"m_start_staff"))
+	# O cajado inicial é comum; o lineup sempre mostrou o do mago incomum, para ver a luz da arma.
+	mage.weapon_rarity = ItemData.Rarity.UNCOMMON
+	var priest := HeroLook.from_items(&"priest", GameDB.item(&"p_start_habit"), GameDB.item(&"p_start_scepter"))
 	var cast: Array[Array] = [
-		[CreatureFactory.build_hero(&"warrior", Color("8f9fb4"), &"sword_shield", ItemData.Rarity.COMMON), 1.0],
-		[CreatureFactory.build_hero(&"mage", Color("3f5fae"), &"staff", ItemData.Rarity.UNCOMMON), 1.0],
-		[CreatureFactory.build_hero(&"priest", Color("e8e2cf"), &"scepter", ItemData.Rarity.COMMON), 1.0],
-		[CreatureFactory.build(&"goblin"), 0.82],
-		[CreatureFactory.build(&"skeleton"), 1.05],
-		[CreatureFactory.build(&"shaman"), 1.0],
-		[CreatureFactory.build(&"wolf"), 1.0],
-		[CreatureFactory.build(&"golem"), 1.5],
-		[CreatureFactory.build(&"frost_king"), 2.5],
+		[CreatureFactory.build_hero(warrior), 1.0],
+		[CreatureFactory.build_hero(mage), 1.0],
+		[CreatureFactory.build_hero(priest), 1.0],
+		[CreatureFactory.build(&"goblin", glow), 0.82],
+		[CreatureFactory.build(&"skeleton", glow), 1.05],
+		[CreatureFactory.build(&"shaman", glow), 1.0],
+		[CreatureFactory.build(&"wolf", glow), 1.0],
+		[CreatureFactory.build(&"golem", glow), 1.5],
+		[CreatureFactory.build(&"frost_king", glow), 2.5],
 	]
 	var x: float = -9.5
 	for entry in cast:

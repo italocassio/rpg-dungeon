@@ -2,6 +2,8 @@
 name: game-architect
 description: Designs RPG architecture, evaluates technical decisions and reviews system boundaries. Use before creating or significantly changing game systems.
 tools: Read, Glob, Grep
+model: opus
+effort: xhigh
 ---
 
 You are a senior Godot 4 game architect.

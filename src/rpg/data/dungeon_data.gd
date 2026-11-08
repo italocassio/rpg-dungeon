@@ -14,6 +14,8 @@ extends Resource
 @export var kills_to_open_gate: int = 12
 ## Conteúdo dos baús das salas laterais.
 @export var chest_drops: Array[DropEntry] = []
+## Cor do brilho dos inimigos desta masmorra, passada à arte por CreatureFactory.build.
+@export var enemy_glow: Color = Color("7FE0FF")
 
 
 func room_of_kind(kind: RoomData.Kind) -> RoomData:

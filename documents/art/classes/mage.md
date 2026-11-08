@@ -28,18 +28,20 @@ Materiais em `Look.hero` (guia, M4), exceto as peças de sombra.
 | Núcleo do foco | `8A7BFF` | `glow(.9)` |
 | Metal de acabamento | Por tier, T0 `C8963F` | Guia, seção 9 |
 
+**Materiais compartilhados.** O mago fecha o T0 em 16 materiais, para que o T1 (pele `EEF1F6`, material novo) caiba em 17 e o teto de 18 sobre. A asa interna da gola usa `Look.two_sided(4F8DFF, .5)`, o mesmo do forro, e o cabelo sólido usa `Look.two_sided(CBD2E2, .55)`, o mesmo da trança e das mechas. Peça fechada com o culling desligado não muda de aparência.
+
 ## Esqueleto e pose
 
 `_biped_skeleton(rig, 1.02, .98, .86)`. Os valores somam-se ao `_pose_biped` após a OS-003.
 
 | Joint | Repouso |
 |---|---|
-| `shoulder_r` | `(.32, 0, .3)` |
+| `shoulder_r` | `(.32, 0, .4)` |
 | `elbow_r` | `(.4, 0, 0)` |
 
-`arm_swing_r = .2`, `arm_swing_l = .6`, `stride = .75`.
+`arm_swing_r = .2`, `arm_swing_l = .6`, `stride = .55`, `knee_bend = .6`. Passo curto: com `.75` e `.85`, o pé atravessa a aba traseira aberta (J4).
 
-O ombro aberto em `.3` afasta o aro da asa da gola, e a rotação z de `-.32` na haste compensa esse giro do braço: sem ela a haste pende para a cabeça e metade do Y some.
+O ombro aberto em `.4` afasta o aro da asa da gola, e a rotação z de `-.47` na haste compensa esse giro do braço e inclina o topo 0,07 rad para fora: sem ela a haste pende para a cabeça e metade do Y some. Com `.3` e `-.32`, o aro encostava na ponta da asa de costas, e em passo a ponta entrava no aro. O alvo é um vão de cerca de 7 cm, com o pé da haste onde estava: de costas, ele já quase toca a barra do casaco, então não pode entrar para dentro dela. Meça o vão, não os ângulos: se a ordem de Euler da mão mudar o efeito do z, ajuste a rotação da haste até o aro sair 11 cm e o pé ficar no mesmo lugar.
 
 ## Peças do corpo
 
@@ -83,10 +85,14 @@ Rosto da base comum, sempre à mostra. `loft` não cobre a nuca sem cobrir o ros
 
 | Arma | Dados | Pose |
 |---|---|---|
-| Cajado (`staff`) | Haste `cylinder(.022,.03,2.1,8)` em `y=-.03`; aro `torus(.135,.185,20)` em `y=1.11`, rot x 90°, metal; núcleo `sphere(.085,12)` em `y=1.11`, escala `(1,1.45,1)`, `glow(8A7BFF,.9)` | Em `hand_r`: posição `(0,-.02,0)`, rotação `(-.97,0,-.32)` |
+| Cajado (`staff`) | Haste `cylinder(.022,.03,2.1,8)` em `y=-.03`; aro `torus(.135,.185,20)` em `y=1.11`, rot x 90°, metal; núcleo `sphere(.085,12)` em `y=1.11`, escala `(1,1.45,1)`, `glow(8A7BFF,.9)`; no T3, núcleo em escala `(1,1.15,1)` e aro interno `torus(.103,.125,20)`, ver Tiers | Em `hand_r`: posição `(0,-.02,0)`, rotação `(-.97,0,-.47)` |
 | Orbe (`orb`) | `sphere(.1,16)`, `glow(8A7BFF,.9)`; aro `torus(.13,.155,24)` rot `(.6,0,.4)`, metal | Em `hand_r`: posição `(0,-.2,-.02)`. Repouso: `shoulder_r (.35,0,.1)`, `elbow_r (1.2,0,0)` |
 
-O pé da haste toca o chão: o aro fica a 2,22 m e o topo a 2,40 m. Luz aliada é redonda, então o cristal `shard` atual sai (B2).
+O pé da haste fica a até 3 cm do chão: o aro fica a cerca de 2,22 m e o topo a 2,40 m, com tolerância de 3 cm para cima por causa do ombro aberto. Luz aliada é redonda, então o cristal `shard` atual sai (B2).
+
+O orbe não tem cabo: flutua além dos dedos, seguindo a mão, com folga de cerca de 1 cm. O mago mantém a energia presa no aro, sem tocar nela.
+
+No golpe vale J10: `strike_wrist` `(-.8,0,.5)` no cajado e zero no orbe. O mago só conjura (`cast` e `cast_quick`), então esse golpe não roda em jogo e o J9 não vale para o cajado nem para o orbe.
 
 ## Viewmodel
 
@@ -104,7 +110,7 @@ Medidas em `documents/art/work_orders/OS-012-viewmodel.md`.
 | T0, variante 0 (Túnica de Aprendiz) | Ficha completa | Capa de 0,30 m |
 | T0, variante 1 (Manto do Novato) | Capa mais longa | Primeiro anel da capa desce para `y=.16` |
 | T1 | **Barra de pele na capa**, metal `C4D2E0` | `loft` 12 lados: `(0,.255,.285,.19) (0,.325,.268,.178)`, `EEF1F6` |
-| T2 | **Gola alta, 2 focos flutuantes**, metal `D8B464` | Gola com escala y `1.22`. Foco: `torus(.06,.09,18)` rot x 90°, escala `(1,.6,1)`, e `sphere(.05,10)` escala `(1,1,.45)`, `glow(8A7BFF,.9)`, em `chest (±.5,.42,.1)`. Oscilação de `±.03` m em y |
-| T3 | **4 focos, aro duplo, casaco longo**, metal `E6ECF5` | Mais 2 focos em `chest (±.42,.82,.14)`. Segundo aro `torus(.205,.24,24)` em `y=1.11`. Aba traseira com `length=1.14` |
+| T2 | **Gola alta, 2 focos flutuantes**, metal `D8B464` | Gola com escala y `1.22`. Foco: `torus(.06,.09,12)` rot x 90°, escala `(1,.6,1)`, metal do tier, e `sphere(.05,10)` escala `(1,1,.45)`, no **mesmo material** do núcleo do cajado, `glow(8A7BFF,.9)` (se criar outro, estoura os 18 materiais), em `chest (±.66,.42,.1)`. Oscilação de `±.03` m em y. Lados do anel caem de 18 para 12 para o T3 caber em 6.000 tris |
+| T3 | **4 focos, aro duplo, casaco longo**, metal `E6ECF5` | Mais 2 focos em `chest (±.66,.74,.14)` (a ficha antiga dava `±.42,.82`: `±.42` ficava a 3,5 cm da asa, e `.82` colocava o foco do lado do cajado sobre o aro do cajado quando visto de costas). Aro duplo **por dentro**: `torus(.103,.125,20)` em `y=1.11`, rot x 90°, mesmo plano do aro do cajado, metal do tier. No T3 o núcleo do cajado passa para escala `(1,1.15,1)` (meia-altura `.098`; nos outros tiers fica `1.45`, meia-altura `.123`). O vão até o aro do cajado (`.135`) é de 12 mm com o núcleo em `1.45`, menos que os 4 mm e 8 mm mais o tubo que um aro circular pede: com o núcleo em `1.15` sobram 5 mm até o aro novo e 10 mm até o aro do cajado. O segundo aro por fora, `torus(.205,.24,24)`, sobe o raio externo de `.185` para `.24`, passa o teto de altura (2,45 m) e fica fora. Casaco longo: os painéis da frente passam de `cloth(.15,.2,.86,.04,3,5)` para `cloth(.15,.2,.94,.04,3,5)`, o que leva a barra a cerca de 5 cm do piso (medido `.048` em repouso e `.098` em duas fases do passo). A aba traseira fica em 1,0: com 1,14 ela desce 13 cm abaixo do piso |
 
-Focos ficam em `chest`, com fase distinta em cada um. A largura com focos não conta para os 0,60 m, que são da gola.
+Focos ficam em `chest`, com fase distinta em cada um. A largura com focos não conta para os 0,60 m, que são da gola. Os focos ficam em `x ±.66`, fora da linha da haste (que passa em `x` .49 a .51 no repouso): em `±.5` a haste atravessava o anel do lado do cajado e virava um fio de contas, de frente e de costas. O conceito os põe em cerca de .56 a .62.

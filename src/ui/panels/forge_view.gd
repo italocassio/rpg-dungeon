@@ -2,7 +2,7 @@ class_name ForgeView
 extends HBoxContainer
 ## Forja: lista receitas por nível, mostra custo e consome os materiais.
 
-const TIER_NAMES: Dictionary = { 1: "Conjunto Gélido", 2: "Conjunto Real  (itens do chefe)", 3: "Conjunto do Monarca  (Rank D)" }
+const TIER_NAMES: Dictionary = { 1: "Conjunto Gélido", 2: "Conjunto Real  (itens do chefe)", 3: "Conjunto do Rei Gélido  (Rank D)" }
 const FAILURE_TEXT: Dictionary = {
 	Forge.Failure.MISSING_MATERIALS: "Materiais insuficientes",
 	Forge.Failure.MISSING_CRYSTALS: "Cristais de Mana insuficientes",

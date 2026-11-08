@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_kgpxq")
 id = &"mage_t1_boots"
-display_name = "Sandálias Gélidas"
+display_name = "Botas Leves Gélidas"
 description = "Peça do conjunto Gélido."
 kind = 5
 rarity = 1
@@ -16,3 +16,4 @@ stat_bonuses = Dictionary[StringName, float]({
 &"magic_defense": 8.0,
 &"move_speed": 0.4
 })
+look_tier = 1

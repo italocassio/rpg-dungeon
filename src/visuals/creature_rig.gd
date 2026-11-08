@@ -9,13 +9,20 @@ enum ActionPhase { NONE, WINDUP, STRIKE, RECOVER }
 const STRIKE_TIME := 0.16
 const RECOVER_TIME := 0.32
 const FLASH_INTERVAL := 0.3
+const KNEE_LEAD := 0.4
+const KNEE_BASE := 0.15
 
 var gait: Gait = Gait.BIPED
 var stride: float = 0.75
 var step_rate: float = 2.3
+var knee_bend: float = 0.85
+var arm_swing_r: float = 0.7
+var arm_swing_l: float = 0.7
 
 var _joints: Dictionary[StringName, Node3D] = {}
 var _rest: Dictionary[StringName, Vector3] = {}
+var _strike_wrist: Vector3 = Vector3.ZERO
+var _strike_clears_rest: bool = false
 var _meshes: Array[MeshInstance3D] = []
 var _phase: float = 0.0
 var _blend: float = 0.0
@@ -30,6 +37,8 @@ var _dead: bool = false
 var _overlay: StandardMaterial3D
 var _death_tween: Tween
 var _rest_height: float = 0.0
+var _floaters: Array[Dictionary] = []
+var _float_time: float = 0.0
 
 
 func joint(joint_name: StringName, parent: Node3D, position_offset: Vector3, rest_rotation := Vector3.ZERO) -> Node3D:
@@ -55,6 +64,20 @@ func part(parent: Node3D, mesh: Mesh, material: Material, offset := Vector3.ZERO
 	return instance
 
 
+## Oscilação em y de um nó em torno da posição que ele tem agora. O tempo só avança em `animate`.
+func add_float(node: Node3D, amplitude: float, frequency: float, phase: float) -> void:
+	_floaters.append({"node": node, "base_y": node.position.y, "amplitude": amplitude, "frequency": frequency, "phase": phase})
+	_apply_floats()
+
+
+func _apply_floats() -> void:
+	for floater in _floaters:
+		var node: Node3D = floater["node"]
+		if not is_instance_valid(node):
+			continue
+		node.position.y = floater["base_y"] + floater["amplitude"] * sin(TAU * floater["frequency"] * _float_time + floater["phase"])
+
+
 func adopt_meshes(node: Node) -> void:
 	for child in node.get_children():
 		if child is MeshInstance3D:
@@ -68,6 +91,41 @@ func has_joint(joint_name: StringName) -> bool:
 
 func get_joint(joint_name: StringName) -> Node3D:
 	return _joints.get(joint_name)
+
+
+## Pose de repouso por classe: soma com as poses (regra J6).
+func set_rest(joint_name: StringName, rest_rotation: Vector3) -> void:
+	_rest[joint_name] = rest_rotation
+
+
+## Só herói chama. Inimigo continua somando o repouso (J10).
+func set_strike_grip(wrist: Vector3) -> void:
+	_strike_clears_rest = true
+	_strike_wrist = wrist
+
+
+## Esqueleto bípede padrão com 1.8 m * height. Utilitário sem aparência, vale para herói e monstro (regra S4).
+static func biped_skeleton(rig: CreatureRig, height: float, arm_scale: float, width: float) -> void:
+	var s: float = height
+	rig.set_pelvis_height(0.95 * s)
+	var pelvis: Node3D = rig.joint(&"pelvis", null, Vector3(0.0, 0.95 * s, 0.0))
+	var chest: Node3D = rig.joint(&"chest", pelvis, Vector3(0.0, 0.12 * s, 0.0))
+	rig.joint(&"head", chest, Vector3(0.0, 0.58 * s, 0.0))
+	var shoulder_r: Node3D = rig.joint(&"shoulder_r", chest, Vector3(0.26 * s * width, 0.46 * s, 0.0))
+	var shoulder_l: Node3D = rig.joint(&"shoulder_l", chest, Vector3(-0.26 * s * width, 0.46 * s, 0.0))
+	var elbow_r: Node3D = rig.joint(&"elbow_r", shoulder_r, Vector3(0.0, -0.32 * s * arm_scale, 0.0))
+	var elbow_l: Node3D = rig.joint(&"elbow_l", shoulder_l, Vector3(0.0, -0.32 * s * arm_scale, 0.0))
+	rig.joint(&"hand_r", elbow_r, Vector3(0.0, -0.3 * s * arm_scale, 0.0))
+	rig.joint(&"hand_l", elbow_l, Vector3(0.0, -0.3 * s * arm_scale, 0.0))
+	var hip_r: Node3D = rig.joint(&"hip_r", pelvis, Vector3(0.11 * s, -0.02 * s, 0.0))
+	var hip_l: Node3D = rig.joint(&"hip_l", pelvis, Vector3(-0.11 * s, -0.02 * s, 0.0))
+	rig.joint(&"knee_r", hip_r, Vector3(0.0, -0.46 * s, 0.0))
+	rig.joint(&"knee_l", hip_l, Vector3(0.0, -0.46 * s, 0.0))
+
+
+## Cilindro pendurado abaixo do joint `parent`.
+static func limb(rig: CreatureRig, parent: StringName, length: float, top: float, bottom: float, material: Material) -> void:
+	rig.part(rig.get_joint(parent), MeshKit.cylinder(top, bottom, length, 8), material, Vector3(0.0, -length * 0.5, 0.0))
 
 
 func wind_up(action: StringName, duration: float) -> void:
@@ -129,6 +187,8 @@ func animate(delta: float, ground_speed: float) -> void:
 	_blend = lerpf(_blend, clampf(ground_speed / 3.5, 0.0, 1.0), minf(delta * 8.0, 1.0))
 	_phase += delta * step_rate * maxf(ground_speed, 1.5) * (1.0 if ground_speed > 0.2 else 0.0)
 	_breath += delta * 1.8
+	_float_time += delta
+	_apply_floats()
 	_tick_action(delta)
 	match gait:
 		Gait.BIPED:
@@ -186,28 +246,40 @@ func _set_joint(joint_name: StringName, rotation_offset: Vector3) -> void:
 		node.rotation = _rest[joint_name] + rotation_offset
 
 
+## leg_phase = _phase na perna direita. A flexão chega antes da coxa passar pelo quadril.
+func _knee_flex(leg_phase: float) -> float:
+	return (KNEE_BASE + maxf(cos(leg_phase + KNEE_LEAD), 0.0) * knee_bend) * _blend
+
+
+## A frente é -Z e os cálculos de ação assumem +Z: o sinal de X inverte ao aplicar (regra J6).
 func _pose_biped() -> void:
 	var swing: float = sin(_phase) * stride * _blend
 	var lift: float = absf(cos(_phase)) * 0.05 * _blend
 	var breath: float = sin(_breath) * 0.018
-	_set_joint(&"hip_l", Vector3(swing, 0.0, 0.0))
-	_set_joint(&"hip_r", Vector3(-swing, 0.0, 0.0))
-	_set_joint(&"knee_l", Vector3(maxf(-sin(_phase), 0.0) * 1.1 * _blend, 0.0, 0.0))
-	_set_joint(&"knee_r", Vector3(maxf(sin(_phase), 0.0) * 1.1 * _blend, 0.0, 0.0))
+	_set_joint(&"hip_l", Vector3(-swing, 0.0, 0.0))
+	_set_joint(&"hip_r", Vector3(swing, 0.0, 0.0))
+	_set_joint(&"knee_l", Vector3(-_knee_flex(_phase + PI), 0.0, 0.0))
+	_set_joint(&"knee_r", Vector3(-_knee_flex(_phase), 0.0, 0.0))
+	# pano atrás: abre com a velocidade, as pernas nunca o atravessam
+	_set_joint(&"cloth_back", Vector3(-(_blend * 0.55 + sin(_phase * 2.0) * 0.05 * _blend + sin(_breath) * 0.012), 0.0, 0.0))
 	if has_joint(&"pelvis"):
 		_joints[&"pelvis"].position.y = _pelvis_height + lift
 
 	var value: float = _action_value()
-	var arm_r := Vector3(swing * 0.7 + breath, 0.0, 0.0)
-	var arm_l := Vector3(-swing * 0.7 - breath, 0.0, 0.0)
+	var arm_r := Vector3(swing * arm_swing_r + breath, 0.0, 0.0)
+	var arm_l := Vector3(-swing * arm_swing_l - breath, 0.0, 0.0)
 	var elbow_r := Vector3(-0.25, 0.0, 0.0)
 	var elbow_l := Vector3(-0.25, 0.0, 0.0)
 	var chest := Vector3(breath, sin(_phase) * 0.08 * _blend, 0.0)
 	var neck := Vector3.ZERO
 	match _action:
 		&"swing":
-			arm_r = arm_r.lerp(Vector3(-1.9 - value * 1.5, 0.0, -0.5), absf(value))
-			elbow_r = Vector3(-0.2 - maxf(-value, 0.0), 0.0, 0.0)
+			var armed: bool = value < 0.0
+			var amount: float = absf(value)
+			var weight: float = 1.0 if _action_phase == ActionPhase.STRIKE else amount
+			var target := Vector3(-lerpf(0.75, 1.9 if armed else 0.5, amount), 0.0, lerpf(0.0, 0.55 if armed else -0.35, amount))
+			arm_r = arm_r.lerp(target, weight)
+			elbow_r = elbow_r.lerp(Vector3(-lerpf(0.15, 0.2, amount) if armed else -0.15, 0.0, 0.0), weight)
 			chest.y += value * 0.55
 		&"overhead":
 			arm_r = arm_r.lerp(Vector3(-2.7 - value * 2.0 if value < 0.0 else -0.4 - value * 0.2, 0.0, 0.0), absf(value))
@@ -229,12 +301,21 @@ func _pose_biped() -> void:
 			chest.y += (value + 1.0) * PI
 	if _action_phase == ActionPhase.NONE:
 		_action = &""
-	_set_joint(&"shoulder_r", arm_r)
-	_set_joint(&"shoulder_l", arm_l)
-	_set_joint(&"elbow_r", elbow_r)
-	_set_joint(&"elbow_l", elbow_l)
-	_set_joint(&"chest", chest)
-	_set_joint(&"head", neck)
+	var strike_weight: float = 0.0
+	if _action in [&"swing", &"overhead", &"thrust"]:
+		strike_weight = 1.0 if _action_phase == ActionPhase.STRIKE else absf(value)
+	var shoulder_offset := Vector3(-arm_r.x, arm_r.y, arm_r.z)
+	var elbow_offset := Vector3(-elbow_r.x, elbow_r.y, elbow_r.z)
+	if _strike_clears_rest:
+		shoulder_offset.x -= _rest[&"shoulder_r"].x * strike_weight
+		elbow_offset.x -= _rest[&"elbow_r"].x * strike_weight
+		_set_joint(&"hand_r", _strike_wrist * strike_weight)
+	_set_joint(&"shoulder_r", shoulder_offset)
+	_set_joint(&"shoulder_l", Vector3(-arm_l.x, arm_l.y, arm_l.z))
+	_set_joint(&"elbow_r", elbow_offset)
+	_set_joint(&"elbow_l", Vector3(-elbow_l.x, elbow_l.y, elbow_l.z))
+	_set_joint(&"chest", Vector3(-chest.x, chest.y, chest.z))
+	_set_joint(&"head", Vector3(-neck.x, neck.y, neck.z))
 
 
 var _pelvis_height: float = 1.0

@@ -134,7 +134,7 @@ func _add_wall_torch(point: Vector2, facing: Vector2, wall_height: float) -> voi
 
 
 func _decorate_room(room: RoomData) -> void:
-	var count: int = maxi(int(TAU * room.radius / 8.5), 6)
+	var count: int = _pillar_count(room)
 	var pillar: ArrayMesh = _pillar_mesh(room.wall_height + 0.4)
 	var rib: ArrayMesh = _dome_rib(room)
 	for i in count:
@@ -172,6 +172,10 @@ func _decorate_room(room: RoomData) -> void:
 			var edge: Vector2 = room.center + Vector2(sign_x * room.radius * 0.72, room.radius * 0.4)
 			if _field.is_walkable(edge, 1.0):
 				_add_floor_fire(edge, 0.85)
+
+
+func _pillar_count(room: RoomData) -> int:
+	return maxi(int(TAU * room.radius / 8.5), 6)
 
 
 func _near_opening(room: RoomData, direction: Vector2) -> bool:
@@ -351,8 +355,11 @@ func _add_banners(room: RoomData, count: int, height: float) -> void:
 	mesh.orientation = PlaneMesh.FACE_Z
 	mesh.subdivide_depth = 10
 	mesh.subdivide_width = 2
+	var pillar_count: int = _pillar_count(room)
+	var step: float = TAU / float(pillar_count)
 	for i in count:
-		var angle: float = TAU * (float(i) + 0.5) / float(count) + 0.2
+		var gap: float = floorf(TAU * (float(i) + 0.5) / float(count) / step)
+		var angle: float = 0.2 + (gap + 0.5) * step
 		var direction := Vector2(cos(angle), sin(angle))
 		if _field.is_walkable(room.center + direction * (room.radius + 1.0), 0.0):
 			continue

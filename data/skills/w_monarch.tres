@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_vs4i1")
 id = &"w_monarch"
-display_name = "Lâmina do Monarca"
+display_name = "Lâmina do Portão"
 description = "Converte Chi em um golpe devastador à frente."
 icon = &"crown"
 color = Color(0.4862745, 0.7764706, 1, 1)

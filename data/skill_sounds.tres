@@ -9,6 +9,7 @@
 [ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/m_fire_charge.wav" id="m_fire_charge"]
 [ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/m_fireball_cast.wav" id="m_fireball_cast"]
 [ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/m_fireball_hit.wav" id="m_fireball_hit"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/m_guard.wav" id="m_guard"]
 [ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/m_icelance_cast.wav" id="m_icelance_cast"]
 [ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/m_icelance_hit.wav" id="m_icelance_hit"]
 [ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/m_meteor_fall.wav" id="m_meteor_fall"]
@@ -17,6 +18,7 @@
 [ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/p_bless.wav" id="p_bless"]
 [ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/p_circle_loop.wav" id="p_circle_loop"]
 [ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/p_circle_start.wav" id="p_circle_start"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/p_guard.wav" id="p_guard"]
 [ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/p_heal.wav" id="p_heal"]
 [ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/p_holy_charge.wav" id="p_holy_charge"]
 [ext_resource type="AudioStreamWAV" path="res://assets/audio/sfx/p_judgement.wav" id="p_judgement"]
@@ -77,6 +79,18 @@ volume_db = -0.5
 script = ExtResource("3_clip")
 variations = Array[AudioStream]([ExtResource("w_guard")])
 volume_db = -1.5
+pitch_jitter = 0.03
+
+[sub_resource type="Resource" id="clip_m_guard"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("m_guard")])
+volume_db = -3.0
+pitch_jitter = 0.03
+
+[sub_resource type="Resource" id="clip_p_guard"]
+script = ExtResource("3_clip")
+variations = Array[AudioStream]([ExtResource("p_guard")])
+volume_db = 2.5
 pitch_jitter = 0.03
 
 [sub_resource type="Resource" id="clip_m_bolt_cast"]
@@ -228,6 +242,16 @@ script = ExtResource("2_sound")
 id = &"guard_warrior"
 fire = SubResource("clip_w_guard")
 
+[sub_resource type="Resource" id="sound_guard_mage"]
+script = ExtResource("2_sound")
+id = &"guard_mage"
+fire = SubResource("clip_m_guard")
+
+[sub_resource type="Resource" id="sound_guard_priest"]
+script = ExtResource("2_sound")
+id = &"guard_priest"
+fire = SubResource("clip_p_guard")
+
 [sub_resource type="Resource" id="sound_m_bolt"]
 script = ExtResource("2_sound")
 id = &"m_bolt"
@@ -304,4 +328,4 @@ fire = SubResource("clip_p_miracle")
 
 [resource]
 script = ExtResource("1_bank")
-sounds = Array[ExtResource("2_sound")]([SubResource("sound_w_slash"), SubResource("sound_w_charge"), SubResource("sound_w_whirl"), SubResource("sound_w_warcry"), SubResource("sound_w_seismic"), SubResource("sound_w_monarch"), SubResource("sound_guard_warrior"), SubResource("sound_m_bolt"), SubResource("sound_m_fireball"), SubResource("sound_m_icelance"), SubResource("sound_m_meteor"), SubResource("sound_m_blink"), SubResource("sound_m_nova"), SubResource("sound_p_smite"), SubResource("sound_p_heal"), SubResource("sound_p_circle"), SubResource("sound_p_bless"), SubResource("sound_p_judgement"), SubResource("sound_p_miracle")])
+sounds = Array[ExtResource("2_sound")]([SubResource("sound_w_slash"), SubResource("sound_w_charge"), SubResource("sound_w_whirl"), SubResource("sound_w_warcry"), SubResource("sound_w_seismic"), SubResource("sound_w_monarch"), SubResource("sound_guard_warrior"), SubResource("sound_guard_mage"), SubResource("sound_guard_priest"), SubResource("sound_m_bolt"), SubResource("sound_m_fireball"), SubResource("sound_m_icelance"), SubResource("sound_m_meteor"), SubResource("sound_m_blink"), SubResource("sound_m_nova"), SubResource("sound_p_smite"), SubResource("sound_p_heal"), SubResource("sound_p_circle"), SubResource("sound_p_bless"), SubResource("sound_p_judgement"), SubResource("sound_p_miracle")])

@@ -15,4 +15,4 @@ stat_bonuses = Dictionary[StringName, float]({
 &"max_hp": 40.0,
 &"phys_defense": 6.0
 })
-armor_tint = Color(0.29411766, 0.24705882, 0.56078434, 1)
+look_variant = 1

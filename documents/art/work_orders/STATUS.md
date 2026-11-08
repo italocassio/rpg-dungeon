@@ -1,0 +1,26 @@
+# Estado das ordens de serviço
+
+Atualizado a cada ordem. A sequência e as dependências estão em `README.md`.
+
+| OS | Estado | Observação |
+|---|---|---|
+| 001 | Aprovada | `tests/visual/hero_review.*`, ainda sem commit |
+| 002 | Aprovada | Ainda sem commit |
+| 003 | Aprovada | Ainda sem commit. unit_tests 804 e flow_test 323 sem falhas. Fora do escopo: cotovelos do `frost_king` e do esqueleto quebram J1 e J2 e pedem ordem própria quando os monstros forem revistos |
+| 004 | Concluída | Parecer em `OS-004-parecer.md`, aprovado com alterações e já incorporado às ordens. A OS-007 agora depende de 005 e 006 |
+| 005 | Aprovada | Ainda sem commit. unit_tests 918 e flow_test 323 sem falhas |
+| 006 | Aprovada | Ainda sem commit. Complemento da placa da túnica aplicado; a direção de arte confere `shaman_andando_perfil.png` na revisão da OS-007. Depois de adicionar classe, rode `godot --headless --import --path .` na cópia |
+| 007 | Aprovada | Ainda sem commit. Se o rosto ler abatido em `turn_*` nas OS-009 a 011, a correção é rotação z `0` nas sobrancelhas |
+| 008 | Aprovada | Ainda sem commit. unit_tests 1125 e flow_test 323 sem falhas |
+| 009 | Aprovada | Ainda sem commit. Nuca com L* 49, unit_tests 1126 e flow_test 323 sem falhas. S1 só fecha no `lineup.png`, depois das OS-010 e 011. O "V" da crista no elmo, de costas, foi aceito |
+| 010 | Aprovada | Ainda sem commit. 16 materiais. J9 restrito a `sword_shield` e `greataxe`: o teste muda na rodada da OS-011 |
+| 011 | Aprovada | Ainda sem commit. S1 aprovada em T0. unit_tests 1124 e flow_test 323 sem falhas. Antes dos tiers (OS-013 a 015), chamar a direção de arte para S5 e P1 |
+| 012 | Aprovada | Ainda sem commit. unit_tests 1130 e flow_test 347 sem falhas. `armor_tint` removido |
+| 013 | Aprovada | Ajustes da revisão aplicados e conferidos pelos critérios numéricos dela: `v1_ok` e `p8_ok` verdadeiros, capa com 2,2 cm de folga no pior caso. Sem commit. unit_tests 1399 e flow_test 347 sem falhas |
+| 014 | Aprovada | Focos T2 e T3 em `x` ±.66, anéis fora da haste. Critério de 2 cm reescrito: na fase 75 do passo, a de maior balanço da haste, ela pode entrar até 1,5 cm no anel. Sem commit. unit_tests 1318 e flow_test 347 sem falhas. Depois, 013 e 015, uma de cada vez, porque as três editam `unit_tests.gd` |
+| 015 | Aprovada | Sem commit. unit_tests 1548 e flow_test 347 sem falhas. Exceção de classe: lanterna a 1,18 a 4 cm ou mais da aba 1 (medido 4,51 cm). O pingente do lado do bastão fica sobre a haste de costas, como no conceito; se o usuário não gostar, a alavanca é `x ±.34` |
+| 016 | Em andamento | SVGs copiados para `assets/icons/`, sem commit, e legíveis a 40 px. Falta `check_scripts` carregar os dois, na rodada da OS-012, e ver na escolha de classe do saguão, na OS-017 |
+| 017 | Concluída | Fechada em 07/11 pela direção de arte, depois da OS-020. Checklist visual aprovado em T0 e T3 (as medições abaixo vieram da validação do `qa-tester`). Duas notas opcionais: fiapo roxo do mago de costas (`CAPE[2]` em `mage_model.gd`, x de `.200` para `.215`) e lâminas do guerreiro T3 que leem como chifre (rot z `.3` para `.15`, altura `.32` para `.24`). Medições da validação: medições passaram: suítes (unit_tests 1548, flow_test 347, sfx_tests 587, 3 playthroughs), 150 de 150 combinações com v1, v4 e limit, custo +0,57 a +0,65 ms (limite 1,0), montagem T3 em 3,04 ms, 1 luz permanente (C3), tours das 3 classes. Duas falhas fora dos heróis: `assets/icons/smite.svg` do sacerdote é uma cruz latina (O2), e `check_scripts` não carrega os ícones novos da OS-016. Falta a direção de arte fechar o checklist da seção 12 e decidir os ícones. Em 07/11 o `/tmp` foi esvaziado e os renders da validação se perderam; a revisão final usa um conjunto novo e menor (`scratchpad/final`: 3 classes em T0 e T3, elenco e ícones) |
+| 020 | Aprovada | Ícones `smite`, `heal` e `circle` trocados (cruz, regra O2) e dois testes de carga de ícones. unit_tests 1572, flow_test 347, check_scripts 0 erros. Sem commit |
+| 018 | Concluída | Shader final: `METALLIC = 0.0`, `ROUGHNESS = 0.3`, `SPECULAR = 0.1`. Sem commit |
+| 019 | Aprovada | Ajustes da revisão aplicados e conferidos pelos critérios numéricos dela (L* 58,8, 9,8 e 36,0; 18 amostras do guerreiro e 6 das demais). Sem commit. unit_tests 1261 e flow_test 347 sem falhas. As OS-013 a 015 mandam nomear as peças. Despachada em 02/11 com o `gameplay-developer` em Sonnet e esforço alto, como está no arquivo; a escolha de modelo do `/usage` segue sem resposta. Ordem seguinte: 014, 013, 015, com `qa-tester` depois de cada uma |

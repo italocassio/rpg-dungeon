@@ -105,12 +105,10 @@ func _refresh_hero() -> void:
 	if stage == null:
 		return
 	var sheet: CharacterSheet = Session.sheets.get(selected_class.id)
-	var armor: ItemData = pending_armor
-	var weapon: ItemData = pending_weapon
 	if sheet != null:
-		armor = sheet.equipment.get(ItemData.Kind.ARMOR, armor)
-		weapon = sheet.equipment.get(ItemData.Kind.WEAPON, weapon)
-	stage.show_hero(selected_class.id, armor, weapon)
+		stage.show_hero(HeroLook.from_sheet(sheet))
+	else:
+		stage.show_hero(HeroLook.from_items(selected_class.id, pending_armor, pending_weapon))
 
 
 # ---------- Classe ----------

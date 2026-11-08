@@ -43,8 +43,7 @@ func setup_character(sheet: CharacterSheet, display_name: String) -> void:
 	combatant.body_height = 1.8
 	caster.combatant = combatant
 	combatant_ready = true
-	var weapon: ItemData = sheet.equipment.get(ItemData.Kind.WEAPON)
-	viewmodel.setup(sheet.class_data, weapon)
+	viewmodel.setup(sheet.class_data, HeroLook.from_sheet(sheet))
 
 
 func _ready() -> void:

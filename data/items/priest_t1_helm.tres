@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_5kewc")
 id = &"priest_t1_helm"
-display_name = "Mitra Gélida"
+display_name = "Chapéu Gélido"
 description = "Peça do conjunto Gélido."
 kind = 3
 rarity = 1
@@ -17,3 +17,4 @@ stat_bonuses = Dictionary[StringName, float]({
 &"max_hp": 40.0,
 &"phys_defense": 6.0
 })
+look_tier = 1

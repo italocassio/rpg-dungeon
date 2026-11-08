@@ -56,7 +56,7 @@ Conjuração: 0,24 s
 Recarga: 10 s
 Dano direto antes da defesa e do elemento do alvo. Variação de ±10%; crítico multiplica por 2.
 
-Lâmina do Monarca
+Lâmina do Portão
 Físico · Metal
 Converte Chi em um golpe devastador à frente.
 Dano: 250 (225 a 275)

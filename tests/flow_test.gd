@@ -79,6 +79,7 @@ func _ready() -> void:
 	await _test_rank_lock_and_tabs()
 	await _test_second_run_keeps_progress()
 	await _test_abandon()
+	await _test_viewmodel_swap_in_run()
 	_failed += _errors.count
 	print("\nFLUXO: %d verificações ok, %d falhas (%d erros de script)" % [_passed, _failed, _errors.count])
 	OS.remove_logger(_errors)
@@ -831,3 +832,97 @@ func _test_abandon() -> void:
 	# O AudioServer libera a faixa parada na thread de mixagem, no relógio real. Com --fixed-fps
 	# o teste sairia antes disso e o stream apareceria como vazamento, ao sabor da corrida.
 	OS.delay_msec(200)
+
+
+## Troca de equipamento com a partida rodando, pelo caminho real: inventário, ficha, `changed`, `refresh_player_stats`.
+## O inventário não pausa, então a troca pode cair no meio de um golpe.
+func _test_viewmodel_swap_in_run() -> void:
+	var lobby: Lobby = _lobby()
+	var priest: ClassData = GameDB.class_by_id(&"priest")
+	lobby._on_class_chosen(priest)
+	await _frames(2)
+	for weapon in priest.starter_weapons:
+		if weapon.weapon_model == &"scepter":
+			lobby._on_weapon_chosen(weapon)
+	await _frames(2)
+	await _enter_gate_through_ui(lobby)
+	var screen: DungeonScreen = _screen()
+	var sheet: CharacterSheet = screen.run.sheet
+	var viewmodel: Viewmodel = screen.run.player.viewmodel
+	check(sheet.class_data == priest and sheet.weapon_model() == &"scepter", "partida do sacerdote com scepter")
+	sheet.level = 5
+	var armor_t1: ItemData = GameDB.item(&"priest_t1_armor")
+	var armor_t2: ItemData = GameDB.item(&"priest_t2_armor")
+	sheet.inventory.add(armor_t1.id)
+	sheet.inventory.add(armor_t2.id)
+
+	# 1. Armadura T2 com a partida rodando: look novo e mãos novas.
+	var old_right: Node3D = viewmodel._right
+	var old_left: Node3D = viewmodel._left
+	check(viewmodel._look.armor_tier == 0, "viewmodel começa em T0")
+	await _equip_through_inventory(screen, armor_t2)
+	check(sheet.equipment.get(ItemData.Kind.ARMOR) == armor_t2, "armadura T2 equipada pelo inventário")
+	check(viewmodel._look.armor_tier == 2, "viewmodel guarda look com armor_tier 2")
+	check(viewmodel._right != old_right and viewmodel._left != old_left, "mãos novas")
+	check(viewmodel._right.get_parent() == viewmodel and not is_instance_valid(old_right), "mãos antigas saem da árvore")
+
+	# 2. XP e ponto: `changed` dispara e o `setup` retorna cedo, com os mesmos nós.
+	var kept: Array[Node] = [viewmodel._right, viewmodel._left, viewmodel._cast_light]
+	var changes: Array[int] = [0]
+	sheet.changed.connect(func() -> void: changes[0] += 1)
+	sheet.add_xp(1)
+	sheet.unspent_points = maxi(sheet.unspent_points, 1)
+	sheet.spend_point(&"intelligence")
+	await _frames(2)
+	check(changes[0] >= 2, "XP e ponto disparam changed (%d)" % changes[0])
+	check(viewmodel._right == kept[0] and viewmodel._left == kept[1] and viewmodel._cast_light == kept[2], "mãos e luz de cast são os mesmos nós")
+
+	# 3. Armadura no meio de um golpe e de um cast: sem erro, sem nó liberado, mão no repouso.
+	var errors_before: int = _errors.count
+	viewmodel.play_swing(1)
+	await _frames(2)
+	check(viewmodel.right_rotation != Vector3.ZERO, "golpe em andamento antes da troca")
+	await _equip_through_inventory(screen, armor_t1, 0)
+	check(viewmodel._look.armor_tier == 1, "troca durante o golpe aplicada")
+	check(viewmodel.right_position == Vector3.ZERO and viewmodel.right_rotation == Vector3.ZERO, "mão volta ao repouso")
+	viewmodel.start_cast(priest.basic_attack, 1.0)
+	await _frames(3)
+	check(viewmodel._cast_light.light_energy > 0.0, "luz de cast acesa antes da troca")
+	await _equip_through_inventory(screen, armor_t2, 0)
+	await _frames(20)
+	check(viewmodel._cast_light.light_energy == 0.0, "luz de cast nova nasce apagada")
+	check(viewmodel.right_position == Vector3.ZERO and viewmodel._right.position.distance_to(Viewmodel.RIGHT_REST) < 0.02, "mão no repouso depois do cast")
+	check(_errors.count == errors_before, "troca em golpe e cast sem erro no console")
+
+	# 4. Três trocas seguidas: uma só lanterna (C3), fora a luz de cast.
+	for armor: ItemData in [armor_t1, armor_t2, armor_t1]:
+		await _equip_through_inventory(screen, armor)
+		var lanterns: int = 0
+		for light: Node in viewmodel.find_children("*", "OmniLight3D", true, false):
+			if light != viewmodel._cast_light:
+				lanterns += 1
+		check(lanterns == 1, "uma só OmniLight3D da lanterna depois da troca (%d)" % lanterns)
+
+	# 5. Alternar entre as mesmas duas armaduras: o cache de materiais para de crescer.
+	var sizes: Array[int] = []
+	for _lap in 3:
+		await _equip_through_inventory(screen, armor_t2)
+		await _equip_through_inventory(screen, armor_t1)
+		sizes.append(Look._viewmodel_cache.size())
+	check(sizes[1] == sizes[0] and sizes[2] == sizes[0], "cache de materiais do viewmodel não cresce: %s" % [sizes])
+
+	screen._open_pause()
+	await _frames(1)
+	screen._abandon()
+	await _frames(4)
+	check(_lobby() != null, "teste de troca volta ao saguão")
+
+
+func _equip_through_inventory(screen: DungeonScreen, item: ItemData, settle_frames: int = 2) -> void:
+	screen.toggle_window(&"menu_inventory")
+	await _frames(2)
+	var inventory: InventoryView = screen._window.find_children("*", "InventoryView", true, false)[0]
+	inventory._on_item_pressed(item)
+	await _frames(settle_frames)
+	screen.close_window()
+	await _frames(1)

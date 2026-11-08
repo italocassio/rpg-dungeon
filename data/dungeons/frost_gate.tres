@@ -263,3 +263,4 @@ boss = ExtResource("1_hf24q")
 ranks = Array[ExtResource("9_b4pod")]([ExtResource("10_1j4ru"), ExtResource("11_cbskp")])
 kills_to_open_gate = 20
 chest_drops = Array[ExtResource("2_iybpn")]([SubResource("Resource_lbwfb"), SubResource("Resource_fqriq"), SubResource("Resource_k35x5"), SubResource("Resource_mwlvo"), SubResource("Resource_y445a")])
+enemy_glow = Color(0.49803922, 0.8784314, 1, 1)

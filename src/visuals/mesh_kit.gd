@@ -17,13 +17,13 @@ static func lathe(profile: PackedVector2Array, sides: int = 12, smooth: bool = t
 			var b: Vector3 = ring.call(i, side + 1)
 			var c: Vector3 = ring.call(i + 1, side + 1)
 			var d: Vector3 = ring.call(i + 1, side)
-			_quad(st, a, d, c, b)
+			_quad(st, a, b, c, d)
 	if close_ends:
 		var bottom := Vector3(0.0, profile[0].y, 0.0)
 		var top := Vector3(0.0, profile[profile.size() - 1].y, 0.0)
 		for side in sides:
-			_triangle(st, bottom, ring.call(0, side), ring.call(0, side + 1))
-			_triangle(st, top, ring.call(profile.size() - 1, side + 1), ring.call(profile.size() - 1, side))
+			_triangle(st, bottom, ring.call(0, side + 1), ring.call(0, side))
+			_triangle(st, top, ring.call(profile.size() - 1, side), ring.call(profile.size() - 1, side + 1))
 	st.generate_normals()
 	return st.commit()
 
@@ -39,13 +39,13 @@ static func loft(rings: Array[Vector4], sides: int = 10, smooth: bool = true) ->
 		return Vector3(ring.x + cos(angle) * ring.z, ring.y, sin(angle) * ring.w)
 	for i in rings.size() - 1:
 		for side in sides:
-			_quad(st, at.call(i, side), at.call(i + 1, side), at.call(i + 1, side + 1), at.call(i, side + 1))
+			_quad(st, at.call(i, side), at.call(i, side + 1), at.call(i + 1, side + 1), at.call(i + 1, side))
 	var bottom := Vector3(rings[0].x, rings[0].y, 0.0)
 	var last: Vector4 = rings[rings.size() - 1]
 	var top := Vector3(last.x, last.y, 0.0)
 	for side in sides:
-		_triangle(st, bottom, at.call(0, side), at.call(0, side + 1))
-		_triangle(st, top, at.call(rings.size() - 1, side + 1), at.call(rings.size() - 1, side))
+		_triangle(st, bottom, at.call(0, side + 1), at.call(0, side))
+		_triangle(st, top, at.call(rings.size() - 1, side), at.call(rings.size() - 1, side + 1))
 	st.generate_normals()
 	return st.commit()
 
@@ -66,8 +66,8 @@ static func shard(radius: float, height: float, rng: RandomNumberGenerator, side
 		shoulder_ring.append(Vector3(cos(angle) * r * 0.72 + tip.x * 0.5, shoulder_height, sin(angle) * r * 0.72 + tip.z * 0.5))
 	for side in sides:
 		var next: int = (side + 1) % sides
-		_quad(st, base_ring[side], shoulder_ring[side], shoulder_ring[next], base_ring[next])
-		_triangle(st, shoulder_ring[side], tip, shoulder_ring[next])
+		_quad(st, base_ring[side], base_ring[next], shoulder_ring[next], shoulder_ring[side])
+		_triangle(st, shoulder_ring[side], shoulder_ring[next], tip)
 	st.generate_normals()
 	return st.commit()
 
@@ -148,9 +148,9 @@ static func extrude_path(path: PackedVector2Array, thickness: float, depth: floa
 		var d0: Vector3 = _v(p0 + n0 * thickness, half)
 		var d1: Vector3 = _v(p1 + n1 * thickness, half)
 		_quad(st, c0, c1, d1, d0)
-		_quad(st, a0, c0, c1, a1)
-		_quad(st, b0, b1, d1, d0)
-		_quad(st, a0, a1, b1, b0)
+		_quad(st, a0, a1, c1, c0)
+		_quad(st, b0, d0, d1, b1)
+		_quad(st, a0, b0, b1, a1)
 	st.generate_normals()
 	return st.commit()
 
@@ -179,6 +179,30 @@ static func cloth(top_width: float, bottom_width: float, length: float, flare: f
 	for row in rows:
 		for column in columns:
 			_quad(st, at.call(column, row), at.call(column + 1, row), at.call(column + 1, row + 1), at.call(column, row + 1))
+	st.generate_normals()
+	return st.commit()
+
+
+## Chapa fina a partir de um contorno 2D no plano XY, com espessura em Z. Facetada, em leque a partir do centro.
+static func plate(outline: PackedVector2Array, thickness: float) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_smooth_group(-1)
+	var half: float = thickness * 0.5
+	var count: int = outline.size()
+	var center := Vector2.ZERO
+	for point in outline:
+		center += point
+	center /= count
+	for i in count:
+		var a: Vector2 = outline[i]
+		var b: Vector2 = outline[(i + 1) % count]
+		st.add_vertex(Vector3(center.x, center.y, half))
+		st.add_vertex(Vector3(b.x, b.y, 0.0))
+		st.add_vertex(Vector3(a.x, a.y, 0.0))
+		st.add_vertex(Vector3(center.x, center.y, -half))
+		st.add_vertex(Vector3(a.x, a.y, 0.0))
+		st.add_vertex(Vector3(b.x, b.y, 0.0))
 	st.generate_normals()
 	return st.commit()
 

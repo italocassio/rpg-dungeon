@@ -178,5 +178,17 @@
 		"seed": "15592",
 		"seconds": 1,
 		"prompt": "Shield raise sound effect.\n\nSteel shield snapping into guard position,\nleather creak, armor clink and a low solid thud.\n\nFirm, quick and defensive.\nVery short single movement, about 0.5 seconds.\n\nDry recording. No music, no voices."
+	},
+	"m_guard": {
+		"model": "Stable Audio 3",
+		"seed": "14266",
+		"seconds": 1,
+		"prompt": "Magic barrier activation sound effect.\n\nArcane energy shield forming in front of the body,\nlow electric hum, glassy crystalline shimmer.\n\nStable, cold and protective.\nQuick swell into a steady hum, about 1 second.\n\nDry recording. No music, no voices."
+	},
+	"p_guard": {
+		"model": "Stable Audio 3",
+		"seed": "31385",
+		"seconds": 1,
+		"prompt": "Holy aegis activation sound effect.\n\nRadiant protective shield forming around the body,\nwarm resonant hum, soft bright metallic ring.\n\nSolid, sacred and protective.\nQuick swell into a steady glow, about 1 second.\n\nDry recording. No music, no voices."
 	}
 }

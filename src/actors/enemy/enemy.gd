@@ -21,6 +21,7 @@ var machine := StateMachine.new()
 var rig: CreatureRig
 var speed_multiplier: float = 1.0
 var is_summon: bool = false
+var glow: Color
 
 @onready var combatant: Combatant = $Combatant
 @onready var caster: SkillCaster = $SkillCaster
@@ -29,11 +30,12 @@ var is_summon: bool = false
 var _focus: Node3D
 
 
-func setup(monster: MonsterData, gate_rank: GateRankData, spawn_position: Vector3, focus_node: Node3D) -> void:
+func setup(monster: MonsterData, gate_rank: GateRankData, spawn_position: Vector3, focus_node: Node3D, eye_glow: Color) -> void:
 	data = monster
 	rank = gate_rank
 	home = spawn_position
 	_focus = focus_node
+	glow = eye_glow
 	active_skills = monster.skills.duplicate()
 
 
@@ -62,7 +64,7 @@ func _ready() -> void:
 	collider.shape = capsule
 	collider.position.y = capsule.height * 0.5
 
-	rig = CreatureFactory.build(data.visual)
+	rig = CreatureFactory.build(data.visual, glow)
 	rig.scale = Vector3.ONE * data.scale
 	add_child(rig)
 

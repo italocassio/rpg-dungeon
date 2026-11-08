@@ -29,6 +29,7 @@ A base é a sua medição na mesma cena, logo depois da OS-002, com os modelos a
 - `report.json` com `v1_ok`, `v4_ok` e `limit_ok` em todas as combinações.
 - O custo novo não passa de 1,0 ms em nenhuma qualidade (C2).
 - Montar um herói T3 leva menos de 6 ms.
+- Na cena de referência, só o sacerdote com `scepter` tem `OmniLight3D` permanente, e só uma. Guerreiro e mago com arma T3 lendária têm 0 (C3).
 
 ## Entrega
 

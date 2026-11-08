@@ -27,7 +27,10 @@ const RARITY_NAMES: Dictionary = {
 @export var required_level: int = 1
 @export var stat_bonuses: Dictionary[StringName, float] = {}
 @export var weapon_model: StringName
-@export var armor_tint: Color = Color.WHITE
+## Forma do modelo (HeroLook): 0 a 3, igual ao tier da receita. T0 são os itens iniciais.
+@export_range(0, 3) var look_tier: int = 0
+## Segundo desenho do mesmo tier. Só os itens iniciais usam 1.
+@export_range(0, 1) var look_variant: int = 0
 
 @export_group("Consumível")
 @export_range(0.0, 1.0) var restores_hp_ratio: float = 0.0

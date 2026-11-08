@@ -36,9 +36,7 @@ func _ready() -> void:
 	combatant.body_height = 1.8
 	combatant.damage_multiplier = GameDB.balance.bot_damage_multiplier
 	caster.combatant = combatant
-	var armor: ItemData = sheet.equipment.get(ItemData.Kind.ARMOR)
-	var weapon: ItemData = sheet.equipment.get(ItemData.Kind.WEAPON)
-	rig = CreatureFactory.build_hero(sheet.class_data.id, armor.armor_tint, weapon.weapon_model, weapon.rarity)
+	rig = CreatureFactory.build_hero(HeroLook.from_sheet(sheet))
 	add_child(rig)
 	var plate := Nameplate.new()
 	add_child(plate)

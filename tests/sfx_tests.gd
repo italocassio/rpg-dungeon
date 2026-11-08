@@ -13,6 +13,8 @@ const SHEET: Dictionary = {
 	&"w_seismic": {"fire": ["w_seismic"]},
 	&"w_monarch": {"cast": ["w_monarch"], "keeps_cast": true},
 	&"guard_warrior": {"fire": ["w_guard"]},
+	&"guard_mage": {"fire": ["m_guard"]},
+	&"guard_priest": {"fire": ["p_guard"]},
 	&"m_bolt": {"fire": ["m_bolt_cast"], "impact": ["m_bolt_hit"]},
 	&"m_fireball": {"cast": ["m_fire_charge"], "fire": ["m_fireball_cast"], "impact": ["m_fireball_hit"]},
 	&"m_icelance": {"fire": ["m_icelance_cast"], "impact": ["m_icelance_hit"]},
@@ -377,6 +379,18 @@ func test_guard_uses_the_class_sound() -> void:
 	var director: SfxDirector = _director()
 	Events.guard_raised.emit(&"warrior", _unit())
 	equal(_playing(director), ["w_guard"], "guerreiro ergue o escudo")
+
+
+func test_mage_guard_uses_its_sound() -> void:
+	var director: SfxDirector = _director()
+	Events.guard_raised.emit(&"mage", _unit())
+	equal(_playing(director), ["m_guard"], "mago ergue a barreira")
+
+
+func test_priest_guard_uses_its_sound() -> void:
+	var director: SfxDirector = _director()
+	Events.guard_raised.emit(&"priest", _unit())
+	equal(_playing(director), ["p_guard"], "sacerdote ergue a égide")
 
 
 func test_guard_without_file_stays_silent() -> void:

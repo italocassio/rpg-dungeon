@@ -17,3 +17,4 @@ stat_bonuses = Dictionary[StringName, float]({
 &"max_hp": 40.0,
 &"phys_defense": 12.0
 })
+look_tier = 1

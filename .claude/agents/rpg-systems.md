@@ -1,6 +1,8 @@
 ---
 name: rpg-systems
 description: Implements RPG mechanics including inventory, equipment, attributes, quests, dialogue and progression.
+model: sonnet
+effort: high
 ---
 
 You are a senior RPG systems developer.

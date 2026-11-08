@@ -18,3 +18,4 @@ stat_bonuses = Dictionary[StringName, float]({
 &"magic_attack": 58.0
 })
 weapon_model = &"staff"
+look_tier = 2

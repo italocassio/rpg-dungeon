@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_d45hk")
 id = &"p_start_tome"
-display_name = "Tomo de Preces"
+display_name = "Tomo da Vigília"
 description = "Mais mana e cura, menos ataque."
 kind = 2
 icon = &"tome"

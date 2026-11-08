@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_yabk7")
 id = &"mage_t3_weapon"
-display_name = "Cajado do Monarca Gélido"
+display_name = "Cajado do Rei Gélido"
 description = "Arma lendária do Portão Gélido."
 kind = 2
 rarity = 4
@@ -18,3 +18,4 @@ stat_bonuses = Dictionary[StringName, float]({
 &"magic_attack": 98.0
 })
 weapon_model = &"staff"
+look_tier = 3
