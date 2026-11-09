@@ -86,6 +86,16 @@ godot --headless --path . --export-release "Linux" build/linux/CacadoresDePortai
 
 Distribua o `.x86_64` e o `.pck` na mesma pasta. Para jogar, rode `./CacadoresDePortais.x86_64`.
 
+### AppImage
+
+Requer também o `appimagetool` no PATH (no Arch/CachyOS: `paru -S appimagetool-bin`).
+
+```bash
+tools/build_appimage.sh
+```
+
+Gera `build/CacadoresDePortais-x86_64.AppImage`, um arquivo único com o jogo dentro. Sem o `appimagetool`, o script só monta a pasta `build/appimage/CacadoresDePortais.AppDir` e sai com erro.
+
 ## Testes
 
 ```bash
