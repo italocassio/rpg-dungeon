@@ -95,10 +95,7 @@ func test_skill_icons_load() -> void:
 
 
 ## Habilidades sem arte aceita. Cada exceção carrega o motivo. Ao chegar a imagem nova, apague a entrada: o teste falha se a arte existir.
-const SKILL_ART_EXCEPTIONS: Dictionary[StringName, String] = {
-	&"w_whirl": "REPROVADA em 08/11/2026: lê como ícone de atualizar; regerar com o prompt revisado de habilidades_gpt_image.md",
-	&"w_warcry": "REPROVADA em 08/11/2026: lê como ícone de volume; regerar com a opção A ou B de habilidades_gpt_image.md",
-}
+const SKILL_ART_EXCEPTIONS: Dictionary[StringName, String] = {}
 
 
 func test_item_and_skill_art() -> void:
@@ -122,9 +119,13 @@ func test_item_and_skill_art() -> void:
 			check(_import_has_mipmaps("res://assets/icons/skills/%s.png" % id), "arte da habilidade %s importa com mipmaps" % id)
 	for id: StringName in SKILL_ART_EXCEPTIONS:
 		check(id in skill_ids, "exceção %s é de uma habilidade que existe" % id)
-	# Plano B: sem arte, o SVG de hoje.
-	equal(UiKit.skill_icon(_skill_named(&"w_whirl")), UiKit.icon(&"whirl"), "Giro de Lâminas cai no whirl.svg")
-	equal(UiKit.skill_icon(_skill_named(&"w_warcry")), UiKit.icon(&"shout"), "Grito de Guerra cai no shout.svg")
+	# Plano B: sem arte, o SVG do campo `icon`.
+	var without_art := SkillData.new()
+	without_art.id = &"habilidade_sem_arte"
+	without_art.icon = &"whirl"
+	equal(UiKit.skill_icon(without_art), UiKit.icon(&"whirl"), "habilidade sem arte cai no SVG do campo icon")
+	equal(UiKit.skill_icon(_skill_named(&"w_whirl")), UiKit.skill_art(&"w_whirl"), "Giro de Lâminas usa a arte nova")
+	equal(UiKit.skill_icon(_skill_named(&"w_warcry")), UiKit.skill_art(&"w_warcry"), "Grito de Guerra usa a arte nova")
 	equal(UiKit.item_art(&"nao_existe"), null, "id sem arte devolve nulo")
 	check(not DirAccess.dir_exists_absolute("res://assets/item_art"), "assets/item_art foi removida")
 	check(not DirAccess.dir_exists_absolute("res://assets/icons/skill_gpt_image"), "skill_gpt_image foi removida")

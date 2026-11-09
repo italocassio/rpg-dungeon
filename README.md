@@ -75,6 +75,17 @@ godot --headless --path . --export-release "Windows Desktop" build/windows/Cacad
 
 Distribua o `.exe` e o `.pck` na mesma pasta.
 
+## Build para Linux
+
+Requer os templates de exportação do Godot 4.7.2.
+
+```bash
+mkdir -p build/linux
+godot --headless --path . --export-release "Linux" build/linux/CacadoresDePortais.x86_64
+```
+
+Distribua o `.x86_64` e o `.pck` na mesma pasta. Para jogar, rode `./CacadoresDePortais.x86_64`.
+
 ## Testes
 
 ```bash
