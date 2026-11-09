@@ -585,3 +585,54 @@ Para cada imagem gerada, marque tudo antes de aprovar. Uma falha na seção A re
 - [ ] A linguagem de classe se mantém: guerreiro com massa pesada e traço grosso; mago com traço fino e pontas afiadas; sacerdote com formas redondas, e a chama da lanterna em Luz Sagrada, Cura e Círculo.
 - [ ] Quando o Círculo Sagrado e a Nova Elemental ficam lado a lado, o anel liso e a estrela de pontas não se confundem.
 - [ ] A Esquiva, ao lado da Investida do guerreiro, se distingue pela curva em arco.
+
+## Revisão das imagens geradas (08/11/2026)
+
+Os 19 PNGs de `assets/icons/skill_gpt_image/` (128 × 128, cinza com alfa) foram conferidos contra os prompts e a lista de conferência acima. Medido: contorno entre 88% e 95% do quadro, valores perto de `F2F4F8` (massa), `B4B9C4` (facetas) e `6B7280` (cortes), sem cor. Contagem de pontas por varredura polar: Milagre 7, Nova 8, Piscar 4. Conferido também a 42 px na barra (multiplicado por `skill.color.lightened(0,3)` sobre o fundo `cor × 0,13`, com o setor de recarga e o número por cima), a 27 px no saguão e em preto sólido a 40 px.
+
+**Veredito: 16 APROVADO, 1 AJUSTES, 2 REPROVADO.**
+
+**APROVADO (16):** `w_slash`, `w_charge`, `w_seismic`, `m_bolt`, `m_fireball`, `m_icelance`, `m_meteor`, `m_blink`, `m_nova`, `p_smite`, `p_heal`, `p_circle`, `p_bless`, `p_judgement`, `p_miracle`, `dodge`.
+
+As seis silhuetas de cada classe se distinguem a 40 px, e os pares que a cor não separa (Seta Arcana e Lança de Gelo, Nova e Círculo, Corte Sísmico e Giro, Luz Sagrada e Bênção) se separam pela forma. Sem cruz, sem crescente, sem estrela de 6 pontas. Observações aceitas, sem pedir nova imagem: a Nova leva um fio escuro fino em volta do miolo e lê um pouco como sol; a Bênção lê como arraia ou guarda-chuva, e não como flor; a cabeça da Luz Sagrada, com a chama vazada grande, lê como argola.
+
+**AJUSTES (1): `w_monarch`.** A espada larga e o anel do Portão estão certos e o contorno é inconfundível, mas o anel entra no valor escuro `6B7280`, atravessado pela espada no centro, e a silhueta em preto lê como "Ø". Entra no jogo como está. Para regerar, troque o prompt da habilidade por este:
+
+```text
+SUBJECT: a great broad sword plunged diagonally through a tall oval portal ring: the Gate Blade, the warrior's ultimate. The ring is the dimensional Gate of the game, a thick stone-like oval frame. It must not read as a prohibition sign or an empty-set symbol: the sword is the dominant shape and the blade crosses the ring off-center.
+COMPOSITION: square canvas. The portal ring is a tall hollow oval about 1.5 times taller than wide, centered at 58 percent from the left and 52 percent from the top, 52 percent wide and 84 percent tall (outer size), its band 11 percent thick, the inside completely empty (transparent). The sword axis runs from the pommel at the upper right (about 90 percent from the left, 8 percent from the top) to the point at the lower left (about 12 percent from the left, 94 percent from the top), about 39 degrees from the vertical, so that the blade crosses the left third of the ring, not its center. The blade passes in front of the ring and crosses its band cleanly, without weaving. The top-left corner stays empty.
+BLADE: very broad blade, 18 percent of the canvas wide at the base, with a central ridge that splits it in two values (upper-left half #F2F4F8, lower-right half #B4B9C4), tapering to a sharp point. One plain straight crossguard bar, 40 percent of the canvas long and 9 percent thick, perpendicular to the blade, placed just outside the ring at the upper right, in #F2F4F8; short grip 14 percent long in #B4B9C4; ball pommel 11 percent across in #F2F4F8. The guard and pommel stay outside the ring.
+RING: the whole ring in the mid value #B4B9C4 with its upper-left half in #F2F4F8, so it reads as a solid frame behind the blade, not as a shadow.
+GLOW: nothing glows.
+```
+
+**REPROVADO (2): ficam fora da cópia do jogo, que usa o SVG atual até a imagem nova chegar.**
+
+**`w_whirl` (Giro de Lâminas).** Dois arcos-seta fechando um anel, sem nada que diga "lâmina": é o ícone universal de atualizar ou sincronizar, e a 40 px, em preto ou colorido, ninguém lê um golpe giratório. O erro vem do prompt, que descrevia esse símbolo. A nova ideia troca o anel por um cata-vento de quatro lâminas retas em volta de um cubo, que mantém o giro e põe as lâminas à vista. Substitua o prompt da habilidade por este:
+
+```text
+SUBJECT: a spinning pinwheel of four straight broad sword blades around a small round hub, like a throwing star or a windmill: a whirling blade attack. It must not look like a refresh, reload or sync icon: no circular arrows, no arrowheads, no ring.
+COMPOSITION: square canvas, centered at 50 percent and 50 percent, about 90 percent across. A solid round hub about 24 percent across at the center. Four identical straight blades leave the hub like the vanes of a pinwheel, each leaving the hub tangentially in the clockwise direction: each blade is a flat broad blade about 38 percent of the canvas long measured from the hub, 15 percent wide at its base, tapering in straight lines to a sharp point (no curve, no crossguard), with a central ridge. The blades are spaced every 90 degrees and the whole pinwheel is rotated 20 degrees, so no blade is vertical or horizontal. Every blade tip leads clockwise and is separated from the next blade's body by a gap of at least 7 percent. The top-left corner may hold a blade tip but no fine detail.
+VALUES: the upper-left half of each blade (split along its central ridge) and of the hub in #F2F4F8; the lower-right half of each blade and of the hub in #B4B9C4.
+GLOW: nothing glows.
+```
+
+**`w_warcry` (Grito de Guerra).** Cone com ondas em arco: é o ícone de volume de áudio. O SVG atual já tinha esse defeito, e o prompt, que pedia uma "corneta", não bastou para o modelo sair do alto-falante. As ondas concêntricas e o cone reto precisam sair. Duas opções, na ordem de preferência.
+
+Opção A, a corneta de guerra, com raios em ponta no lugar das ondas:
+
+```text
+SUBJECT: a long war horn raised and blown, with three sharp shock rays bursting from its bell: the warrior's battle cry. It must not look like a loudspeaker, a megaphone, a volume or audio icon, and it must not use concentric sound arcs or waves.
+COMPOSITION: square canvas. The horn is a long thick tapered animal-horn bugle running diagonally from a small rounded mouthpiece cap at the lower left (about 12 percent from the left and 84 percent from the top) to a wide flared bell at the upper right (the bell rim centered at about 62 percent from the left and 30 percent from the top, about 30 percent across). Its body bends gently, about 20 degrees in total, and never forms a crescent. Two broad metal bands wrap it at one third and two thirds of its length. Three sharp elongated triangular shock rays burst from the bell toward the upper right: the central one reaching about 96 percent from the left and 8 percent from the top, one above reaching about 72 percent from the left and 5 percent from the top, one below reaching about 98 percent from the left and 40 percent from the top. Each ray is separated from the bell and from the others by a gap of at least 7 percent. The top-left corner stays empty.
+VALUES: the horn's upper-left side in #F2F4F8 and its lower-right side in #B4B9C4; the two bands in #F2F4F8 with their lower halves in #B4B9C4; the rays in #F2F4F8.
+GLOW: nothing glows.
+```
+
+Opção B, se a corneta ainda ler como alto-falante, a bandeira de guerra, que também diz "provocar e reforçar a defesa":
+
+```text
+SUBJECT: a war banner raised on a spear-tipped pole, flying a swallow-tailed flag: the warrior's rally cry. It must not look like a loudspeaker or an audio icon. The flag hangs from the side of the pole, not from a crossbar, so nothing forms a cross.
+COMPOSITION: square canvas. A straight pole 7 percent thick, tilted about 12 degrees clockwise from the vertical, from its foot at about 36 percent from the left and 95 percent from the top to its top at about 46 percent from the left and 6 percent from the top, ending in a small sharp spearhead 12 percent long. The flag is attached along the upper 45 percent of the pole, on its right side, streaming to the right: a rectangle about 46 percent long and 34 percent tall with a V-shaped swallow-tail notch at its free end and two soft waves along its length, plain, with no emblem and no pattern. The top-left corner stays empty.
+VALUES: the flag's upper half in #F2F4F8 and its lower half in #B4B9C4; the pole in #B4B9C4; the spearhead in #F2F4F8.
+GLOW: nothing glows.
+```

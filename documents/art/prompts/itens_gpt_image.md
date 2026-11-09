@@ -1279,3 +1279,25 @@ Para cada imagem gerada, marque tudo antes de aprovar. Uma falha em qualquer lin
 - [ ] A cor da raridade nos encaixes é a da UI: verde `6FE08A` no T1, azul `5AA8FF` no T2, âmbar `FFB13C` no T3.
 - [ ] Nenhum tier quebra a silhueta da classe (S5): o T3 só reforça a forma.
 - [ ] Guerreiro T0 e Cota de Malha se distinguem pela ombreira de 2 telhas; Mago T0 e Manto do Novato pelo comprimento da capa; Sacerdote T0 e Peregrino pelo alforje.
+
+## Revisão das imagens geradas (08/11/2026)
+
+Os 48 PNGs de `assets/item_art/` (1024 × 1024, RGBA) foram conferidos contra os prompts e a lista de conferência acima: canal alfa real, um item só, cores, brilho da raridade só nos encaixes, símbolos proibidos (O2) e leitura a 64, 46 e 28 px sobre os quadros de raridade (fundo `cor × 0,16`, borda de 1 px, margem de 8%), que é o tamanho real em `UiKit.icon_tile`.
+
+**Veredito: 47 APROVADO, 1 AJUSTES, 0 REPROVADO.**
+
+**APROVADO (47):** `w_start_sword`, `w_start_axe`, `w_start_mail`, `w_start_plate`, `warrior_t1_weapon`, `warrior_t1_armor`, `warrior_t1_helm`, `warrior_t1_boots`, `warrior_t2_weapon`, `warrior_t2_armor`, `warrior_t3_weapon`, `warrior_t3_armor`, `m_start_staff`, `m_start_orb`, `m_start_robe`, `m_start_cloak`, `mage_t1_weapon`, `mage_t1_armor`, `mage_t1_helm`, `mage_t1_boots`, `mage_t2_weapon`, `mage_t2_armor`, `mage_t3_weapon`, `mage_t3_armor`, `p_start_scepter`, `p_start_tome`, `p_start_habit`, `p_start_pilgrim`, `priest_t1_weapon`, `priest_t1_armor`, `priest_t1_helm`, `priest_t1_boots`, `priest_t2_weapon`, `priest_t3_weapon`, `priest_t3_armor`, `mat_bone`, `mat_cloth`, `mat_essence`, `mat_fang`, `mat_hide`, `mat_ore`, `mat_shard`, `potion_hp`, `potion_mp`, `boss_core`, `boss_plate`, `boss_crown`.
+
+O que a revisão conferiu e aceitou:
+
+- **Progressão das linhas.** Armas: mesmo ângulo e escala, metal bronze, prata, ouro, platina, e encaixes acesos 0, 1, 2, 3 nas cores da UI (verde, azul, âmbar). Armaduras: uma peça nova por tier (gola de pele, ombreira maior e crista alta, máscara e lâminas; barra de pele, focos, 4 focos; manto, pingentes, aba dupla com fitas e lanterna de cinto), massa de cor igual.
+- **Contagens e formas travadas:** sem nasal e sem cruz no elmo T3, visor único; guarda reta da espada presente; estola do sacerdote só abaixo da faixa; sem "+" nas poções; cristal só nos materiais e nos itens de chefe.
+- **Margem menor que 9% nas armaduras altas** (armaduras de 93% a 98% da altura, sem corte: o alfa da borda não passa de 1). Aceito, porque o quadro da UI soma 8% de margem por lado.
+- **Brilho de emissão** (núcleo do orbe, do cajado e do Núcleo do Rei, luz do tomo): só uns poucos pixels em volta do que acende, como o prompt permite. Aceito.
+- **Ruído de alfa de 1 a 12** (cerca de 40% dos pixels de `mage_t2_weapon`, 11% de `mat_ore`): invisível. A conversão da OS-023 zera o alfa até 12.
+
+**AJUSTES (1): `priest_t2_armor`.** Há uma névoa clara e semitransparente (alfa até 86) acima do chapéu, que chega à borda superior do quadro: sobre o fundo escuro do inventário aparece como um borrão cinza. Em 46 px é quase invisível, então a imagem entra no jogo como está. Para regerar, acrescente ao fim do prompt do item, antes do bloco de restrições:
+
+```text
+EXTRA: the hat stays at least 9 percent below the top edge of the canvas. Nothing semi-transparent or hazy anywhere: no glow, no mist, no smoke, no gradient above or around the hat or the garment; the background is fully transparent.
+```

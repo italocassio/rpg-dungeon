@@ -250,5 +250,11 @@
 		"seed": "20259",
 		"seconds": 4,
 		"prompt": "Catastrophic frost explosion sound effect.\n\nHuge deep boom filling a great stone hall,\nice shattering outward in every direction,\ngiant ice spikes bursting from the floor,\nfrozen debris raining down.\n\nOverwhelming, cold and devastating.\nMassive single blast with a long cold rumble, about 3.5 seconds.\n\nNo music, no voices."
+	},
+	"track-0-lobby": {
+		"model": "Stable Audio 3",
+		"seed": "1307600243",
+		"seconds": 90,
+		"prompt": "Dark fantasy main menu soundtrack.\n\nMysterious hunters' hall before entering a magic portal,\nsoft orchestral strings, gentle harp arpeggios,\nwarm low brass and a distant ethereal choir.\n\nCalm, mysterious and hopeful atmosphere.\nSteady slow tempo, consistent energy throughout.\n\nInstrumental only, no lyrics."
 	}
 }

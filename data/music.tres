@@ -3,8 +3,11 @@
 [ext_resource type="Script" path="res://src/audio/music_config.gd" id="1_cfg"]
 [ext_resource type="AudioStreamWAV" path="res://assets/audio/music/track-1.wav" id="2_dun"]
 [ext_resource type="AudioStreamWAV" path="res://assets/audio/music/track-2-boss-battle.wav" id="3_bos"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/music/track-0-lobby.wav" id="4_lob"]
 
 [resource]
 script = ExtResource("1_cfg")
 dungeon_track = ExtResource("2_dun")
 boss_track = ExtResource("3_bos")
+lobby_track = ExtResource("4_lob")
+lobby_volume_db = -5.5

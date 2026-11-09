@@ -41,6 +41,11 @@ func _exit_tree() -> void:
 		_sheet.inventory.changed.disconnect(_refresh)
 
 
+func select(recipe: RecipeData) -> void:
+	_selected = recipe
+	_refresh()
+
+
 func _refresh() -> void:
 	for child in _list.get_children():
 		child.queue_free()
@@ -60,15 +65,11 @@ func _recipe_row(recipe: RecipeData) -> Button:
 	button.text = ("● " if ready_to_forge else "") + item.display_name
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.focus_mode = Control.FOCUS_NONE
-	button.icon = UiKit.icon(item.icon)
 	button.expand_icon = false
-	button.add_theme_constant_override(&"icon_max_width", 24)
 	var tint: Color = UiKit.rarity_color(item.rarity)
+	UiKit.set_button_icon(button, item, tint, 28, 24)
 	button.add_theme_color_override(&"font_color", tint if recipe != _selected else UiKit.GOLD_BRIGHT)
-	button.add_theme_color_override(&"icon_normal_color", tint)
-	button.pressed.connect(func() -> void:
-		_selected = recipe
-		_refresh())
+	button.pressed.connect(select.bind(recipe))
 	return button
 
 
@@ -80,7 +81,7 @@ func _show_detail() -> void:
 	var item: ItemData = _selected.result
 	var head := UiKit.hbox(10)
 	_detail.add_child(head)
-	head.add_child(UiKit.icon_tile(item.icon, UiKit.rarity_color(item.rarity), 64.0))
+	head.add_child(UiKit.item_tile(item, 64.0))
 	var column := UiKit.vbox(2)
 	head.add_child(column)
 	column.add_child(UiKit.label(item.display_name, 19, UiKit.rarity_color(item.rarity), UiKit.title_font()))
@@ -96,7 +97,7 @@ func _show_detail() -> void:
 		var need: int = _selected.ingredients[ingredient]
 		var have: int = _sheet.inventory.count_of(ingredient.id)
 		var row := UiKit.hbox(8)
-		row.add_child(UiKit.icon_tile(ingredient.icon, UiKit.rarity_color(ingredient.rarity), 28.0))
+		row.add_child(UiKit.item_tile(ingredient, 28.0))
 		var name_label := UiKit.label(ingredient.display_name, 14, UiKit.rarity_color(ingredient.rarity))
 		name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(name_label)

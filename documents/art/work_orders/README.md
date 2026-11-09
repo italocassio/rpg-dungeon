@@ -26,6 +26,7 @@ Execute na ordem. Uma ordem só começa quando as anteriores da coluna "Depende 
 | 020 | Ícones de habilidade do sacerdote e teste dos ícones | `gameplay-developer` | 016 |
 | 021 | Rei Gélido, modelo novo | `gameplay-developer` | Nenhuma |
 | 022 | Efeitos de ataque do Rei Gélido | `rpg-systems` (dados) e `gameplay-developer` (código) | 021 |
+| 023 | Arte de itens e de habilidades na UI | `gameplay-developer` | Nenhuma |
 
 As OS-006 e 007 não correm em paralelo: a 007 lê `look_tier` da OS-005 e mexe nos mesmos corpos de `creature_factory.gd` que a 006. O contrato final está na OS-004, e o parecer em `OS-004-parecer.md`.
 

@@ -161,6 +161,7 @@ func _test_new_character() -> void:
 	var lobby: Lobby = _lobby()
 	check(lobby != null, "saguão abre")
 	check(_music().current == MusicDirector.Track.LOBBY, "saguão começa com a música do saguão")
+	check(_music()._lobby_player.playing, "faixa do saguão tocando ao abrir o jogo")
 	for class_data in GameDB.catalog.classes:
 		lobby._on_class_chosen(class_data)
 		await _frames(2)
@@ -1154,6 +1155,7 @@ func _test_victory_and_return() -> void:
 	check(_main.get_node_or_null("MusicDirector") != null, "diretor de música sobrevive à troca de tela")
 	await _frames(2)
 	check(_music().current == MusicDirector.Track.LOBBY, "saída da masmorra não silencia o saguão")
+	check(_music()._lobby_player.playing, "faixa do saguão tocando de novo")
 	await _frames(4)
 	for voice: AudioStreamPlayer3D in _sfx()._voices:
 		check(not voice.playing, "efeitos não vazam para o saguão")

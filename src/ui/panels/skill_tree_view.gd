@@ -53,10 +53,7 @@ func _add_tier(tree: VBoxContainer, heading: String, keys: Array[String], skills
 	tree.add_child(row)
 	for i in skills.size():
 		var skill: SkillData = skills[i]
-		var slot := SkillSlot.new()
-		slot.key_text = keys[i]
-		slot.tint = skill.color
-		slot.icon_texture = UiKit.icon(skill.icon)
+		var slot: SkillSlot = SkillSlot.for_skill(skill, keys[i])
 		slot.mouse_entered.connect(select.bind(skill))
 		row.add_child(slot)
 		_slots[skill] = slot

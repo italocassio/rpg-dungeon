@@ -74,17 +74,31 @@ func _slot_row(kind: ItemData.Kind) -> Control:
 	var row := UiKit.hbox(8)
 	var item: ItemData = _sheet.equipment.get(kind)
 	var tint: Color = UiKit.rarity_color(item.rarity) if item != null else UiKit.BRONZE_DARK
-	var tile := UiKit.icon_tile(item.icon if item != null else &"cloth", tint, 46.0)
-	if item == null:
-		tile.modulate.a = 0.35
-	else:
+	var tile: PanelContainer
+	if item != null:
+		tile = UiKit.item_tile(item, 46.0)
 		tile.tooltip_text = UiKit.item_tooltip(item)
+	else:
+		tile = UiKit.empty_slot_tile(_empty_slot_icon(kind), 46.0)
 	row.add_child(tile)
 	var column := UiKit.vbox(0)
 	row.add_child(column)
 	column.add_child(UiKit.label(ItemData.KIND_NAMES[kind], 12, UiKit.MUTED))
 	column.add_child(UiKit.label(item.display_name if item != null else "Vazio", 14, tint if item != null else UiKit.MUTED, UiKit.bold_font()))
 	return row
+
+
+## Silhueta do tipo de peça; arma e armadura dependem da classe.
+func _empty_slot_icon(kind: ItemData.Kind) -> StringName:
+	var class_data: ClassData = _sheet.class_data
+	match kind:
+		ItemData.Kind.WEAPON:
+			return class_data.starter_weapons[0].icon
+		ItemData.Kind.ARMOR:
+			return class_data.starter_armors[0].icon
+		ItemData.Kind.HELM:
+			return &"helm"
+	return &"boots"
 
 
 func _item_tile(item: ItemData, count: int) -> Control:
@@ -95,10 +109,8 @@ func _item_tile(item: ItemData, count: int) -> Control:
 	var tint: Color = UiKit.rarity_color(item.rarity)
 	button.add_theme_stylebox_override(&"normal", UiKit.style(Color(tint.r * 0.14, tint.g * 0.14, tint.b * 0.14, 0.95), tint, 1, 3))
 	button.add_theme_stylebox_override(&"hover", UiKit.style(Color(tint.r * 0.28, tint.g * 0.28, tint.b * 0.28, 0.95), tint.lightened(0.3), 1, 3))
-	button.icon = UiKit.icon(item.icon)
 	button.expand_icon = true
-	button.add_theme_color_override(&"icon_normal_color", tint.lightened(0.3))
-	button.add_theme_constant_override(&"icon_max_width", 40)
+	UiKit.set_button_icon(button, item, tint.lightened(0.3), 46, 40)
 	var amount := UiKit.shadowed(UiKit.label("x%d" % count, 12, Color.WHITE, UiKit.bold_font()), 3)
 	amount.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	amount.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM

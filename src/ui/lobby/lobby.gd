@@ -201,9 +201,10 @@ func _class_detail() -> Control:
 		var row := UiKit.hbox(8)
 		row.name = "Skill_%s" % skill.id
 		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var tile := UiKit.icon_tile(skill.icon, skill.color, 38.0)
+		var tile := UiKit.skill_tile(skill, 38.0)
 		# PanelContainer para o evento: sem isto, o ícone tiraria o hover da linha.
 		tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tile.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 		row.add_child(tile)
 		_skill_tooltip.attach(row, skill)
 		var text := UiKit.vbox(0)
@@ -290,7 +291,9 @@ func _item_card(item: ItemData, selected: bool, action: Callable) -> Button:
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	UiKit.fit_rect(row, 0.0, 0.0, 1.0, 1.0, Rect2(10.0, 8.0, -10.0, -8.0))
 	button.add_child(row)
-	row.add_child(UiKit.icon_tile(item.icon, UiKit.rarity_color(item.rarity), 54.0))
+	var tile := UiKit.item_tile(item, 54.0)
+	tile.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	row.add_child(tile)
 	var column := UiKit.vbox(2)
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	column.mouse_filter = Control.MOUSE_FILTER_IGNORE

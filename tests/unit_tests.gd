@@ -94,6 +94,53 @@ func test_skill_icons_load() -> void:
 	equal(_skill_named(&"p_circle").icon, &"circle", "Círculo usa circle.svg")
 
 
+## Habilidades sem arte aceita. Cada exceção carrega o motivo. Ao chegar a imagem nova, apague a entrada: o teste falha se a arte existir.
+const SKILL_ART_EXCEPTIONS: Dictionary[StringName, String] = {
+	&"w_whirl": "REPROVADA em 08/11/2026: lê como ícone de atualizar; regerar com o prompt revisado de habilidades_gpt_image.md",
+	&"w_warcry": "REPROVADA em 08/11/2026: lê como ícone de volume; regerar com a opção A ou B de habilidades_gpt_image.md",
+}
+
+
+func test_item_and_skill_art() -> void:
+	for file_name in DirAccess.get_files_at("res://data/items"):
+		if not file_name.ends_with(".tres"):
+			continue
+		var id := StringName(file_name.get_basename())
+		var art: Texture2D = UiKit.item_art(id)
+		check(art != null and art.get_size() == Vector2(256, 256), "item %s tem arte de 256 px" % id)
+		check(_import_has_mipmaps("res://assets/icons/items/%s.png" % id), "arte do item %s importa com mipmaps" % id)
+	var skill_ids: Array[StringName] = [&"dodge"]
+	for skill in _player_skills():
+		skill_ids.append(skill.id)
+	check(skill_ids.size() == 19, "18 habilidades de classe e a Esquiva")
+	for id in skill_ids:
+		var art: Texture2D = UiKit.skill_art(id)
+		if SKILL_ART_EXCEPTIONS.has(id):
+			check(art == null, "exceção %s (%s) ainda sem arte: se a arte chegou, apague a exceção" % [id, SKILL_ART_EXCEPTIONS[id]])
+		else:
+			check(art != null and art.get_size() == Vector2(128, 128), "habilidade %s tem arte de 128 px" % id)
+			check(_import_has_mipmaps("res://assets/icons/skills/%s.png" % id), "arte da habilidade %s importa com mipmaps" % id)
+	for id: StringName in SKILL_ART_EXCEPTIONS:
+		check(id in skill_ids, "exceção %s é de uma habilidade que existe" % id)
+	# Plano B: sem arte, o SVG de hoje.
+	equal(UiKit.skill_icon(_skill_named(&"w_whirl")), UiKit.icon(&"whirl"), "Giro de Lâminas cai no whirl.svg")
+	equal(UiKit.skill_icon(_skill_named(&"w_warcry")), UiKit.icon(&"shout"), "Grito de Guerra cai no shout.svg")
+	equal(UiKit.item_art(&"nao_existe"), null, "id sem arte devolve nulo")
+	check(not DirAccess.dir_exists_absolute("res://assets/item_art"), "assets/item_art foi removida")
+	check(not DirAccess.dir_exists_absolute("res://assets/icons/skill_gpt_image"), "skill_gpt_image foi removida")
+	# Tinta: poção colorida, habilidade tingida.
+	var potion_slot: SkillSlot = SkillSlot.for_potion(GameDB.item(&"potion_hp"), &"potion_red", UiKit.HP_COLOR, "Q")
+	check(potion_slot.icon_colored, "poção usa a arte colorida, sem tinta")
+	potion_slot.free()
+	var skill_slot: SkillSlot = SkillSlot.for_skill(_skill_named(&"w_slash"), "LMB")
+	check(not skill_slot.icon_colored, "habilidade segue tingida")
+	skill_slot.free()
+
+
+func _import_has_mipmaps(png_path: String) -> bool:
+	return FileAccess.get_file_as_string(png_path + ".import").contains("mipmaps/generate=true")
+
+
 func test_every_dungeon_has_boss_with_rare_drops() -> void:
 	check(GameDB.catalog.dungeons.size() >= 1, "há ao menos uma masmorra")
 	for dungeon in GameDB.catalog.dungeons:

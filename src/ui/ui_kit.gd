@@ -18,11 +18,25 @@ const SYSTEM_TEXT := Color("d6f2ff")
 const GOOD := Color("8dffb0")
 const BAD := Color("ff7a6a")
 
+const ITEM_ART_DIR := "res://assets/icons/items/"
+const SKILL_ART_DIR := "res://assets/icons/skills/"
+const ITEM_ART_SIZE := Vector2i(256, 256)
+const SKILL_ART_SIZE := Vector2i(128, 128)
+const ART_FILTER := CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+const GLYPH_PADDING := 0.14
+const ITEM_ART_PADDING := 0.08
+## Com arte colorida, o tema não pode tingir o ícone do botão em nenhum estado.
+const ART_ICON_COLORS: Array[StringName] = [
+	&"icon_normal_color", &"icon_hover_color", &"icon_pressed_color", &"icon_hover_pressed_color", &"icon_focus_color",
+]
+
 static var _title_font: Font
 static var _bold_font: Font
 static var _body_font: Font
 static var _theme: Theme
 static var _icons: Dictionary[StringName, Texture2D] = {}
+static var _item_art: Dictionary[StringName, Texture2D] = {}
+static var _skill_art: Dictionary[StringName, Texture2D] = {}
 
 
 static func title_font() -> Font:
@@ -58,6 +72,36 @@ static func icon(id: StringName) -> Texture2D:
 	var texture: Texture2D = load(path) if ResourceLoader.exists(path) else null
 	_icons[id] = texture
 	return texture
+
+
+## Ilustração colorida do item, achada pelo id. Nulo se não houver arquivo.
+static func item_art(item_id: StringName) -> Texture2D:
+	return _art(_item_art, ITEM_ART_DIR, item_id)
+
+
+## Glifo cinza da habilidade, achado pelo id. Nulo se não houver arquivo.
+static func skill_art(skill_id: StringName) -> Texture2D:
+	return _art(_skill_art, SKILL_ART_DIR, skill_id)
+
+
+static func _art(cache: Dictionary[StringName, Texture2D], directory: String, id: StringName) -> Texture2D:
+	if cache.has(id):
+		return cache[id]
+	var path: String = "%s%s.png" % [directory, id]
+	var texture: Texture2D = load(path) if ResourceLoader.exists(path) else null
+	cache[id] = texture
+	return texture
+
+
+## Arte do id, senão o SVG de plano B.
+static func item_icon(item: ItemData) -> Texture2D:
+	var art: Texture2D = item_art(item.id)
+	return art if art != null else icon(item.icon)
+
+
+static func skill_icon(skill: SkillData) -> Texture2D:
+	var art: Texture2D = skill_art(skill.id)
+	return art if art != null else icon(skill.icon)
 
 
 static func style(background: Color, border: Color, width: int = 2, radius: int = 3) -> StyleBoxFlat:
@@ -191,19 +235,64 @@ static func rarity_color(rarity: ItemData.Rarity) -> Color:
 
 ## Ícone sobre fundo escuro com borda colorida (raridade ou classe).
 static func icon_tile(icon_id: StringName, tint: Color, size: float) -> PanelContainer:
+	return _tile(icon(icon_id), tint, size, tint.lightened(0.25), GLYPH_PADDING, false)
+
+
+## Item: a ilustração colorida vai sem tinta e a raridade só pinta o fundo e a borda.
+static func item_tile(item: ItemData, size: float) -> PanelContainer:
+	var tint: Color = rarity_color(item.rarity)
+	var art: Texture2D = item_art(item.id)
+	if art == null:
+		return icon_tile(item.icon, tint, size)
+	return _tile(art, tint, size, Color.WHITE, ITEM_ART_PADDING, true)
+
+
+## Habilidade: o glifo cinza é multiplicado pela cor da habilidade.
+static func skill_tile(skill: SkillData, size: float) -> PanelContainer:
+	var art: Texture2D = skill_art(skill.id)
+	if art == null:
+		return icon_tile(skill.icon, skill.color, size)
+	return _tile(art, skill.color, size, skill.color.lightened(0.25), GLYPH_PADDING, true)
+
+
+## Espaço de equipamento vazio: silhueta do tipo de peça, apagada.
+static func empty_slot_tile(icon_id: StringName, size: float) -> PanelContainer:
+	var tile: PanelContainer = icon_tile(icon_id, BRONZE_DARK, size)
+	tile.modulate.a = 0.5
+	return tile
+
+
+static func _tile(texture: Texture2D, tint: Color, size: float, modulate_color: Color, padding: float, filtered: bool) -> PanelContainer:
 	var tile := PanelContainer.new()
 	var box: StyleBoxFlat = style(Color(tint.r * 0.16, tint.g * 0.16, tint.b * 0.16, 0.95), tint, 1, 3)
-	box.set_content_margin_all(size * 0.14)
+	box.set_content_margin_all(size * padding)
 	tile.add_theme_stylebox_override(&"panel", box)
 	tile.custom_minimum_size = Vector2.ONE * size
 	var picture := TextureRect.new()
-	picture.texture = icon(icon_id)
+	picture.texture = texture
 	picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	picture.modulate = tint.lightened(0.25)
+	picture.modulate = modulate_color
 	picture.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if filtered:
+		picture.texture_filter = ART_FILTER
 	tile.add_child(picture)
 	return tile
+
+
+## Ícone de um Button de item. Com arte: colorida, sem tinta do tema. Sem arte: o SVG tingido de hoje.
+static func set_button_icon(button: Button, item: ItemData, tint: Color, art_width: int, svg_width: int) -> void:
+	var art: Texture2D = item_art(item.id)
+	if art != null:
+		button.icon = art
+		button.add_theme_constant_override(&"icon_max_width", art_width)
+		for color_name: StringName in ART_ICON_COLORS:
+			button.add_theme_color_override(color_name, Color.WHITE)
+		button.texture_filter = ART_FILTER
+	else:
+		button.icon = icon(item.icon)
+		button.add_theme_constant_override(&"icon_max_width", svg_width)
+		button.add_theme_color_override(&"icon_normal_color", tint)
 
 
 static func item_tooltip(item: ItemData) -> String:

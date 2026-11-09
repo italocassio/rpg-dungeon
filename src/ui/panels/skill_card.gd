@@ -26,7 +26,7 @@ func show_info(info: SkillInfo) -> void:
 	var skill: SkillData = info.skill
 	var header := UiKit.hbox(10)
 	add_child(header)
-	header.add_child(UiKit.icon_tile(skill.icon, skill.color, ICON_SIZE))
+	header.add_child(UiKit.skill_tile(skill, ICON_SIZE))
 	var titles := UiKit.vbox(0)
 	titles.alignment = BoxContainer.ALIGNMENT_CENTER
 	titles.size_flags_horizontal = Control.SIZE_EXPAND_FILL
